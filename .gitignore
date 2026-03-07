@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Environment secrets
+.env
+*.env
+config.py
+
+# Databases (never commit your local DB!)
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Face recognition data (large binary files)
+backend/known_faces/
+*.npy
+
+# Logs
+*.log
+logs/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Flask instance folder
+instance/

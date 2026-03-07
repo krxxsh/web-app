@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-7">
+        <div class="card p-4 border-0 shadow-sm">
+            <h3 class="fw-bold mb-4"><i class="fas fa-plus-circle text-primary me-2"></i>Create New Service</h3>
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">SERVICE NAME</label>
+                    <input type="text" name="name" class="form-control" placeholder="e.g. Premium Haircut" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-muted">DURATION (MINS)</label>
+                        <input type="number" name="duration" class="form-control" value="30" required>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-muted">PRICE (₹)</label>
+                        <input type="number" name="price" class="form-control" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">DESCRIPTION</label>
+                    <textarea name="description" class="form-control" rows="3"
+                        placeholder="Describe what's included..."></textarea>
+                </div>
+
+                <div class="card bg-light border-0 p-3 mb-4">
+                    <h6 class="fw-bold small mb-3">Service Options</h6>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="member_only" id="memberOnly">
+                        <label class="form-check-label small" for="memberOnly">
+                            <i class="fas fa-crown text-warning me-1"></i> Membership exclusive
+                        </label>
+                        <div class="form-text mt-0" style="font-size: 0.7rem;">Only users with premium memberships can
+                            book this.</div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_virtual" id="isVirtual">
+                        <label class="form-check-label small" for="isVirtual">
+                            <i class="fas fa-video text-info me-1"></i> Virtual Consultation
+                        </label>
+                        <div class="form-text mt-0" style="font-size: 0.7rem;">Automatically generates a Jitsi meeting
+                            room link.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold">Create Service</button>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-link text-muted">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

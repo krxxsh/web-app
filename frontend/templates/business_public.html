@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+{% block content %}
+{% if business.primary_color %}
+<style>
+    :root {
+        --bs-primary: {
+                {
+                business.primary_color
+            }
+        }
+
+        ;
+    }
+
+    .bg-primary {
+        background-color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+    }
+
+    .text-primary {
+        color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+    }
+
+    .btn-primary {
+        background: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+
+        border-color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+    }
+
+    .btn-outline-primary {
+        color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+
+        border-color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: {
+                {
+                business.primary_color
+            }
+        }
+
+        !important;
+        color: white !important;
+    }
+</style>
+{% endif %}
+<div class="row pt-4">
+    <div class="col-md-8">
+        <div class="card p-4 shadow-sm border-0">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary text-white rounded-circle p-3 me-3">
+                    <i class="fas fa-building fa-2x"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0 text-dark">
+                        {% if business.logo_url %}
+                        <img src="{{ business.logo_url }}" alt="Logo" class="me-2"
+                            style="max-height: 40px; border-radius: 8px;">
+                        {% endif %}
+                        {{ business.name }}
+                    </h2>
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle me-1 text-success"></i> Highly Recommended
+                    </p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Our Services</h4>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active" id="lang-en">English</button>
+                    <button class="btn btn-outline-secondary" id="lang-hi">हिंदी</button>
+                </div>
+            </div>
+
+            <div class="list-group list-group-flush" id="services-list">
+                {% for service in business.services %}
+                <div
+                    class="list-group-item d-flex justify-content-between align-items-center py-3 border-bottom service-item">
+                    <div>
+                        <h6 class="mb-1 fw-bold service-name">{{ service.name }}</h6>
+                        <small class="text-muted"><i class="far fa-clock me-1"></i> {{ service.duration }} mins</small>
+                        {% if service.member_only %}
+                        <span class="badge bg-warning text-dark ms-2 small"><i class="fas fa-crown me-1"></i> Member
+                            Only</span>
+                        {% endif %}
+                        {% if service.is_virtual %}
+                        <span class="badge bg-info text-white ms-2 small"><i class="fas fa-video me-1"></i>
+                            Virtual</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold text-primary mb-2">₹{{ service.price }}</div>
+                        <button class="btn btn-primary btn-sm px-4 rounded-pill select-service"
+                            data-service-id="{{ service.id }}" data-service-name="{{ service.name }}"
+                            data-service-price="{{ service.price }}" data-bs-toggle="modal"
+                            data-bs-target="#bookingModal">Book</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4 shadow-sm border-0 h-100">
+            <h5 class="fw-bold mb-3 text-center">Business Info</h5>
+            <hr>
+            <div class="mb-4">
+                <h6 class="fw-bold small text-uppercase text-muted"><i
+                        class="far fa-clock me-2 text-primary"></i>Working Hours</h6>
+                <div class="mt-2 small text-muted">
+                    <div class="d-flex justify-content-between mb-1"><span>Mon - Fri</span> <span>09:00 AM - 05:00
+                            PM</span></div>
+                    <div class="d-flex justify-content-between"><span>Sat - Sun</span> <span>Closed</span></div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h6 class="fw-bold small text-uppercase text-muted"><i class="fas fa-users me-2 text-primary"></i>Staff
+                </h6>
+                <div class="mt-2">
+                    {% for member in business.staff %}
+                    <span class="badge bg-light text-dark border me-1 fw-normal">{{ member.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog shadow-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold" id="serviceTitle text-primary">Select Slot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="small fw-bold text-muted mb-2 text-uppercase letter-spacing-1">Choose Date</label>
+                <input type="date" id="bookingDate" class="form-control mb-4 border-0 bg-light">
+
+                <div id="surgeAlert" class="alert alert-warning py-2 small d-none fw-bold">
+                    <i class="fas fa-bolt me-1"></i> High Demand! Surge Pricing Active (<span id="surgeMulti"></span>x)
+                    - New Price: ₹<span id="surgePrice"></span>
+                </div>
+
+                <div id="aiRecs" class="mb-4 d-none">
+                    <h6 class="small fw-bold text-primary text-uppercase mb-3"><i class="fas fa-magic me-1"></i> AI
+                        Suggestions</h6>
+                    <div id="recContainer" class="d-flex gap-2 flex-wrap"></div>
+                </div>
+
+                <div id="allSlots" class="d-none">
+                    <h6 class="small fw-bold text-muted text-uppercase mb-3">Available Times</h6>
+                    <div id="slotGrid" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <div id="waitlistSection"
+                    class="d-none text-center py-4 bg-light rounded border border-warning border-dashed">
+                    <i class="fas fa-user-clock fa-2x text-warning mb-3"></i>
+                    <h6 class="fw-bold">All slots booked!</h6>
+                    <p class="small text-muted mb-3">Join the waitlist to get notified if someone cancels.</p>
+                    <button class="btn btn-warning btn-sm px-4 fw-bold" id="joinWaitlist">Join Waitlist</button>
+                </div>
+
+                <div id="slotPlaceholder" class="text-center py-4">
+                    <i class="far fa-calendar-alt fa-3x text-light mb-3"></i>
+                    <p class="text-muted small">Select a date to see available slots.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-primary w-100 py-3 fw-bold shadow" id="payAndConfirm" disabled>Pay
+                    & Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    let selectedServiceId = null;
+    let selectedTime = null;
+    let currentPrice = 0;
+
+    document.querySelectorAll('.select-service').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            selectedServiceId = e.target.dataset.serviceId;
+            currentPrice = e.target.dataset.servicePrice;
+            document.getElementById('serviceTitle').innerText = e.target.dataset.serviceName;
+            resetSlots();
+        });
+    });
+
+    function resetSlots() {
+        document.getElementById('slotGrid').innerHTML = '';
+        document.getElementById('recContainer').innerHTML = '';
+        document.getElementById('aiRecs').classList.add('d-none');
+        document.getElementById('allSlots').classList.add('d-none');
+        document.getElementById('waitlistSection').classList.add('d-none');
+        document.getElementById('slotPlaceholder').classList.remove('d-none');
+        document.getElementById('surgeAlert').classList.add('d-none');
+        document.getElementById('bookingDate').value = '';
+        document.getElementById('payAndConfirm').disabled = true;
+    }
+
+    document.getElementById('bookingDate').addEventListener('change', async (e) => {
+        const date = e.target.value;
+        if (!date) return;
+        document.getElementById('slotPlaceholder').innerHTML = '<div class="spinner-border text-primary spinner-border-sm"></div>';
+        try {
+            const res = await fetch(`/api/slots?business_id={{ business.id }}&service_id=${selectedServiceId}&date=${date}`);
+            const data = await res.json();
+            document.getElementById('slotPlaceholder').classList.add('d-none');
+            const grid = document.getElementById('slotGrid');
+            grid.innerHTML = '';
+
+            if (data.is_full) {
+                document.getElementById('waitlistSection').classList.remove('d-none');
+                return;
+            }
+
+            // Surge Pricing Update
+            if (data.surge_multiplier > 1.0) {
+                document.getElementById('surgeAlert').classList.remove('d-none');
+                document.getElementById('surgeMulti').innerText = data.surge_multiplier;
+                document.getElementById('surgePrice').innerText = data.dynamic_price;
+                currentPrice = data.dynamic_price;
+            } else {
+                document.getElementById('surgeAlert').classList.add('d-none');
+            }
+
+            if (data.recommendations && data.recommendations.length > 0) {
+                const recCont = document.getElementById('recContainer');
+                recCont.innerHTML = '';
+                data.recommendations.forEach(time => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-outline-primary rounded-pill px-3';
+                    btn.innerText = time;
+                    btn.onclick = () => selectTime(time, btn);
+                    recCont.appendChild(btn);
+                });
+                document.getElementById('aiRecs').classList.remove('d-none');
+            }
+
+            data.available_slots.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-secondary btn-sm slot-btn px-3 fw-medium';
+                btn.innerText = time;
+                btn.onclick = () => selectTime(time, btn);
+                grid.appendChild(btn);
+            });
+            document.getElementById('allSlots').classList.remove('d-none');
+        } catch (e) {
+            document.getElementById('slotPlaceholder').innerHTML = '<p class="text-danger small">Failed to load slots.</p>';
+        }
+    });
+
+    function selectTime(time, btn) {
+        document.querySelectorAll('.slot-btn, #recContainer button').forEach(b => b.classList.remove('active', 'btn-primary', 'text-white'));
+        btn.classList.add('active', 'btn-primary', 'text-white');
+        selectedTime = time;
+        document.getElementById('payAndConfirm').disabled = false;
+    }
+
+    document.getElementById('payAndConfirm').onclick = async () => {
+        const orderRes = await fetch('/api/create_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service_id: selectedServiceId, dynamic_price: currentPrice })
+        });
+        const order = await orderRes.json();
+
+        const options = {
+            key: 'rzp_test_placeholder',
+            amount: order.amount,
+            currency: order.currency,
+            name: '{{ business.name }}',
+            order_id: order.order_id,
+            handler: async function (response) {
+                const bookRes = await fetch('/api/book', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_id: {{ business.id }},
+                    service_id: selectedServiceId,
+                    date: document.getElementById('bookingDate').value,
+                    time: selectedTime,
+                    payment: response
+                    })
+        });
+        if (bookRes.ok) {
+            alert('Appointment booked successfully!');
+            window.location.reload();
+        } else {
+            const err = await bookRes.json();
+            alert(err.error || 'Booking failed.');
+        }
+    }
+        };
+    const rzp = new Razorpay(options);
+    rzp.open();
+    };
+
+    document.getElementById('joinWaitlist').onclick = async () => {
+        const res = await fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: {{ business.id }}, service_id: selectedServiceId })
+        });
+    if (res.ok) {
+        alert('You have been added to the waitlist!');
+        bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+    }
+    };
+
+    // AI Chat UI Logic
+    function toggleChat() {
+        document.getElementById('ai-chat-window').classList.toggle('d-none');
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendMessage('user', text);
+        input.value = '';
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, business_id: "{{ business.id }}" })
+            });
+            const data = await response.json();
+            appendMessage('bot', data.reply);
+
+            if (data.intent && data.intent.action === 'book' && data.intent.date && data.intent.time) {
+                const bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+                document.getElementById('bookingDate').value = data.intent.date;
+                document.getElementById('bookingDate').dispatchEvent(new Event('change'));
+                bookingModal.show();
+                appendMessage('bot', "I've pulled up the schedule for you. Please confirm the slot!");
+            }
+        } catch (e) {
+            appendMessage('bot', "Connection issue. Please try again.");
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const msgs = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = `message ${sender}-message mb-3`;
+        div.innerHTML = `<div class="${sender === 'bot' ? 'bg-white text-dark shadow-sm' : 'bg-primary text-white shadow'} p-2 rounded small" style="display:inline-block; max-width:85%; border: 1px solid #eee;">${text}</div>`;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // Language Switching Logic
+    const translations = {
+        'en': {
+            'services': 'Our Services',
+            'book': 'Book',
+            'info': 'Business Info',
+            'hours': 'Working Hours'
+        },
+        'hi': {
+            'services': 'हमारी सेवाएँ',
+            'book': 'बुक करें',
+            'info': 'व्यापार जानकारी',
+            'hours': 'कार्य समय'
+        }
+    };
+
+    function setLanguage(lang) {
+        document.querySelectorAll('#lang-en, #lang-hi').forEach(b => b.classList.remove('active', 'btn-secondary', 'text-white'));
+        document.querySelectorAll('#lang-en, #lang-hi').forEach(b => b.classList.add('btn-outline-secondary'));
+
+        const activeBtn = document.getElementById(`lang-${lang}`);
+        activeBtn.classList.add('active', 'btn-secondary', 'text-white');
+        activeBtn.classList.remove('btn-outline-secondary');
+
+        const t = translations[lang];
+        document.querySelector('h4.fw-bold').innerText = t.services;
+        document.querySelector('h5.fw-bold').innerText = t.info;
+        document.querySelectorAll('.select-service').forEach(btn => btn.innerText = t.book);
+        document.querySelector('h6.fw-bold.small.text-uppercase.text-muted').innerHTML = `<i class="far fa-clock me-2 text-primary"></i>${t.hours}`;
+    }
+
+    document.getElementById('lang-en').onclick = () => setLanguage('en');
+    document.getElementById('lang-hi').onclick = () => setLanguage('hi');
+
+    document.getElementById('chat-send').onclick = sendChatMessage;
+    document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
+    document.getElementById('ai-chat-toggle').onclick = toggleChat;
+</script>
+
+<!-- AI Chat Floating Button -->
+<div id="ai-chat-container" class="position-fixed bottom-0 end-0 m-4" style="z-index: 1050;">
+    <button id="ai-chat-toggle"
+        class="btn btn-primary rounded-circle shadow-lg p-0 d-flex align-items-center justify-content-center"
+        style="width: 56px; height: 56px;">
+        <i class="fas fa-comment-dots fa-lg"></i>
+    </button>
+    <div id="ai-chat-window" class="card shadow-lg d-none border-0 overflow-hidden"
+        style="width: 320px; height: 420px; bottom: 70px; position: absolute; right: 0; border-radius: 15px;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+            <span class="fw-bold small"><i class="fas fa-robot me-2"></i>AI Booking Assistant</span>
+            <button class="btn-close btn-close-white" onclick="toggleChat()"></button>
+        </div>
+        <div id="chat-messages" class="card-body overflow-auto p-3" style="height: 300px; background-color: #fcfcfc;">
+            <div class="message bot-message mb-3">
+                <div class="bg-white p-2 rounded small shadow-sm border" style="display:inline-block; max-width:85%;">
+                    Hello! 👋 I'm your AI scheduler. Just say "Book a haircut for Tuesday at 3pm" and I'll handle the
+                    rest!</div>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top-0 p-2">
+            <div class="input-group">
+                <input type="text" id="chat-input" class="form-control form-control-sm border-0 bg-light"
+                    placeholder="Type your request...">
+                <button class="btn btn-primary btn-sm rounded-3 ms-1" id="chat-send"><i
+                        class="fas fa-paper-plane px-1"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bot-message {
+        text-align: left;
+    }
+
+    .user-message {
+        text-align: right;
+    }
+
+    .message div {
+        border-radius: 12px;
+    }
+
+    .bot-message div {
+        border-bottom-left-radius: 2px;
+    }
+
+    .user-message div {
+        border-bottom-right-radius: 2px;
+    }
+
+    .letter-spacing-1 {
+        letter-spacing: 0.5px;
+    }
+
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>
+{% endblock content %}

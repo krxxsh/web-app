@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card p-5 text-center shadow-lg border-0" style="border-top: 5px solid #6366f1 !important;">
+            <div class="mb-4">
+                <div class="spinner-grow text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h3 class="fw-bold">Virtual Waiting Room</h3>
+                <p class="text-muted">For your appointment with <strong>{{ appointment.business.name }}</strong></p>
+                <div class="badge bg-light text-dark border px-3 py-2 fs-6 mb-2">
+                    {{ appointment.service.name }} at {{ appointment.start_time.strftime('%I:%M %p') }}
+                </div>
+            </div>
+
+            <div class="p-4 bg-light rounded-3 mb-4">
+                <h1 class="display-1 fw-bold text-primary mb-0" id="queuePosition">{{ pos }}</h1>
+                <p class="text-uppercase fw-bold text-muted small mt-2 letter-spacing-1">People Ahead of You</p>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="border rounded p-3">
+                        <i class="fas fa-clock text-warning fs-3 mb-2"></i>
+                        <h5 class="fw-bold mb-0" id="estWait">~{{ pos * 15 }} min</h5>
+                        <small class="text-muted" style="font-size: 0.7rem;">Est. Wait Time</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border rounded p-3">
+                        <i class="fas fa-check-circle text-success fs-3 mb-2"></i>
+                        <h5 class="fw-bold mb-0" id="appStatus">{{ appointment.status | title }}</h5>
+                        <small class="text-muted" style="font-size: 0.7rem;">Current Status</small>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-muted small px-3">This page auto-updates every 10 seconds. Do not close this window.</p>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('main.my_account') }}" class="btn btn-link text-decoration-none"><i
+                    class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function pollQueue() {
+        fetch(`/waiting-room/data/{{ appointment.id }}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('queuePosition').innerText = data.pos;
+                    document.getElementById('estWait').innerText = "~" + (data.pos * 15) + " min";
+                    document.getElementById('appStatus').innerText = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+
+                    if (data.status === 'arrived') {
+                        document.getElementById('appStatus').classList.replace('text-success', 'text-primary');
+                        document.getElementById('queuePosition').innerText = '0';
+                        document.getElementById('estWait').innerText = "It's your turn!";
+                    }
+                }
+            });
+    }
+
+    setInterval(pollQueue, 10000);
+</script>
+{% endblock content %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center pt-3">
+    <div class="col-md-6 col-12">
+        <div class="card bg-primary text-white border-0 shadow-sm p-4 mb-4 rounded-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-white text-primary rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
+                    style="width: 50px; height: 50px;">
+                    <i class="fas fa-briefcase-medical fa-lg"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">{{ staff.name }}</h5>
+                    <small class="opacity-75">Staff Portal • {{ staff.business.name }}</small>
+                </div>
+            </div>
+            <div class="d-flex space-between w-100">
+                <div class="flex-grow-1">
+                    <div class="small opacity-75 text-uppercase">Today's Load</div>
+                    <div class="fs-4 fw-bold">{{ appointments | length }}</div>
+                </div>
+                <div class="flex-grow-1 text-end">
+                    <div class="small opacity-75 text-uppercase">Remaining</div>
+                    <div class="fs-4 fw-bold">{{ appointments | selectattr('status', 'equalto', 'booked') | list |
+                        length }}</div>
+                </div>
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-muted mb-3 text-uppercase small"><i class="far fa-calendar-check me-2"></i> Your
+            Schedule</h6>
+
+        <div class="list-group list-group-flush shadow-sm rounded-3 overflow-hidden">
+            {% for appt in appointments %}
+            <div class="list-group-item d-flex justify-content-between align-items-center p-3 {{ 'bg-light opacity-50' if appt.status == 'completed' else '' }}"
+                id="appt-{{ appt.id }}">
+                <div>
+                    <div
+                        class="fw-bold mb-1 {{ 'text-decoration-line-through' if appt.status == 'completed' else 'text-dark' }}">
+                        {{ appt.customer.username }} - {{ appt.service.name }}
+                    </div>
+                    <div class="small text-muted mb-2">
+                        <i class="far fa-clock me-1 text-primary"></i> {{ appt.start_time.strftime('%I:%M %p') }} - {{
+                        appt.end_time.strftime('%I:%M %p') }}
+                    </div>
+                    <span
+                        class="badge {{ 'bg-success' if appt.status == 'arrived' else ('bg-secondary' if appt.status == 'completed' else 'bg-primary') }} status-badge">
+                        {{ appt.status | title }}
+                    </span>
+                </div>
+                <div>
+                    {% if appt.status != 'completed' %}
+                    <button class="btn btn-outline-success btn-sm rounded-circle shadow-sm checkoff-btn"
+                        style="width: 44px; height: 44px;" onclick="checkoff({{ appt.id }})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% if not appointments %}
+            <div class="list-group-item p-5 text-center text-muted">
+                <i class="fas fa-mug-hot fa-3x mb-3 text-light"></i>
+                <p class="mb-0">No appointments scheduled today. Relax!</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+    async function checkoff(id) {
+        if (!confirm("Mark this appointment as Completed?")) return;
+
+        try {
+            const res = await fetch(`/staff/complete/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                const row = document.getElementById(`appt-${id}`);
+                row.classList.add('bg-light', 'opacity-50');
+                const title = row.querySelector('.text-dark');
+                if (title) title.classList.add('text-decoration-line-through');
+
+                const badge = row.querySelector('.status-badge');
+                badge.className = 'badge bg-secondary status-badge';
+                badge.innerText = 'Completed';
+
+                row.querySelector('.checkoff-btn').remove();
+            } else {
+                alert("Failed to complete appointment.");
+            }
+        } catch (e) {
+            alert("Network error.");
+        }
+    }
+</script>
+{% endblock content %}

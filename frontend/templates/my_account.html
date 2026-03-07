@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row pt-4">
+    <div class="col-md-4">
+        <div class="card p-4 border-0 shadow-sm mb-4 text-center">
+            <div class="position-relative d-inline-block mx-auto mb-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 80px; height: 80px;">
+                    <i class="fas fa-user-circle fa-3x"></i>
+                </div>
+                <span
+                    class="position-absolute bottom-0 end-0 badge rounded-pill bg-warning text-dark border border-white">
+                    {{ current_user.membership_level|upper if current_user.membership_level else 'FREE' }}
+                </span>
+            </div>
+            <h4 class="fw-bold mb-1">{{ current_user.username }}</h4>
+            <p class="text-muted small mb-3">Member since Mar 2026</p>
+
+            <div class="d-grid gap-2 mb-3">
+                {% if current_user.membership_level == 'premium' %}
+                <button class="btn btn-outline-primary fw-bold py-2">Manage Subscription</button>
+                {% else %}
+                <button class="btn btn-warning fw-bold py-2 shadow-sm"><i class="fas fa-crown me-2"></i>Upgrade to
+                    Premium</button>
+                {% endif %}
+            </div>
+
+            <div class="text-start mt-3 pt-3 border-top">
+                <label class="small fw-bold text-muted text-uppercase mb-2">Preferred Language</label>
+                <div class="d-flex gap-2">
+                    <button
+                        class="btn btn-sm btn-outline-secondary flex-grow-1 {{ 'active' if current_user.preferred_language == 'en' }}">English</button>
+                    <button
+                        class="btn btn-sm btn-outline-secondary flex-grow-1 {{ 'active' if current_user.preferred_language == 'hi' }}">हिंदी</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 border-0 shadow-sm mb-4">
+            <h6 class="fw-bold mb-3">Loyalty Rewards</h6>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small text-uppercase">Points</span>
+                <span class="fw-bold text-primary">{{ current_user.loyalty_points or 0 }}</span>
+            </div>
+            <div class="progress mb-3" style="height: 10px; border-radius: 5px;">
+                {% set p = current_user.loyalty_points or 0 %}
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                    style="width: {{ (p % 100) }}%"></div>
+            </div>
+            <p class="small text-muted" style="font-size: 0.75rem;">Earn {{ 100 - (p % 100) }} more for your next
+                discount!</p>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card p-4 border-0 shadow-sm mb-4">
+            <h5 class="fw-bold mb-3">My Appointments</h5>
+            <div class="list-group list-group-flush">
+                {% for appt in current_user.appointments %}
+                <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-bottom">
+                    <div>
+                        <div class="fw-bold text-dark">{{ appt.service.name }}</div>
+                        <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{
+                            appt.start_time.strftime('%b %d at %H:%M') }}</small>
+                        {% if appt.virtual_link %}
+                        <div class="mt-2">
+                            <a href="{{ appt.virtual_link }}" target="_blank"
+                                class="btn btn-sm btn-info text-white rounded-pill px-3 py-1">
+                                <i class="fas fa-video me-1"></i> Join Meeting
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if appt.status in ['booked', 'arrived'] %}
+                        <div class="mt-2 d-inline-block">
+                            <a href="{{ url_for('main.waiting_room', appt_id=appt.id) }}"
+                                class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1">
+                                <i class="fas fa-clock fs-sm me-1"></i> Live Queue
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <span
+                            class="badge rounded-pill {{ 'bg-success' if appt.status == 'booked' else 'bg-secondary' }} px-3">{{
+                            appt.status }}</span>
+                        <div class="mt-2 fw-bold text-primary">₹{{ appt.service.price }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not current_user.appointments %}
+                <div class="text-center py-5">
+                    <i class="far fa-calendar-times fa-3x text-light mb-3"></i>
+                    <p class="text-muted">No appointments found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card p-4 border-0 shadow-sm bg-primary text-white overflow-hidden position-relative"
+            style="border-radius: 15px;">
+            <div class="position-relative" style="z-index: 2;">
+                <h5 class="fw-bold">Refer & Earn</h5>
+                <p class="small opacity-75">Tell your friends about {{ current_user.business_id if
+                    current_user.business_id else 'us' }} and earn 50 points!</p>
+                <div class="input-group mb-2" style="max-width: 280px;">
+                    <input type="text" class="form-control form-control-sm border-0 bg-white"
+                        value="{{ current_user.referral_code or 'REF-AIPRO-99' }}" readonly id="refCode">
+                    <button class="btn btn-dark btn-sm" onclick="copyRef()"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            <i class="fas fa-gift fa-6x position-absolute"
+                style="right: -10px; bottom: -10px; opacity: 0.15; transform: rotate(-15deg);"></i>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyRef() {
+        const input = document.getElementById('refCode');
+        input.select();
+        document.execCommand('copy');
+        alert('Referral code copied to clipboard!');
+    }
+</script>
+{% endblock content %}

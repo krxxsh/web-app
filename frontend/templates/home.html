@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3 shadow-sm"
+    style="background: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1000'); background-size: cover;">
+    <div class="container-fluid py-5 text-center">
+        <h1 class="display-4 fw-bold text-dark">Book Better, Faster, Smarter.</h1>
+        <p class="col-md-8 mx-auto fs-5 text-muted">
+            The AI-powered appointment system for doctors, lawyers, salons, and more.
+            Smart slot recommendations and automated reminders built-in.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-5">Get Started</a>
+            <a href="#businesses" class="btn btn-outline-dark btn-lg px-5">Browse Businesses</a>
+        </div>
+    </div>
+</div>
+
+<div class="row pt-5" id="businesses">
+    <div class="col-12 mb-4">
+        <h2 class="fw-bold">Explore Service Providers</h2>
+        <p class="text-muted">Find and book appointments with top-rated businesses.</p>
+    </div>
+    {% for business in businesses %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 p-3">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ business.name }}</h5>
+                <p class="card-text text-muted">Service Provider</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary-subtle text-primary">{{ business.services|length }} Services</span>
+                    <a href="{{ url_for('main.business_page', business_id=business.id) }}"
+                        class="btn btn-outline-primary btn-sm">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not businesses %}
+    <div class="col-12 text-center py-5">
+        <p class="text-muted">No businesses onboarded yet. Be the first!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

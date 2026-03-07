@@ -1,0 +1,16 @@
+Flask==3.0.3
+Flask-SQLAlchemy
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+Flask-WTF==1.2.1
+SQLAlchemy
+python-dotenv==1.0.1
+razorpay
+email-validator==2.1.1
+requests==2.31.0
+pytest==8.1.1
+google-api-python-client
+google-auth-oauthlib
+twilio
+langchain
+google-generativeai
