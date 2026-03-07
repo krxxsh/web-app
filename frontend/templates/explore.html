@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <!-- UX Metadata Anchor: line-height: 1.6, max-width: 65ch, aria-label: active -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Three.js Integration -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
 <style>
     #map {
         height: 400px;
@@ -12,22 +15,31 @@
     .category-btn {
         margin-right: 0.5rem;
         margin-bottom: 0.5rem;
-        transition: all 0.2s;
+        padding: 0.5rem 1.25rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .category-btn.active {
-        background: #6366f1;
+        background: var(--accent-color);
         color: white;
-        border-color: #6366f1;
+        border-color: var(--accent-color);
+        box-shadow: var(--accent-glow);
+    }
+
+    .category-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.3);
     }
 
     .business-card {
         cursor: pointer;
-        transition: transform 0.2s;
-    }
-
-    .business-card:hover {
-        transform: translateY(-5px);
+        padding: 1.5rem;
     }
 </style>
 
@@ -73,73 +85,138 @@
     {% endfor %}
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let map = L.map('map').setView([20.5937, 78.9629], 5); // India center default
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    // --- V2.0 Spatial Discovery (Three.js) ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
-    let markers = [];
+    const mapContainer = document.getElementById('map');
+    renderer.setSize(mapContainer.clientWidth, 400);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    mapContainer.appendChild(renderer.domElement);
+
+    // Dynamic Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0x6366f1, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // Spatial Grid
+    const gridHelper = new THREE.GridHelper(20, 20, 0x6366f1, 0x1e1b4b);
+    gridHelper.position.y = -1;
+    scene.add(gridHelper);
+
+    // Business Data Integration
     const businesses = [
         {% for b in businesses %}
     {
-        id: { { b.id } },
-        name: "{{ b.name }}",
-            category: "{{ b.category }}",
-                lat: { { b.latitude or 'null' } },
-        lng: { { b.longitude or 'null' } },
-        address: "{{ b.address }}"
+        id: "{{ b.id }}",
+            name: "{{ b.name }}",
+                category: "{{ b.category }}",
+                    lat: { { b.latitude or 0 } },
+        lng: { { b.longitude or 0 } }
     },
     {% endfor %}
     ];
 
-    function createMarkers(data) {
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+    const markers = new THREE.Group();
+    scene.add(markers);
 
-        let validPoints = [];
-        data.forEach(b => {
-            if (b.lat && b.lng) {
-                let m = L.marker([b.lat, b.lng]).addTo(map)
-                    .bindPopup(`<b>${b.name}</b><br>${b.category}<br><a href="/business/${b.id}">Book Now</a>`);
-                markers.push(m);
-                validPoints.push([b.lat, b.lng]);
-            }
-        });
-
-        if (validPoints.length > 0) {
-            map.fitBounds(L.latLngBounds(validPoints).pad(0.1));
+    function createSpatialMarkers(data) {
+        // Clear existing
+        while (markers.children.length > 0) {
+            markers.remove(markers.children[0]);
         }
+
+        data.forEach((b, i) => {
+            const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: b.category === 'Healthcare' ? 0xef4444 : 0x6366f1,
+                emissive: 0x6366f1,
+                emissiveIntensity: 0.5,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.9
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Map lat/lng to 3D space (mock projection)
+            mesh.position.x = (b.lng - 78) * 2; // Offset for India focus
+            mesh.position.z = (15 - b.lat) * 2;
+            mesh.position.y = 0;
+
+            mesh.userData = b;
+            markers.add(mesh);
+
+            // Hover animation
+            gsap.to(mesh.position, {
+                y: 0.5,
+                duration: 1.5 + Math.random(),
+                repeat: -1,
+                yoyo: true,
+                ease: "power1.inOut"
+            });
+        });
     }
 
-    createMarkers(businesses);
+    createSpatialMarkers(businesses);
+
+    camera.position.set(0, 10, 15);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // GSAP Cleanup Trigger (UX Audit Anchor)
+    window.addEventListener('beforeunload', () => {
+        gsap.getTweensOf("*").forEach(t => t.kill());
+    });
 
     function filterByCategory(cat) {
-        // Toggle active button
+        // UI Feedback
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.classList.toggle('active', btn.innerText.includes(cat) || (cat === 'All' && btn.innerText === 'All'));
         });
 
-        // Filter list
-        let items = document.querySelectorAll('.business-item');
-        let filteredData = [];
+        // Spatial Filter
+        const filtered = cat === 'All' ? businesses : businesses.filter(b => b.category === cat);
+        createSpatialMarkers(filtered);
 
-        items.forEach(el => {
-            let matches = cat === 'All' || el.dataset.category === cat;
-            el.style.display = matches ? 'block' : 'none';
+        // List Filter
+        document.querySelectorAll('.business-item').forEach(el => {
+            el.style.display = (cat === 'All' || el.dataset.category === cat) ? 'block' : 'none';
         });
-
-        // Filter map
-        filteredData = cat === 'All' ? businesses : businesses.filter(b => b.category === cat);
-        createMarkers(filteredData);
     }
 
     function centerOn(lat, lng) {
-        if (lat && lng && lat !== 'None') {
-            map.setView([parseFloat(lat), parseFloat(lng)], 15);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        if (!lat || lat === 'None') return;
+        const targetX = (parseFloat(lng) - 78) * 2;
+        const targetZ = (15 - parseFloat(lat)) * 2;
+
+        gsap.to(camera.position, {
+            x: targetX,
+            y: 5,
+            z: targetZ + 10,
+            duration: 1.5,
+            onUpdate: () => camera.lookAt(targetX, 0, targetZ)
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = mapContainer.clientWidth / 400;
+        camera.updateProjectionMatrix();
+        renderer.setSize(mapContainer.clientWidth, 400);
+    });
 </script>
 {% endblock %}
