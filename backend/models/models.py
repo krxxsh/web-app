@@ -2,6 +2,26 @@ from flask_login import UserMixin
 from backend.extensions import db, login_manager
 from datetime import datetime
 
+
+class BusinessCategory(db.Model):
+    """Predefined business categories selectable at registration."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)  # e.g. Health, Salon, Legal
+    icon = db.Column(db.String(10), default='🏢')  # emoji icon
+    description = db.Column(db.String(200), nullable=True)
+    is_health_related = db.Column(db.Boolean, default=False)  # Enables emergency tab context
+
+    businesses = db.relationship('Business', backref='category_obj', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'icon': self.icon,
+            'description': self.description,
+            'is_health_related': self.is_health_related,
+        }
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -15,6 +35,10 @@ class User(db.Model, UserMixin):
     referral_code = db.Column(db.String(20), unique=True, nullable=True)
     referred_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     preferred_language = db.Column(db.String(5), default='en') # en, hi
+    
+    # Security & Verification
+    is_verified = db.Column(db.Boolean, default=False)
+    is_platform_owner = db.Column(db.Boolean, default=False)
     
     # Relationships
     businesses = db.relationship('Business', backref='owner', lazy=True)
@@ -36,21 +60,50 @@ class Business(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    working_hours = db.Column(db.JSON, nullable=True) # e.g. {"mon": ["09:00", "17:00"], ...}
-    
+    working_hours = db.Column(db.JSON, nullable=True)  # e.g. {"mon": ["09:00", "17:00"], ...}
+
+    # Category & Location
+    category_id = db.Column(db.Integer, db.ForeignKey('business_category.id'), nullable=True)
+    category = db.Column(db.String(50), nullable=True) # Cache name for easy access
+    address = db.Column(db.String(300), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+
     # Advanced Features Support
     use_ai_recommendations = db.Column(db.Boolean, default=True)
     auto_notify_waitlist = db.Column(db.Boolean, default=True)
-    
+    queue_enabled = db.Column(db.Boolean, default=False)
+    emergency_priority_enabled = db.Column(db.Boolean, default=False)
+    typical_wait_time = db.Column(db.Integer, default=15) # in minutes
+    avg_service_time_override = db.Column(db.Integer, nullable=True) # for queue estimations
+    status = db.Column(db.String(20), default='pending') # pending, active, suspended
+
     # White-Labeling Settings
     primary_color = db.Column(db.String(20), default='#6366f1')
     logo_url = db.Column(db.String(255), nullable=True)
-    
+
     # Relationships
     services = db.relationship('Service', backref='business', lazy=True)
     staff = db.relationship('Staff', backref='business', lazy=True)
     appointments = db.relationship('Appointment', backref='business', lazy=True)
     resources = db.relationship('Resource', backref='business', lazy=True)
+    promotions = db.relationship('Promotion', backref='business', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'category': self.category,
+            'address': self.address,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'phone': self.phone,
+            'website': self.website,
+            'logo_url': self.logo_url,
+            'primary_color': self.primary_color,
+        }
 
 class Resource(db.Model):
     """Rooms, equipment, or other limited assets required for services."""
@@ -69,6 +122,8 @@ class Staff(db.Model):
     # Advanced Features Support
     zoom_link = db.Column(db.String(255), nullable=True)
     
+    is_active = db.Column(db.Boolean, default=True)
+    
     # Relationships
     appointments = db.relationship('Appointment', backref='staff', lazy=True)
 
@@ -85,6 +140,9 @@ class Service(db.Model):
     is_virtual = db.Column(db.Boolean, default=False)
     upsell_services = db.Column(db.String(255), nullable=True) # Comma separated IDs
     member_only = db.Column(db.Boolean, default=False) # If true, restricted to premium members
+    prep_instructions = db.Column(db.Text, nullable=True)
+    is_group_allowed = db.Column(db.Boolean, default=False)
+    max_group_size = db.Column(db.Integer, default=1)
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -103,6 +161,16 @@ class Appointment(db.Model):
     google_event_id = db.Column(db.String(255), nullable=True)
     virtual_link = db.Column(db.String(255), nullable=True)
     is_reminder_sent = db.Column(db.Boolean, default=False)
+    party_size = db.Column(db.Integer, default=1)
+    group_details = db.Column(db.JSON, nullable=True) # list of names/IDs
+    check_in_time = db.Column(db.DateTime, nullable=True)
+    travel_time_est = db.Column(db.Integer, nullable=True) # in minutes
+    is_priority = db.Column(db.Boolean, default=False)
+    cancellation_reason = db.Column(db.String(255), nullable=True)
+    checkin_pin = db.Column(db.String(6), nullable=True) # Secure check-in
+
+    # Relationships
+    feedback = db.relationship('Feedback', backref='appointment', lazy=True, uselist=False)
 
 class Waitlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,3 +179,24 @@ class Waitlist(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
     request_date = db.Column(db.DateTime, nullable=False)
     notified = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default='active') # active, converted, expired
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False) # 1-5
+    comment = db.Column(db.Text, nullable=True)
+    ai_category = db.Column(db.String(50), nullable=True) # waiting time, service quality, staff behavior
+    sentiment_score = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Promotion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    discount_pct = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)

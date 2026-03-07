@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from backend.models.models import Business, Appointment
+from backend.models.models import Business, Appointment, Service
+from sqlalchemy.orm import joinedload
+from backend.services.scheduling_service import get_rebook_suggestion
 from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
@@ -8,7 +10,7 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route("/")
 @main_bp.route("/home")
 def home():
-    businesses = Business.query.all()
+    businesses = Business.query.filter_by(status='active').all()
     return render_template('home.html', businesses=businesses)
 
 @main_bp.route("/business/<int:business_id>")
@@ -19,7 +21,32 @@ def business_page(business_id):
 @main_bp.route("/account")
 @login_required
 def my_account():
-    return render_template("my_account.html")
+    # Fetch user appointments
+    upcoming = Appointment.query.options(joinedload(Appointment.business), joinedload(Appointment.service)).filter(
+        Appointment.customer_id == current_user.id,
+        Appointment.start_time >= datetime.now(),
+        Appointment.status != 'cancelled'
+    ).order_by(Appointment.start_time).all()
+    
+    past = Appointment.query.options(joinedload(Appointment.business), joinedload(Appointment.service)).filter(
+        Appointment.customer_id == current_user.id,
+        Appointment.start_time < datetime.now()
+    ).order_by(Appointment.start_time.desc()).limit(5).all()
+    
+    suggestion = get_rebook_suggestion(current_user.id)
+    
+    return render_template("my_account.html", 
+                           upcoming=upcoming, 
+                           past=past, 
+                           suggestion=suggestion)
+
+@main_bp.route("/rebook/<int:service_id>", methods=['POST'])
+@login_required
+def rebook(service_id):
+    service = Service.query.get_or_404(service_id)
+    # Redirect to business page with service selected
+    flash(f"Rebooking {service.name}. Please select a new time slot.", "info")
+    return redirect(url_for('main.business_page', business_id=service.business_id, service_id=service.id))
 
 def calculate_queue_pos(appt):
     # Find all 'booked' or 'arrived' appointments today for this business that are BEFORE this appointment

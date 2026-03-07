@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from backend.models.models import Appointment
 
 def calculate_dynamic_price(business_id, base_price, date_str, time_str):

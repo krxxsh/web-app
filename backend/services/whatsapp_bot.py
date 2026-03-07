@@ -1,10 +1,8 @@
-from flask import request, current_app
 from twilio.twiml.messaging_response import MessagingResponse
-from backend.models.models import Business, Service, Appointment, User
+from backend.models.models import Business, Service
 from ai_engine.engine import generate_slots
 from backend.services.payments import create_razorpay_order
 from datetime import datetime
-from backend.extensions import db
 
 # In a real app, use Redis for session management. 
 # Using a simple dictionary given the SQLite/local dev context for rapid prototyping.

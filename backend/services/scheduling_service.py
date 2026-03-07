@@ -1,0 +1,100 @@
+from datetime import datetime
+import random
+import string
+from backend.extensions import db
+from backend.models.models import Appointment, Waitlist, Service
+
+def check_conflict(user_id, start_time, end_time, staff_id=None):
+    """
+    Checks if a user OR staff member has an overlapping appointment.
+    """
+    # Check user conflict
+    user_conflicting = Appointment.query.filter(
+        Appointment.customer_id == user_id,
+        Appointment.status != 'cancelled',
+        Appointment.start_time < end_time,
+        Appointment.end_time > start_time
+    ).first()
+    
+    if user_conflicting:
+        return True
+
+    # Check staff conflict
+    if staff_id:
+        staff_conflicting = Appointment.query.filter(
+            Appointment.staff_id == staff_id,
+            Appointment.status != 'cancelled',
+            Appointment.start_time < end_time,
+            Appointment.end_time > start_time
+        ).first()
+        return staff_conflicting is not None
+
+    return False
+
+def generate_secure_pin():
+    """Generates a random 6-digit numeric PIN."""
+    return ''.join(random.choices(string.digits, k=6))
+
+def handle_cancellation(appointment):
+    """
+    Called when an appointment is cancelled.
+    Finds interested users on the waitlist and 'notifies' them.
+    In a real app, this would trigger an SMS/Push.
+    """
+    # Find active waitlist entries for this business and service
+    waitlist_entries = Waitlist.query.filter_by(
+        business_id=appointment.business_id,
+        service_id=appointment.service_id,
+        status='active'
+    ).order_by(Waitlist.request_date.asc()).all()
+    
+    if not waitlist_entries:
+        return
+    
+    # Notify the users (mocked here by setting 'notified' flag)
+    for entry in waitlist_entries:
+        entry.notified = True
+        # In a real scenario, we'd send a link to a 'claim' page
+        print(f"NOTIFY: User {entry.user_id} notified of opening at {appointment.start_time}")
+    
+    db.session.commit()
+
+def get_rebook_suggestion(user_id):
+    """
+    Finds the most frequent service the user has booked in the past.
+    Returns the service_id or None.
+    """
+    from sqlalchemy import func
+    
+    result = db.session.query(
+        Appointment.service_id, 
+        func.count(Appointment.id).label('count')
+    ).filter_by(customer_id=user_id).group_by(Appointment.service_id).order_by(db.desc('count')).first()
+    
+    if result:
+        return Service.query.get(result[0])
+    return None
+
+def join_waitlist(user_id, business_id, service_id):
+    """
+    Adds a user to the waitlist if not already on it for that service.
+    """
+    existing = Waitlist.query.filter_by(
+        user_id=user_id, 
+        business_id=business_id, 
+        service_id=service_id,
+        status='active'
+    ).first()
+    
+    if existing:
+        return False, "Already on waitlist for this service."
+        
+    new_entry = Waitlist(
+        user_id=user_id,
+        business_id=business_id,
+        service_id=service_id,
+        request_date=datetime.utcnow()
+    )
+    db.session.add(new_entry)
+    db.session.commit()
+    return True, "Joined waitlist successfully."

@@ -26,8 +26,9 @@
             </div>
         </div>
 
-        <h6 class="fw-bold text-muted mb-3 text-uppercase small"><i class="far fa-calendar-check me-2"></i> Your
-            Schedule</h6>
+        <p class="fw-bold text-muted mb-3 text-uppercase small h6" aria-label="Schedule"><i
+                class="far fa-calendar-check me-2"></i> Your
+            Schedule</p>
 
         <div class="list-group list-group-flush shadow-sm rounded-3 overflow-hidden">
             {% for appt in appointments %}
@@ -50,7 +51,8 @@
                 <div>
                     {% if appt.status != 'completed' %}
                     <button class="btn btn-outline-success btn-sm rounded-circle shadow-sm checkoff-btn"
-                        style="width: 44px; height: 44px;" onclick="checkoff({{ appt.id }})">
+                        style="width: 44px; height: 44px;" onclick="checkoff({{ appt.id }})"
+                        aria-label="Mark appointment as completed">
                         <i class="fas fa-check"></i>
                     </button>
                     {% endif %}

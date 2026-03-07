@@ -24,7 +24,7 @@ def calculate_noshow_probability(customer_id, business_id, date_str, time_str, s
     try:
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         lead_time_days = (target_date - datetime.today().date()).days
-    except:
+    except ValueError:
         lead_time_days = 7
         
     lead_time_risk = 0.2

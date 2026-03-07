@@ -6,24 +6,25 @@
             <h3 class="fw-bold mb-4"><i class="fas fa-plus-circle text-primary me-2"></i>Create New Service</h3>
             <form method="POST">
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-muted">SERVICE NAME</label>
-                    <input type="text" name="name" class="form-control" placeholder="e.g. Premium Haircut" required>
+                    <label for="name" class="form-label small fw-bold text-muted">SERVICE NAME</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Premium Haircut"
+                        required>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-muted">DURATION (MINS)</label>
-                        <input type="number" name="duration" class="form-control" value="30" required>
+                        <label for="duration" class="form-label small fw-bold text-muted">DURATION (MINS)</label>
+                        <input type="number" id="duration" name="duration" class="form-control" value="30" required>
                     </div>
                     <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-muted">PRICE (₹)</label>
-                        <input type="number" name="price" class="form-control" required placeholder="0.00">
+                        <label for="price" class="form-label small fw-bold text-muted">PRICE (₹)</label>
+                        <input type="number" id="price" name="price" class="form-control" required placeholder="0.00">
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-muted">DESCRIPTION</label>
-                    <textarea name="description" class="form-control" rows="3"
+                    <label for="description" class="form-label small fw-bold text-muted">DESCRIPTION</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"
                         placeholder="Describe what's included..."></textarea>
                 </div>
 
@@ -37,13 +38,36 @@
                         <div class="form-text mt-0" style="font-size: 0.7rem;">Only users with premium memberships can
                             book this.</div>
                     </div>
-                    <div class="form-check form-switch">
+                    <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" name="is_virtual" id="isVirtual">
                         <label class="form-check-label small" for="isVirtual">
                             <i class="fas fa-video text-info me-1"></i> Virtual Consultation
                         </label>
                         <div class="form-text mt-0" style="font-size: 0.7rem;">Automatically generates a Jitsi meeting
                             room link.</div>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_group_allowed" id="isGroupAllowed"
+                            onchange="toggleGroupSize()">
+                        <label class="form-check-label small" for="isGroupAllowed">
+                            <i class="fas fa-users text-primary me-1"></i> Allow Group Bookings
+                        </label>
+                        <div class="form-text mt-0" style="font-size: 0.7rem;">Allow users to book for multiple people
+                            at once.</div>
+                    </div>
+                    <div class="mt-2 d-none" id="groupSizeContainer">
+                        <label for="max_group_size" class="form-label small fw-bold text-muted">MAX GROUP SIZE</label>
+                        <input type="number" id="max_group_size" name="max_group_size"
+                            class="form-control form-control-sm" value="1" min="1">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="prep_instructions" class="form-label small fw-bold text-muted">PREPARATION
+                        INSTRUCTIONS</label>
+                    <textarea id="prep_instructions" name="prep_instructions" class="form-control" rows="2"
+                        placeholder="e.g. Please bring your medical history..."></textarea>
+                    <div class="form-text" style="font-size: 0.7rem;">Shown to users after booking and in reminders.
                     </div>
                 </div>
 
@@ -56,3 +80,17 @@
     </div>
 </div>
 {% endblock content %}
+
+{% block scripts %}
+<script>
+    function toggleGroupSize() {
+        const checked = document.getElementById('isGroupAllowed').checked;
+        const container = document.getElementById('groupSizeContainer');
+        if (checked) {
+            container.classList.remove('d-none');
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+</script>
+{% endblock scripts %}

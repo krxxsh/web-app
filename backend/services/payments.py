@@ -47,5 +47,5 @@ def verify_payment_signature(payment_id, order_id, signature):
     try:
         client.utility.verify_payment_signature(params_dict)
         return True
-    except:
+    except Exception:
         return False

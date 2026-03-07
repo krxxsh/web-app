@@ -1,0 +1,12 @@
+[tool.ruff]
+exclude = [
+    ".agent",
+    ".git",
+    "tests",
+    "venv",
+    "env",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+ignore = ["E501", "E902"]

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row pt-4">
+    <div class="col-md-5">
+        <div class="card p-4 shadow-sm border-0 mb-4">
+            <h4 class="fw-bold mb-3"><i class="fas fa-bolt text-warning me-2"></i>Fastest Near Me</h4>
+            <p class="text-muted small">We'll find the absolute earliest slot you can make, including travel time.</p>
+            <hr>
+
+            <div class="mb-3">
+                <label class="small fw-bold text-muted text-uppercase mb-2">Category</label>
+                <select id="catSelect" class="form-select border-0 bg-light">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button class="btn btn-primary w-100 fw-bold py-2 mb-3" id="findFastestBtn">
+                <i class="fas fa-search me-2"></i> Find Earliest Available
+            </button>
+
+            <div id="resultsList" class="list-group list-group-flush">
+                <!-- Results injected here -->
+            </div>
+
+            <div id="loader" class="text-center d-none py-4">
+                <div class="spinner-border text-primary spinner-border-sm"></div>
+                <p class="small text-muted mt-2">Calculating travel times...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 h-100 overflow-hidden" style="min-height: 500px;">
+            <div id="map" style="height: 100%; width: 100%;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS/JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    let map = L.map('map').setView([28.6139, 77.2090], 12); // Default New Delhi
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let userMarker = null;
+    let markers = [];
+
+    // Get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const { latitude, longitude } = pos.coords;
+            map.setView([latitude, longitude], 13);
+            userMarker = L.marker([latitude, longitude], { icon: L.divIcon({ className: 'user-icon', html: '<i class="fas fa-user-circle fa-2x text-primary shadow"></i>', iconSize: [30, 30] }) }).addTo(map);
+        });
+    }
+
+    document.getElementById('findFastestBtn').onclick = async () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation not supported.");
+            return;
+        }
+
+        const catId = document.getElementById('catSelect').value;
+        document.getElementById('loader').classList.remove('d-none');
+        document.getElementById('resultsList').innerHTML = '';
+
+        navigator.geolocation.getCurrentPosition(async pos => {
+            const { latitude, longitude } = pos.coords;
+            try {
+                const res = await fetch(`/api/fastest_near_me?lat=${latitude}&lng=${longitude}&category_id=${catId}`);
+                const data = await res.json();
+
+                document.getElementById('loader').classList.add('d-none');
+                renderResults(data);
+            } catch (e) {
+                alert("Search failed.");
+                document.getElementById('loader').classList.add('d-none');
+            }
+        });
+    };
+
+    function renderResults(data) {
+        const list = document.getElementById('resultsList');
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        if (data.length === 0) {
+            list.innerHTML = '<p class="text-center text-muted py-4 small">No available slots found in this category.</p>';
+            return;
+        }
+
+        data.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = "list-group-item border-0 border-bottom px-0 py-3 service-card cursor-pointer";
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold mb-1">${idx + 1}. ${item.business_name}</h6>
+                        <p class="text-muted small mb-1"><i class="fas fa-map-marker-alt me-1"></i> ${item.distance_km} km away</p>
+                        <span class="badge bg-success-subtle text-success small border border-success">Earliest Slot: ${item.earliest_slot}</span>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-primary small fw-bold mb-1"><i class="fas fa-car me-1"></i> ${item.travel_time_mins} mins</div>
+                        <a href="/business/${item.business_id}?service_id=${item.service_id}" class="btn btn-primary btn-sm rounded-pill px-3">Book Now</a>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+
+            // Add Marker
+            const marker = L.marker([item.lat, item.lng]).addTo(map)
+                .bindPopup(`<b>${item.business_name}</b><br>Next Slot: ${item.earliest_slot}`);
+            markers.push(marker);
+        });
+
+        if (markers.length > 0) {
+            const group = new L.featureGroup([userMarker, ...markers].filter(m => m !== null));
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+</script>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    .service-card:hover {
+        background-color: #f8f9fa;
+    }
+
+    .user-icon {
+        background: none;
+        border: none;
+    }
+
+    .bg-success-subtle {
+        background-color: #d1e7dd !important;
+    }
+</style>
+{% endblock %}

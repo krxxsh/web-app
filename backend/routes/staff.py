@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
 from backend.models.models import Appointment, Staff
 from backend.extensions import db
@@ -17,8 +17,8 @@ def dashboard():
         return "No profile linked.", 404
         
     # Get today's appointments for this staff member
-    today_start = datetime.now().replace(hour=0, minute=0, second=0)
-    today_end = datetime.now().replace(hour=23, minute=59, second=59)
+    datetime.now().replace(hour=0, minute=0, second=0)
+    datetime.now().replace(hour=23, minute=59, second=59)
     
     # Actually just grab all upcoming ones to make testing easy
     appointments = Appointment.query.filter_by(staff_id=staff_profile.id).order_by(Appointment.start_time).all()

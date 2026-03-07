@@ -1,5 +1,4 @@
 import subprocess
-import os
 
 KIOSK_PROCESS = None
 

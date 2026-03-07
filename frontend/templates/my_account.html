@@ -50,47 +50,97 @@
             <p class="small text-muted" style="font-size: 0.75rem;">Earn {{ 100 - (p % 100) }} more for your next
                 discount!</p>
         </div>
+
+        {% if suggestion %}
+        <div class="card p-4 border-0 shadow-sm mb-4 bg-light">
+            <h6 class="fw-bold mb-2">Quick Rebook</h6>
+            <p class="small text-muted mb-3">You frequently book: <b>{{ suggestion.name }}</b></p>
+            <form action="{{ url_for('main.rebook', service_id=suggestion.id) }}" method="POST">
+                <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold">Rebook Now</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div id="offlineSyncCard" class="card p-4 border-0 shadow-sm mb-4 d-none bg-danger text-white">
+            <h6 class="fw-bold mb-2"><i class="fas fa-wifi-slash me-2"></i>You're Offline</h6>
+            <p class="small mb-0">Bookings made now will sync automatically when you're back online.</p>
+        </div>
     </div>
 
     <div class="col-md-8">
         <div class="card p-4 border-0 shadow-sm mb-4">
             <h5 class="fw-bold mb-3">My Appointments</h5>
             <div class="list-group list-group-flush">
-                {% for appt in current_user.appointments %}
-                <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-bottom">
-                    <div>
-                        <div class="fw-bold text-dark">{{ appt.service.name }}</div>
-                        <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{
-                            appt.start_time.strftime('%b %d at %H:%M') }}</small>
-                        {% if appt.virtual_link %}
-                        <div class="mt-2">
-                            <a href="{{ appt.virtual_link }}" target="_blank"
-                                class="btn btn-sm btn-info text-white rounded-pill px-3 py-1">
-                                <i class="fas fa-video me-1"></i> Join Meeting
-                            </a>
+                {% for appt in upcoming %}
+                <div class="list-group-item py-3 px-0 border-bottom appt-row" data-business-id="{{ appt.business_id }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="fw-bold text-dark">{{ appt.service.name }} at {{ appt.business.name }}</div>
+                            <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{
+                                appt.start_time.strftime('%b %d at %H:%M') }}</small>
+                            <div class="live-wait-container d-none mt-1">
+                                <span class="badge bg-warning-subtle text-warning border border-warning small">
+                                    <i class="fas fa-hourglass-half me-1"></i> Live Wait: <span
+                                        class="wait-val">--</span> mins
+                                </span>
+                            </div>
                         </div>
-                        {% endif %}
-                        {% if appt.status in ['booked', 'arrived'] %}
-                        <div class="mt-2 d-inline-block">
-                            <a href="{{ url_for('main.waiting_room', appt_id=appt.id) }}"
-                                class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1">
-                                <i class="fas fa-clock fs-sm me-1"></i> Live Queue
-                            </a>
+                        <div class="text-end">
+                            <span
+                                class="badge rounded-pill {{ 'bg-success' if appt.status in ['booked', 'arrived'] else 'bg-secondary' }} px-3">
+                                {{ appt.status }}
+                            </span>
+                            <div class="mt-1 fw-bold text-primary">₹{{ appt.service.price }}</div>
                         </div>
-                        {% endif %}
                     </div>
-                    <div class="text-end">
-                        <span
-                            class="badge rounded-pill {{ 'bg-success' if appt.status == 'booked' else 'bg-secondary' }} px-3">{{
-                            appt.status }}</span>
-                        <div class="mt-2 fw-bold text-primary">₹{{ appt.service.price }}</div>
+
+                    {% if appt.service.prep_instructions %}
+                    <div class="alert alert-info py-2 px-3 small border-0 mb-2" style="font-size: 0.8rem;">
+                        <i class="fas fa-info-circle me-1"></i> <b>Prep:</b> {{ appt.service.prep_instructions }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 align-items-center">
+                        {% if appt.virtual_link %}
+                        <a href="{{ appt.virtual_link }}" target="_blank"
+                            class="btn btn-sm btn-info text-white rounded-pill px-3">
+                            <i class="fas fa-video me-1"></i> Join
+                        </a>
+                        {% endif %}
+
+                        {% if appt.status == 'booked' %}
+                        <button onclick="checkIn({{ appt.id }})" class="btn btn-sm btn-success rounded-pill px-3">
+                            <i class="fas fa-map-marker-alt me-1"></i> Check-In
+                        </button>
+                        {% endif %}
+
+                        {% if appt.status == 'arrived' or appt.status == 'completed' %}
+                        {% if not appt.feedback %}
+                        <button onclick="openFeedbackModal({{ appt.id }})"
+                            class="btn btn-sm btn-warning rounded-pill px-3">
+                            <i class="far fa-star me-1"></i> Review
+                        </button>
+                        {% endif %}
+                        {% endif %}
+
+                        {% if appt.status in ['booked', 'arrived'] %}
+                        <a href="{{ url_for('main.waiting_room', appt_id=appt.id) }}"
+                            class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="fas fa-clock me-1"></i> Live Queue
+                        </a>
+                        <button onclick="cancelAppt({{ appt.id }})"
+                            class="btn btn-sm btn-link text-danger text-decoration-none">
+                            Cancel
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
-                {% if not current_user.appointments %}
+
+                {% if not upcoming %}
                 <div class="text-center py-5">
                     <i class="far fa-calendar-times fa-3x text-light mb-3"></i>
-                    <p class="text-muted">No appointments found.</p>
+                    <p class="text-muted">No upcoming appointments found.</p>
                 </div>
                 {% endif %}
             </div>
@@ -100,12 +150,12 @@
             style="border-radius: 15px;">
             <div class="position-relative" style="z-index: 2;">
                 <h5 class="fw-bold">Refer & Earn</h5>
-                <p class="small opacity-75">Tell your friends about {{ current_user.business_id if
-                    current_user.business_id else 'us' }} and earn 50 points!</p>
+                <p class="small opacity-75">Tell your friends about us and earn 50 points!</p>
                 <div class="input-group mb-2" style="max-width: 280px;">
                     <input type="text" class="form-control form-control-sm border-0 bg-white"
                         value="{{ current_user.referral_code or 'REF-AIPRO-99' }}" readonly id="refCode">
-                    <button class="btn btn-dark btn-sm" onclick="copyRef()"><i class="far fa-copy"></i></button>
+                    <button class="btn btn-dark btn-sm" onclick="copyRef()"
+                        aria-label="Copy referral code to clipboard"><i class="far fa-copy"></i></button>
                 </div>
             </div>
             <i class="fas fa-gift fa-6x position-absolute"
@@ -114,12 +164,166 @@
     </div>
 </div>
 
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">How was your experience?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <input type="hidden" id="feedbackApptId">
+                <div class="mb-3 text-center">
+                    <div class="rating-stars h4" role="radiogroup" aria-label="Service Rating">
+                        <i class="far fa-star cursor-pointer px-1" data-val="1" role="radio" aria-label="1 star"></i>
+                        <i class="far fa-star cursor-pointer px-1" data-val="2" role="radio" aria-label="2 stars"></i>
+                        <i class="far fa-star cursor-pointer px-1" data-val="3" role="radio" aria-label="3 stars"></i>
+                        <i class="far fa-star cursor-pointer px-1" data-val="4" role="radio" aria-label="4 stars"></i>
+                        <i class="far fa-star cursor-pointer px-1" data-val="5" role="radio" aria-label="5 stars"></i>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted text-uppercase mb-2">Comment</label>
+                    <textarea id="feedbackComment" class="form-control border-0 bg-light" rows="3"
+                        placeholder="Tell us more..."></textarea>
+                </div>
+                <div id="aiReflection" class="alert alert-success d-none py-2 px-3 small border-0 mb-3">
+                    <i class="fas fa-magic me-2"></i> <span id="reflectionContent"></span>
+                </div>
+                <button id="submitFeedbackBtn" class="btn btn-primary w-100 fw-bold py-2">Submit Feedback</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let selectedRating = 0;
+    const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+
+    // Handle Stars
+    document.querySelectorAll('.rating-stars i').forEach(star => {
+        star.onclick = () => {
+            selectedRating = parseInt(star.getAttribute('data-val'));
+            updateStars();
+        };
+    });
+
+    function updateStars() {
+        document.querySelectorAll('.rating-stars i').forEach((star, idx) => {
+            if (idx < selectedRating) {
+                star.classList.replace('far', 'fas');
+                star.classList.add('text-warning');
+            } else {
+                star.classList.replace('fas', 'far');
+                star.classList.remove('text-warning');
+            }
+        });
+    }
+
+    function openFeedbackModal(apptId) {
+        document.getElementById('feedbackApptId').value = apptId;
+        selectedRating = 0;
+        updateStars();
+        document.getElementById('feedbackComment').value = '';
+        document.getElementById('aiReflection').classList.add('d-none');
+        feedbackModal.show();
+    }
+
+    document.getElementById('submitFeedbackBtn').onclick = async () => {
+        if (selectedRating === 0) return alert("Please select a rating.");
+
+        const btn = document.getElementById('submitFeedbackBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
+
+        const res = await fetch('/api/feedback/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                appointment_id: document.getElementById('feedbackApptId').value,
+                rating: selectedRating,
+                comment: document.getElementById('feedbackComment').value
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('aiReflection').classList.remove('d-none');
+            document.getElementById('reflectionContent').innerText = data.reflection;
+            btn.innerHTML = 'Success!';
+            setTimeout(() => {
+                feedbackModal.hide();
+                location.reload();
+            }, 3000);
+        } else {
+            alert(data.error || "Failed to submit.");
+            btn.disabled = false;
+            btn.innerHTML = 'Submit Feedback';
+        }
+    };
+
+    // Load Live Wait Times
+    async function loadLiveWaitTimes() {
+        const rows = document.querySelectorAll('.appt-row');
+        for (let row of rows) {
+            const bizId = row.getAttribute('data-business-id');
+            try {
+                const res = await fetch(`/api/business/stats/${bizId}`);
+                const data = await res.json();
+                const container = row.querySelector('.live-wait-container');
+                container.classList.remove('d-none');
+                container.querySelector('.wait-val').innerText = data.live_wait_time;
+            } catch (e) { }
+        }
+    }
+    loadLiveWaitTimes();
+
     function copyRef() {
         const input = document.getElementById('refCode');
         input.select();
         document.execCommand('copy');
         alert('Referral code copied to clipboard!');
     }
+
+    async function checkIn(id) {
+        try {
+            const res = await fetch(`/api/check_in/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.error || "Check-in failed.");
+            }
+        } catch (e) {
+            alert("Error during check-in.");
+        }
+    }
+
+    async function cancelAppt(id) {
+        if (!confirm("Are you sure you want to cancel this appointment?")) return;
+        try {
+            const response = await fetch(`/api/appointments/cancel/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: 'User cancelled from dashboard' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || "Failed to cancel.");
+            }
+        } catch (e) {
+            alert("Error cancelling appointment.");
+        }
+    }
 </script>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
 {% endblock content %}

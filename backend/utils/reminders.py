@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from backend.extensions import db
 from backend.app import create_app
 from backend.models.models import Appointment
 from backend.services.notifications import send_email

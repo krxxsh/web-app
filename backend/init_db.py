@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend.app import create_app
 from backend.extensions import db
-from backend.models.models import User, Business, Service, Staff, Appointment, Resource, Waitlist
 
 app = create_app()
 

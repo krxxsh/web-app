@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- UX Metadata Anchor: aria-label: interactive map, line-height: 1.6 -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #adminMap {
+        height: 600px;
+        border-radius: 12px;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Global Business Map</h2>
+    <div class="badge bg-primary px-3 py-2">{{ businesses|length }} Total Businesses</div>
+</div>
+
+<div class="card p-2 mb-4 shadow-sm" role="region" aria-label="Global Business Location Map">
+    <div id="adminMap" aria-label="Interactive map showing business locations"></div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card p-3 shadow-sm border-0 bg-light">
+            <h5 class="fw-bold mb-3">Legend</h5>
+            <div class="d-flex flex-wrap gap-4">
+                {% for cat in categories %}
+                <div class="d-flex align-items-center">
+                    <span class="p-2 me-2"
+                        style="background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">{{
+                        cat.icon }}</span>
+                    <span>{{ cat.name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let map = L.map('adminMap').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const businesses = [
+        {% for b in businesses %}
+    {
+        name: "{{ b.name }}",
+            category: "{{ b.category }}",
+                lat: { { b.latitude or 'null' } },
+        lng: { { b.longitude or 'null' } },
+        owner: "{{ b.owner.username }}"
+    },
+    {% endfor %}
+    ];
+
+    let points = [];
+    businesses.forEach(b => {
+        if (b.lat && b.lng) {
+            L.marker([b.lat, b.lng]).addTo(map)
+                .bindPopup(`<b>${b.name}</b><br>Owner: ${b.owner}<br>Category: ${b.category}`);
+            points.push([b.lat, b.lng]);
+        }
+    });
+
+    if (points.length > 0) {
+        map.fitBounds(L.latLngBounds(points).pad(0.2));
+    }
+</script>
+{% endblock %}

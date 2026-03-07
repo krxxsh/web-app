@@ -1,33 +1,28 @@
 import cv2
-import time
-import os
 from datetime import datetime
-from backend.models.models import User, Appointment
+from backend.models.models import Appointment
 from backend.extensions import db
 
-def check_in_user(app):
+def verify_pin_and_checkin(app, pin):
     """
-    Since pure CV2 cannot do facial identity 1:1 matching without training a custom LBPH model 
-    (which requires massive datasets), we fallback to a "Motion/Face Detection Kiosk" where 
-    it auto-checks in the FIRST appointment scheduled within the next 30 minutes when ANY face walks up 
-    to the camera. 
+    Verifies the entered 6-digit PIN against active appointments.
     """
     with app.app_context():
         now = datetime.now()
-        
-        # Who is booked right now?
-        today_appts = Appointment.query.filter(
+        # Find any booked appointment today with this PIN
+        appt = Appointment.query.filter(
+            Appointment.checkin_pin == pin,
             Appointment.status == 'booked'
-        ).all()
-        
-        for appt in today_appts:
-            if appt.start_time.date() == now.date():
-                # If they are within 45 mins of their start time
-                time_diff = abs((appt.start_time - now).total_seconds())
-                if time_diff <= (45 * 60):
-                    appt.status = 'arrived'
-                    db.session.commit()
-                    return appt.customer.name if appt.customer else "Guest"
+        ).first()
+
+        if appt and appt.start_time.date() == now.date():
+            # Verify they are within a reasonable arrival window (60 mins)
+            time_diff = abs((appt.start_time - now).total_seconds())
+            if time_diff <= (60 * 60):
+                appt.status = 'arrived'
+                appt.check_in_time = now
+                db.session.commit()
+                return appt.customer.username or "Customer"
         
         return None
 
@@ -37,8 +32,6 @@ def start_camera_loop(app):
     
     video_capture = cv2.VideoCapture(0)
     print("🎥 Smart Kiosk Started. Looking for faces...")
-
-    last_checkin_time = 0
 
     while True:
         ret, frame = video_capture.read()
@@ -60,25 +53,31 @@ def start_camera_loop(app):
             # Draw rectangle around face
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             
-            # If enough time has passed from the last trigger, auto-check-in
-            if (time.time() - last_checkin_time) > 10:
-                name_arrived = check_in_user(app)
-                if name_arrived:
-                    last_checkin_time = time.time()
-                    print(f"✅ Auto-checked in: {name_arrived}")
+            # SECURITY HARDENING: Replace "Press C" with "Enter 6-Digit PIN"
+            cv2.putText(frame, "ENTER 6-DIGIT PIN TO CHECK-IN", (x, y - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
             
-            # Display text
-            if (time.time() - last_checkin_time) <= 5:
-                cv2.putText(frame, "- CHECKED IN -", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            else:
-                cv2.putText(frame, "DETECTING", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-
-            # Dump verification image and break loops for automation testing
-            cv2.imwrite("cv_verification_snapshot.jpg", frame)
-            print("Successfully processed a face visually and saved verification snapshot!")
-            video_capture.release()
-            cv2.destroyAllWindows()
-            return
+            # Simple simulation of numeric PIN entry via keyboard
+            # In a real kiosk, this would be a touchscreen or physical keypad
+            pin_input = ""
+            key = cv2.waitKey(1) & 0xFF
+            if key in range(ord('0'), ord('9') + 1):
+                # Start PIN buffer simulation
+                print("⌨️ PIN Entry started...")
+                pin_input = chr(key)
+                for _ in range(5):
+                    k = cv2.waitKey(2000) & 0xFF # Wait for each digit
+                    if k in range(ord('0'), ord('9') + 1):
+                        pin_input += chr(k)
+                        print(f"Captured: {'*' * len(pin_input)}")
+                
+                if len(pin_input) == 6:
+                    name_arrived = verify_pin_and_checkin(app, pin_input)
+                    if name_arrived:
+                        print(f"✅ PIN Verified. Welcome {name_arrived}")
+                        # ... success feedback ...
+                        return
+                    else:
+                        print("❌ Invalid PIN")
 
         # Show the video feed
         cv2.imshow('AI Sched - Kiosk Camera', frame)

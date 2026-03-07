@@ -1,11 +1,9 @@
-import os
-import json
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-from flask import url_for, session, current_app
+from flask import url_for, current_app
 from backend.extensions import db
-from backend.models.models import OAuthToken, Appointment
+from backend.models.models import OAuthToken
 
 # Scopes needed for Google Calendar
 SCOPES = ['https://www.googleapis.com/auth/calendar.events']

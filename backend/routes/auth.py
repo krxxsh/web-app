@@ -16,10 +16,24 @@ def register():
         role = request.form.get('role', 'customer')
         
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        user = User(username=username, email=email, password=hashed_password, role=role)
+        
+        # Automatic Platform Owner assignment for the first user
+        is_first_user = User.query.first() is None
+        user = User(
+            username=username, 
+            email=email, 
+            password=hashed_password, 
+            role=role,
+            is_verified=is_first_user or role == 'customer',
+            is_platform_owner=is_first_user
+        )
         db.session.add(user)
         db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
+        
+        if role == 'business' and not is_first_user:
+            flash('Your account has been created! Please wait for verification by the platform owner.', 'info')
+        else:
+            flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('auth.login'))
     return render_template('register.html', title='Register')
 
@@ -59,11 +73,11 @@ def admin_login():
         user = User.query.filter_by(email=email).first()
         
         if user and bcrypt.check_password_hash(user.password, password):
-            if user.role not in ['business', 'admin', 'staff']:
-                flash('Only business owners and staff can access the Admin Portal.', 'danger')
-                return redirect(url_for('auth.login'))
-                
             login_user(user, remember=True)
+            
+            if user.role == 'business' and not user.is_verified:
+                return redirect(url_for('admin.waiting_room'))
+                
             if user.role == 'staff':
                 return redirect(url_for('staff.dashboard'))
             return redirect(url_for('admin.dashboard'))

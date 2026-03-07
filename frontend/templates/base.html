@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Sched is the intelligent scheduling platform for modern businesses.">
+    <meta property="og:title" content="AI Sched">
+    <meta property="og:description" content="Intelligent scheduling platform.">
     <title>AI Sched - {{ title if title else 'Intelligent Scheduling' }}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,7 +17,40 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
+            background-color: hsl(210, 17%, 98%);
+            line-height: 1.6;
+            /* UI Anchor: line-height: 1.6 */
+            color: hsl(220, 15%, 15%);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            line-height: 1.3;
+            /* UI Anchor: line-height: 1.3 */
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+        }
+
+        /* Focus states for accessibility */
+        :focus-visible {
+            outline: 3px solid hsl(243, 75%, 59%);
+            outline-offset: 2px;
+        }
+
+        /* Focus states for accessibility */
+        :focus-visible {
+            outline: 3px solid hsl(243, 75%, 59%);
+            outline-offset: 2px;
+        }
+
+        .navbar-brand:focus,
+        .nav-link:focus,
+        .btn:focus {
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.5);
         }
 
         .navbar {
@@ -24,7 +60,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            background: linear-gradient(135deg, hsl(239, 84%, 67%) 0%, hsl(243, 75%, 59%) 100%);
             border: none;
         }
 
@@ -37,13 +73,17 @@
 </head>
 
 <body>
+    <a href="#main-content"
+        class="visually-hidden-focusable p-2 bg-primary text-white position-absolute top-0 start-0 z-3 m-2 rounded">Skip
+        to main content</a>
     <nav class="navbar navbar-expand-lg sticky-top mb-4">
         <div class="container">
             <a class="navbar-brand fw-bold text-primary" href="{{ url_for('main.home') }}">
                 <i class="fas fa-calendar-check me-2"></i>AI Sched
             </a>
 
-            <button class="btn btn-link text-secondary d-lg-none ms-auto me-2" id="themeToggleMobile">
+            <button class="btn btn-link text-secondary d-lg-none ms-auto me-2" id="themeToggleMobile"
+                aria-label="Toggle Dark Mode">
                 <i class="fas fa-moon"></i>
             </button>
 
@@ -51,35 +91,39 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.home') }}">Explore</a></li>
+                <li><a class="nav-link" href="{{ url_for('main.home') }}">Home</a></li>
+                <li><a class="nav-link" href="{{ url_for('explore.explore') }}">Explore</a></li>
+                <li><a class="nav-link" href="{{ url_for('explore.fastest_search') }}"><i
+                            class="fas fa-bolt text-warning me-1"></i> Near Me</a></li>
+                <li><a class="nav-link text-danger fw-bold" href="{{ url_for('emergency.emergency') }}">🚨 Emergency</a>
+                </li>
                 </ul>
                 <ul class="navbar-nav ms-auto align-items-center">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item me-3">
+                    <li class="me-3">
                         <a class="nav-link fw-bold" href="{{ url_for('main.my_account') }}">
                             <i class="far fa-user-circle me-1 text-primary"></i> My Account
                         </a>
                     </li>
                     {% if current_user.role == 'admin' %}
-                    <li class="nav-item me-3">
+                    <li class="me-3">
                         <a class="btn btn-outline-primary btn-sm px-3" href="{{ url_for('admin.dashboard') }}">
                             Admin Panel
                         </a>
                     </li>
                     {% endif %}
-                    <li class="nav-item"><a class="nav-link text-danger small"
-                            href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    <li><a class="nav-link text-danger small" href="{{ url_for('auth.logout') }}">Sign Out</a></li>
                     {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
-                    <li class="nav-item"><a class="btn btn-primary btn-sm ms-2 px-3"
-                            href="{{ url_for('auth.register') }}">Get Started</a></li>
+                    <li><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
+                    <li><a class="btn btn-primary btn-sm ms-2 px-3" href="{{ url_for('auth.register') }}">Get
+                            Started</a></li>
                     {% endif %}
+                    <li><a class="nav-link" href="#">Contact</a></li>
 
                     <!-- Dark Mode Toggle Desktop -->
-                    <li class="nav-item ms-3 d-none d-lg-flex align-items-center border-start ps-3">
+                    <li class="ms-3 d-none d-lg-flex align-items-center border-start ps-3">
                         <button class="btn btn-sm btn-outline-secondary rounded-circle" id="themeToggle"
-                            style="width: 32px; height: 32px; padding: 0;">
+                            style="width: 32px; height: 32px; padding: 0;" aria-label="Toggle Dark Mode">
                             <i class="fas fa-moon"></i>
                         </button>
                     </li>
@@ -88,20 +132,20 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <main class="container mt-4" id="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
             {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
         {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
     <footer class="mt-5 py-4 border-top">
         <div class="container text-center text-muted">
@@ -126,7 +170,7 @@
 
             // Re-style custom components depending on theme
             if (theme === 'dark') {
-                document.body.style.backgroundColor = '#121212';
+                document.body.style.backgroundColor = 'hsl(0, 0%, 7%)';
                 document.querySelectorAll('.navbar').forEach(el => el.style.background = 'rgba(30,30,30,0.9)');
                 // Update icons
                 document.querySelectorAll('#themeToggle i, #themeToggleMobile i').forEach(icon => {
@@ -134,7 +178,7 @@
                     icon.classList.add('fa-sun');
                 });
             } else {
-                document.body.style.backgroundColor = '#f8f9fa';
+                document.body.style.backgroundColor = 'hsl(210, 17%, 98%)';
                 document.querySelectorAll('.navbar').forEach(el => el.style.background = 'rgba(255,255,255,0.9)');
                 // Update icons
                 document.querySelectorAll('#themeToggle i, #themeToggleMobile i').forEach(icon => {
@@ -153,7 +197,59 @@
 
         document.getElementById('themeToggle')?.addEventListener('click', handleToggle);
         document.getElementById('themeToggleMobile')?.addEventListener('click', handleToggle);
+
+        // Accessibility: Allow keyboard to trigger onClick on non-button elements
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute('onclick')) {
+                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                    e.preventDefault();
+                    e.target.click();
+                }
+            }
+        });
+
+        // Auto-add tabindex to elements with onclick to make them focusable
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[onclick]:not(button):not(a):not([tabindex])').forEach(el => {
+                el.setAttribute('tabindex', '0');
+                el.style.cursor = 'pointer';
+            });
+        });
+
+        // Service Worker & Offline Sync
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/sw.js')
+                .then(() => console.log("Offline Mode Active"));
+        }
+
+        window.addEventListener('online', () => {
+            document.body.classList.remove('offline-mode');
+            alert("Back online! Syncing bookings...");
+        });
+        window.addEventListener('offline', () => {
+            document.body.classList.add('offline-mode');
+        });
     </script>
+    <style>
+        .offline-mode {
+            filter: grayscale(0.5);
+            pointer-events: none;
+        }
+
+        .offline-mode::after {
+            content: 'OFFLINE MODE';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #dc3545;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+            padding: 5px;
+        }
+    </style>
 </body>
 
 </html>

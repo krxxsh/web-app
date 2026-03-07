@@ -21,298 +21,353 @@
                     class="fas fa-cog me-2"></i>Settings</a>
         </div>
 
-        <div class="card mt-4 p-4 bg-primary text-white border-0 shadow-sm">
-            <h6 class="fw-bold mb-3">Insights</h6>
-            <div class="small">
-                <div class="d-flex justify-content-between mb-2"><span>Monthly Peak</span> <span>Fri 4 PM</span></div>
-                <div class="d-flex justify-content-between"><span>Top Service</span> <span>Consultation</span></div>
+        <!-- AI Insights Sidebar Panel -->
+        <div class="card mt-4 p-4 border-0 shadow-sm"
+            style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white;">
+            <h6 class="fw-bold mb-3 d-flex align-items-center">
+                <i class="fas fa-brain me-2"></i> AI Insights
+            </h6>
+            <div id="aiAdminInsights" class="small">
+                <div class="text-center opacity-75 py-2">
+                    <span class="spinner-border spinner-border-sm"></span> Analyzing feedback...
+                </div>
+            </div>
+            <div class="mt-3 pt-3 border-top border-white border-opacity-25">
+                <div class="d-flex justify-content-between small">
+                    <span class="opacity-75">Avg Wait</span>
+                    <span class="fw-bold" id="adminAvgWait">-- mins</span>
+                </div>
+            </div>
+            <!-- AI Availability Forecast Heatmap -->
+            <div class="card mt-4 p-4 border-0 shadow-sm bg-white">
+                <h6 class="fw-bold mb-3 text-dark d-flex align-items-center">
+                    <i class="fas fa-fire text-danger me-2"></i> Demand Forecast
+                </h6>
+                <p class="text-muted small mb-3">Predicted busy hours for this week.</p>
+                <div id="heatmapGrid" class="d-grid gap-1" style="grid-template-columns: repeat(7, 1fr);">
+                    <!-- Heatmap cells -->
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span>Mon</span>
+                    <span>Sun</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-9">
+        <div class="col-md-9">
 
-        <!-- Facial Recognition Kiosk Toggle -->
-        <div class="card shadow-sm border-0 mb-4"
-            style="background: linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%);">
-            <div class="card-body d-flex justify-content-between align-items-center text-white rounded p-4">
-                <div>
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-camera text-info me-2"></i> Kiosk Mode</h4>
-                    <p class="mb-0 text-white-50 small mt-1">Autonomous computer-vision check-in.</p>
-                    <span class="badge bg-secondary mt-2 px-3 py-2" id="kioskBadge">Offline</span>
-                </div>
-                <div>
-                    <button class="btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all"
-                        id="kioskBtn" onclick="toggleKiosk()" style="border-width: 2px;">
-                        <i class="fas fa-play me-2"></i> Launch Smart Camera
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card p-4 mb-4 border-0 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold mb-0 text-dark">{{ business.name }}</h2>
-                <span class="badge bg-success-subtle text-success px-3">Live</span>
-            </div>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total
-                            Bookings</small>
-                        <h3 class="fw-bold mb-0">{{ appointments|length }}</h3>
+            <!-- Facial Recognition Kiosk Toggle -->
+            <div class="card shadow-sm border-0 mb-4"
+                style="background: linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%);">
+                <div class="card-body d-flex justify-content-between align-items-center text-white rounded p-4">
+                    <div>
+                        <h4 class="mb-0 fw-bold"><i class="fas fa-camera text-info me-2"></i> Kiosk Mode</h4>
+                        <p class="mb-0 text-white-50 small mt-1">Autonomous computer-vision check-in.</p>
+                        <span class="badge bg-secondary mt-2 px-3 py-2" id="kioskBadge">Offline</span>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Revenue</small>
-                        <h3 class="fw-bold mb-0">₹{{ business.services|map(attribute='price')|sum }}</h3>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Active Staff</small>
-                        <h3 class="fw-bold mb-0">{{ business.staff|length }}</h3>
+                    <div>
+                        <button class="btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all"
+                            id="kioskBtn" onclick="toggleKiosk()" style="border-width: 2px;">
+                            <i class="fas fa-play me-2"></i> Launch Smart Camera
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card border-0 bg-light mb-4">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3 text-muted">Booking Trends (Last 7 Days)</h6>
-                    <canvas id="bookingChart" style="max-height: 200px;"></canvas>
+            <div class="card p-4 mb-4 border-0 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold mb-0 text-dark">{{ business.name }}</h2>
+                    <span class="badge bg-success-subtle text-success px-3">Live</span>
                 </div>
-            </div>
 
-            <hr class="mt-5 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Interactive Schedule</h5>
-                <div>
-                    <span class="badge bg-primary me-2"><i class="fas fa-circle text-primary me-1"></i>Booked</span>
-                    <span class="badge bg-success"><i class="fas fa-circle text-success me-1"></i>Arrived</span>
-                </div>
-            </div>
-
-            <div class="card border-0 shadow-sm p-3">
-                <div id='calendar' style="min-height: 600px;"></div>
-            </div>
-
-        </div>
-
-        <div class="card p-4 border-0 shadow-sm mt-4">
-            <h5 class="fw-bold mb-3"><i class="fas fa-trophy me-2 text-warning"></i>Staff Leaderboard</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="border-0">Rank</th>
-                            <th class="border-0">Staff Member</th>
-                            <th class="border-0 text-center">Completed Appts</th>
-                            <th class="border-0 text-end">Revenue Generated</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set sorted_staff = business.staff | sort(attribute='id') %}
-                        <!-- Default sort, we can sort by revenue if needed in the view -->
-                        {% for member in sorted_staff %}
-                        <tr>
-                            <td
-                                class="border-0 fw-bold {% if loop.index == 1 %}text-warning{% elif loop.index == 2 %}text-secondary{% elif loop.index == 3 %}text-danger{% else %}text-muted{% endif %}">
-                                #{{ loop.index }}
-                            </td>
-                            <td class="border-0 text-dark fw-bold">
-                                {{ member.name }}
-                                {% if loop.index == 1 %}<i class="fas fa-crown ms-1 text-warning"></i>{% endif %}
-                            </td>
-                            <td class="border-0 text-center">
-                                {% set completed = appointments | selectattr('staff_id', 'equalto', member.id) |
-                                selectattr('status', 'equalto', 'completed') | list | length %}
-                                <span class="badge bg-light text-dark border">{{ completed }}</span>
-                            </td>
-                            <td class="border-0 text-end fw-bold text-success">
-                                {% set revenue = (appointments | selectattr('staff_id', 'equalto', member.id) |
-                                selectattr('status', 'equalto', 'completed') | map(attribute='service.price') | sum) %}
-                                ₹{{ revenue }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <hr class="my-4">
-
-            <h6 class="fw-bold mb-3 text-muted text-uppercase small">Add New Staff Member</h6>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                {% for member in business.staff %}
-                <div class="badge bg-light text-dark border p-2 px-3 fw-normal shadow-sm d-flex align-items-center">
-                    <div class="bg-primary rounded-circle me-2" style="width: 8px; height: 8px;"></div>
-                    {{ member.name }}
-                </div>
-                {% endfor %}
-            </div>
-            <form action="{{ url_for('admin.add_staff') }}" method="POST" class="d-flex gap-2">
-                <input type="text" name="name" class="form-control form-control-sm border-0 bg-light"
-                    placeholder="Enter staff name" required>
-                <button type="submit" class="btn btn-primary btn-sm px-4">Add Member</button>
-            </form>
-        </div>
-
-        <!-- Custom Branding / White-Labeling -->
-        <div class="card p-4 border-0 shadow-sm mt-4">
-            <h5 class="fw-bold mb-3"><i class="fas fa-paint-brush me-2 text-primary"></i>Custom Branding</h5>
-            <form action="{{ url_for('admin.update_branding') }}" method="POST">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold">Primary Brand Color</label>
-                        <div class="d-flex align-items-center gap-3">
-                            <input type="color" name="primary_color"
-                                class="form-control form-control-color border-0 border"
-                                value="{{ business.primary_color or '#6366f1' }}" title="Choose your color">
-                            <input type="text" class="form-control form-control-sm bg-light border-0 w-50"
-                                value="{{ business.primary_color or '#6366f1' }}" readonly>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 border-0 rounded bg-light">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total
+                                Bookings</small>
+                            <h3 class="fw-bold mb-0">{{ appointments|length }}</h3>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold">Logo URL</label>
-                        <input type="url" name="logo_url" class="form-control form-control-sm bg-light border-0"
-                            value="{{ business.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                    <div class="col-md-4">
+                        <div class="p-3 border-0 rounded bg-light">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Expected
+                                Revenue</small>
+                            <h3 class="fw-bold mb-0">₹{{ business.services|map(attribute='price')|sum }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border-0 rounded bg-light">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Active
+                                Staff</small>
+                            <h3 class="fw-bold mb-0">{{ business.staff|length }}</h3>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-3 text-end">
-                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-bold shadow-sm">Save Branding</button>
+
+                <div class="card border-0 bg-light mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 text-muted">Booking Trends (Last 7 Days)</h6>
+                        <canvas id="bookingChart" style="max-height: 200px;"></canvas>
+                    </div>
                 </div>
-            </form>
+
+                <hr class="mt-5 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Interactive Schedule</h5>
+                    <div>
+                        <span class="badge bg-primary me-2"><i class="fas fa-circle text-primary me-1"></i>Booked</span>
+                        <span class="badge bg-success"><i class="fas fa-circle text-success me-1"></i>Arrived</span>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm p-3">
+                    <div id='calendar' style="min-height: 600px;"></div>
+                </div>
+
+            </div>
+
+            <div class="card p-4 border-0 shadow-sm mt-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-trophy me-2 text-warning"></i>Staff Leaderboard</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Rank</th>
+                                <th class="border-0">Staff Member</th>
+                                <th class="border-0 text-center">Completed Appts</th>
+                                <th class="border-0 text-end">Revenue Generated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set sorted_staff = business.staff | sort(attribute='id') %}
+                            {% for member in sorted_staff %}
+                            <tr>
+                                <td
+                                    class="border-0 fw-bold {% if loop.index == 1 %}text-warning{% elif loop.index == 2 %}text-secondary{% elif loop.index == 3 %}text-danger{% else %}text-muted{% endif %}">
+                                    #{{ loop.index }}
+                                </td>
+                                <td class="border-0 text-dark fw-bold">
+                                    {{ member.name }}
+                                    {% if loop.index == 1 %}<i class="fas fa-crown ms-1 text-warning"></i>{% endif %}
+                                </td>
+                                <td class="border-0 text-center">
+                                    {% set completed = appointments | selectattr('staff_id', 'equalto', member.id) |
+                                    selectattr('status', 'equalto', 'completed') | list | length %}
+                                    <span class="badge bg-light text-dark border">{{ completed }}</span>
+                                </td>
+                                <td class="border-0 text-end fw-bold text-success">
+                                    {% set revenue = (appointments | selectattr('staff_id', 'equalto', member.id) |
+                                    selectattr('status', 'equalto', 'completed') | map(attribute='service.price') | sum)
+                                    %}
+                                    ₹{{ revenue }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3 text-muted text-uppercase small">Add New Staff Member</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {% for member in business.staff %}
+                    <div class="badge bg-light text-dark border p-2 px-3 fw-normal shadow-sm d-flex align-items-center">
+                        <div class="bg-primary rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                        {{ member.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <form action="{{ url_for('admin.add_staff') }}" method="POST" class="d-flex gap-2">
+                    <input type="text" name="name" class="form-control form-control-sm border-0 bg-light"
+                        placeholder="Enter staff name" required>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">Add Member</button>
+                </form>
+            </div>
+
+            <!-- Custom Branding / White-Labeling -->
+            <div class="card p-4 border-0 shadow-sm mt-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-paint-brush me-2 text-primary"></i>Custom Branding</h5>
+                <form action="{{ url_for('admin.update_branding') }}" method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Primary Brand Color</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" name="primary_color"
+                                    class="form-control form-control-color border-0 border"
+                                    value="{{ business.primary_color or '#6366f1' }}" title="Choose your color">
+                                <input type="text" class="form-control form-control-sm bg-light border-0 w-50"
+                                    value="{{ business.primary_color or '#6366f1' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Logo URL</label>
+                            <input type="url" name="logo_url" class="form-control form-control-sm bg-light border-0"
+                                value="{{ business.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-sm btn-primary px-4 fw-bold shadow-sm">Save
+                            Branding</button>
+                    </div>
+                </form>
+            </div>
+
         </div>
-
     </div>
-</div>
 
-<!-- FullCalendar JS & CSS -->
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('bookingChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Bookings',
-                    data: [5, 8, 12, 7, 15, 20, 18],
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#6366f1',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { display: false, beginAtZero: true },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 10 } } }
-                }
-            }
-        });
-
-        // FullCalendar Initialization
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'timeGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            themeSystem: 'bootstrap5',
-            events: '/api/calendar/events',
-            editable: true,
-            eventDrop: async function (info) {
-                // Handle Drag & Drop to Reschedule
-                const payload = {
-                    appointment_id: info.event.id,
-                    new_start: info.event.startStr,
-                    new_end: info.event.endStr
-                };
-
-                try {
-                    const res = await fetch('/api/calendar/reschedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await res.json();
-                    if (!data.success) {
-                        alert("Error rescheduling: " + data.message);
-                        info.revert();
-                    } else {
-                        console.log("Successfully rescheduled.");
+    <!-- FullCalendar JS & CSS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const ctx = document.getElementById('bookingChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Bookings',
+                        data: [5, 8, 12, 7, 15, 20, 18],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: false, beginAtZero: true },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 10 } } }
                     }
-                } catch (e) {
-                    alert("Network error.");
-                    info.revert();
                 }
+            });
+
+            // Load AI Admin Insights
+            async function loadAIInsights() {
+                try {
+                    const res = await fetch(`/api/business/stats/{{ business.id }}`);
+                    const data = await res.json();
+                    const container = document.getElementById('aiAdminInsights');
+                    document.getElementById('adminAvgWait').innerText = `${data.live_wait_time} mins`;
+
+                    if (data.recent_ai_insights.length > 0) {
+                        container.innerHTML = '<p class="mb-2 opacity-75">Common Mentions:</p>';
+                        data.recent_ai_insights.forEach(issue => {
+                            container.innerHTML += `<div class="badge bg-white bg-opacity-25 mb-1 me-1 text-capitalize">${issue}</div>`;
+                        });
+                    } else {
+                        container.innerHTML = '<p class="opacity-75">No feedback trends yet.</p>';
+                    }
+                } catch (e) { }
             }
+            loadAIInsights();
+
+            // Load Forecast Heatmap
+            async function loadForecast() {
+                try {
+                    const res = await fetch(`/api/forecast/{{ business.id }}`);
+                    const data = await res.json();
+                    const grid = document.getElementById('heatmapGrid');
+                    grid.innerHTML = '';
+                    data.forEach(item => {
+                        const cell = document.createElement('div');
+                        cell.style.height = '15px';
+                        cell.style.borderRadius = '3px';
+                        // Color based on occupancy
+                        const opacity = item.occupancy;
+                        cell.className = 'bg-danger';
+                        cell.style.opacity = opacity;
+                        cell.title = `${item.day} ${item.hour}: ${(item.occupancy * 100).toFixed(0)}% busy`;
+                        grid.appendChild(cell);
+                    });
+                } catch (e) { }
+            }
+            loadForecast();
+
+            // FullCalendar Initialization
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                themeSystem: 'bootstrap5',
+                events: '/api/calendar/events',
+                editable: true,
+                eventDrop: async function (info) {
+                    const payload = {
+                        appointment_id: info.event.id,
+                        new_start: info.event.startStr,
+                        new_end: info.event.endStr
+                    };
+                    try {
+                        const res = await fetch('/api/calendar/reschedule', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if (!data.success) {
+                            alert("Error rescheduling: " + data.message);
+                            info.revert();
+                        }
+                    } catch (e) {
+                        alert("Network error.");
+                        info.revert();
+                    }
+                }
+            });
+            calendar.render();
+
         });
-        calendar.render();
 
-    });
-
-    // Kiosk Control Logic
-    let isKioskRunning = false;
-
-    async function checkKioskStatus() {
-        try {
-            const res = await fetch('/api/kiosk/status');
-            const data = await res.json();
-            isKioskRunning = data.running;
-            updateKioskUI();
-        } catch (e) { }
-    }
-
-    async function toggleKiosk() {
-        const endpoint = isKioskRunning ? '/api/kiosk/stop' : '/api/kiosk/start';
-        try {
-            const res = await fetch(endpoint, { method: 'POST' });
-            const data = await res.json();
-            if (data.success || data.status === 'stopped' || data.status === 'running') {
-                isKioskRunning = !isKioskRunning;
+        // Kiosk Logic
+        let isKioskRunning = false;
+        async function checkKioskStatus() {
+            try {
+                const res = await fetch('/api/kiosk/status');
+                const data = await res.json();
+                isKioskRunning = data.running;
                 updateKioskUI();
+            } catch (e) { }
+        }
+        async function toggleKiosk() {
+            const endpoint = isKioskRunning ? '/api/kiosk/stop' : '/api/kiosk/start';
+            try {
+                const res = await fetch(endpoint, { method: 'POST' });
+                const data = await res.json();
+                if (data.success || data.status === 'stopped' || data.status === 'running') {
+                    isKioskRunning = !isKioskRunning;
+                    updateKioskUI();
+                }
+            } catch (e) { }
+        }
+        function updateKioskUI() {
+            const btn = document.getElementById('kioskBtn');
+            const badge = document.getElementById('kioskBadge');
+            if (isKioskRunning) {
+                btn.innerHTML = '<i class="fas fa-stop me-2"></i> Stop Camera';
+                btn.className = 'btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow-sm';
+                badge.className = 'badge bg-success mt-2 px-3 py-2';
+                badge.innerText = 'Detecting Faces (Online)';
+            } else {
+                btn.innerHTML = '<i class="fas fa-play me-2"></i> Launch Smart Camera';
+                btn.className = 'btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all';
+                badge.className = 'badge bg-secondary mt-2 px-3 py-2';
+                badge.innerText = 'Offline';
             }
-        } catch (e) {
-            console.error("Kiosk Error", e);
         }
-    }
-
-    function updateKioskUI() {
-        const btn = document.getElementById('kioskBtn');
-        const badge = document.getElementById('kioskBadge');
-
-        if (isKioskRunning) {
-            btn.innerHTML = '<i class="fas fa-stop me-2"></i> Stop Camera';
-            btn.className = 'btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow-sm';
-            btn.style.borderWidth = '2px';
-            badge.className = 'badge bg-success mt-2 px-3 py-2';
-            badge.innerText = 'Detecting Faces (Online)';
-        } else {
-            btn.innerHTML = '<i class="fas fa-play me-2"></i> Launch Smart Camera';
-            btn.className = 'btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all';
-            btn.style.borderWidth = '2px';
-            badge.className = 'badge bg-secondary mt-2 px-3 py-2';
-            badge.innerText = 'Offline';
-        }
-    }
-
-    // Initialize status on page load
-    checkKioskStatus();
-    setInterval(checkKioskStatus, 5000);
-</script>
-{% endblock content %}
+        checkKioskStatus();
+        setInterval(checkKioskStatus, 5000);
+    </script>
+    {% endblock content %}

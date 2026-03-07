@@ -16,14 +16,14 @@ def run_reminder_worker():
         print(f"[{datetime.now()}] Checking for upcoming appointments...")
         # Get appointments in the next 24 hours that haven't been reminded
         tomorrow = datetime.now() + timedelta(days=1)
-        next_hour = datetime.now() + timedelta(hours=1)
+        datetime.now() + timedelta(hours=1)
         
         # 24h reminders
         remind_24 = Appointment.query.filter(
             Appointment.start_time <= tomorrow,
             Appointment.start_time > datetime.now(),
             Appointment.status == 'booked',
-            Appointment.is_reminder_sent == False
+            not Appointment.is_reminder_sent
         ).all()
         
         for appt in remind_24:

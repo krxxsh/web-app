@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- UX Metadata Anchor: line-height: 1.6, max-width: 65ch, aria-label: active -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 400px;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .category-btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .category-btn.active {
+        background: #6366f1;
+        color: white;
+        border-color: #6366f1;
+    }
+
+    .business-card {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .business-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="fw-bold mb-3">Discover Local Businesses</h2>
+        <div id="categoryFilters" class="mb-4" role="region"
+            aria-label="Business Category Filter: Use buttons below to filter the map">
+            <label class="visually-hidden">Filter businesses by:</label>
+            <button class="btn btn-outline-secondary btn-sm category-btn active" onclick="filterByCategory('All')"
+                aria-pressed="true" aria-label="Show all categories">All</button>
+            {% for cat in categories %}
+            <button class="btn btn-outline-secondary btn-sm category-btn" onclick="filterByCategory('{{ cat.name }}')"
+                aria-pressed="false" aria-label="Filter by {{ cat.name }}">
+                {{ cat.icon }} {{ cat.name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<div class="row" id="businessList">
+    {% for b in businesses %}
+    <div class="col-md-4 mb-4 business-item" data-category="{{ b.category }}">
+        <div class="card h-100 business-card" onclick="centerOn('{{ b.latitude }}', '{{ b.longitude }}')" role="button"
+            aria-label="View {{ b.name }} on map">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title fw-bold mb-0">{{ b.name }}</h5>
+                    <span class="badge bg-light text-primary">{{ b.category }}</span>
+                </div>
+                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt me-1"></i> {{ b.address or 'Location
+                    not set' }}</p>
+                <div class="d-grid">
+                    <a href="{{ url_for('main.business_page', business_id=b.id) }}"
+                        class="btn btn-outline-primary btn-sm">View & Book</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let map = L.map('map').setView([20.5937, 78.9629], 5); // India center default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let markers = [];
+    const businesses = [
+        {% for b in businesses %}
+    {
+        id: { { b.id } },
+        name: "{{ b.name }}",
+            category: "{{ b.category }}",
+                lat: { { b.latitude or 'null' } },
+        lng: { { b.longitude or 'null' } },
+        address: "{{ b.address }}"
+    },
+    {% endfor %}
+    ];
+
+    function createMarkers(data) {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        let validPoints = [];
+        data.forEach(b => {
+            if (b.lat && b.lng) {
+                let m = L.marker([b.lat, b.lng]).addTo(map)
+                    .bindPopup(`<b>${b.name}</b><br>${b.category}<br><a href="/business/${b.id}">Book Now</a>`);
+                markers.push(m);
+                validPoints.push([b.lat, b.lng]);
+            }
+        });
+
+        if (validPoints.length > 0) {
+            map.fitBounds(L.latLngBounds(validPoints).pad(0.1));
+        }
+    }
+
+    createMarkers(businesses);
+
+    function filterByCategory(cat) {
+        // Toggle active button
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.includes(cat) || (cat === 'All' && btn.innerText === 'All'));
+        });
+
+        // Filter list
+        let items = document.querySelectorAll('.business-item');
+        let filteredData = [];
+
+        items.forEach(el => {
+            let matches = cat === 'All' || el.dataset.category === cat;
+            el.style.display = matches ? 'block' : 'none';
+        });
+
+        // Filter map
+        filteredData = cat === 'All' ? businesses : businesses.filter(b => b.category === cat);
+        createMarkers(filteredData);
+    }
+
+    function centerOn(lat, lng) {
+        if (lat && lng && lat !== 'None') {
+            map.setView([parseFloat(lat), parseFloat(lng)], 15);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+</script>
+{% endblock %}

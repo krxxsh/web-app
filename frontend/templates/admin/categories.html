@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0">System Categories</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Icon</th>
+                                <th>Name</th>
+                                <th>Health Related</th>
+                                <th>Businesses</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td><span class="fs-4">{{ cat.icon }}</span></td>
+                                <td class="fw-bold">{{ cat.name }}</td>
+                                <td>
+                                    {% if cat.is_health_related %}
+                                    <span class="badge bg-danger">Yes (🚨 Emergency Enabled)</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ cat.businesses|length }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0">Add New Category</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Spa, Yoga" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon (Emoji)</label>
+                        <input type="text" name="icon" class="form-control" placeholder="e.g. 💆" required>
+                    </div>
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" name="is_health_related" id="healthSwitch">
+                        <label class="form-check-label" for="healthSwitch">Mark as Health Related</label>
+                        <div class="form-text">Enables emergency context for businesses in this category.</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary fw-bold">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

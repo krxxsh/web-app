@@ -1,5 +1,4 @@
 import uuid
-from flask import url_for
 
 def create_virtual_meeting(appointment):
     """

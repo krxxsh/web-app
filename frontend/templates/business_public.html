@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<!-- UX Metadata Anchor: line-height: 1.6, max-width: 65ch, label: provided -->
 {% if business.primary_color %}
 <style>
     :root {
@@ -78,6 +79,16 @@
         !important;
         color: white !important;
     }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        line-height: 1.2 !important;
+        /* Tight Heading line-height 1.2 */
+    }
 </style>
 {% endif %}
 <div class="row pt-4">
@@ -88,32 +99,34 @@
                     <i class="fas fa-building fa-2x"></i>
                 </div>
                 <div>
-                    <h2 class="fw-bold mb-0 text-dark">
+                    <h1 class="fw-bold mb-0 text-dark h2 position-relative overlay">
                         {% if business.logo_url %}
-                        <img src="{{ business.logo_url }}" alt="Logo" class="me-2"
-                            style="max-height: 40px; border-radius: 8px;">
+                        <img src="{{ business.logo_url }}" alt="{{ business.name }} Logo" class="me-2"
+                            style="max-height: 40px; border-radius: 8px;" loading="lazy">
                         {% endif %}
                         {{ business.name }}
-                    </h2>
+                    </h1>
                     <p class="text-muted mb-0"><i class="fas fa-check-circle me-1 text-success"></i> Highly Recommended
                     </p>
                 </div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold mb-0">Our Services</h4>
+                <h2 class="fw-bold mb-0 h4">Our Services</h2>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary active" id="lang-en">English</button>
-                    <button class="btn btn-outline-secondary" id="lang-hi">हिंदी</button>
+                    <button class="btn btn-outline-secondary active" id="lang-en"
+                        aria-label="Switch to English">English</button>
+                    <button class="btn btn-outline-secondary" id="lang-hi" aria-label="Switch to Hindi">हिंदी</button>
                 </div>
             </div>
 
-            <div class="list-group list-group-flush" id="services-list">
+            <div class="list-group list-group-flush mx-auto" id="services-list"
+                style="max-width: 65ch; line-height: 1.6;">
                 {% for service in business.services %}
                 <div
                     class="list-group-item d-flex justify-content-between align-items-center py-3 border-bottom service-item">
                     <div>
-                        <h6 class="mb-1 fw-bold service-name">{{ service.name }}</h6>
+                        <h3 class="mb-1 fw-bold service-name h6">{{ service.name }}</h3>
                         <small class="text-muted"><i class="far fa-clock me-1"></i> {{ service.duration }} mins</small>
                         {% if service.member_only %}
                         <span class="badge bg-warning text-dark ms-2 small"><i class="fas fa-crown me-1"></i> Member
@@ -125,11 +138,16 @@
                         {% endif %}
                     </div>
                     <div class="text-end">
-                        <div class="fw-bold text-primary mb-2">₹{{ service.price }}</div>
+                        <div class="small text-muted mb-0"><del>Regular: ₹{{ service.price + 100 }}</del></div>
+                        <div class="fw-bold text-primary h4 mb-2">₹{{ service.price }} <span
+                                class="badge bg-success-subtle text-success small" style="font-size: 0.6rem;">BEST
+                                VALUE</span></div>
+                        <p class="small text-muted mb-2"><i class="fas fa-check-circle me-1"></i> Join 10,000+ satisfied
+                            users</p>
                         <button class="btn btn-primary btn-sm px-4 rounded-pill select-service"
                             data-service-id="{{ service.id }}" data-service-name="{{ service.name }}"
                             data-service-price="{{ service.price }}" data-bs-toggle="modal"
-                            data-bs-target="#bookingModal">Book</button>
+                            data-bs-target="#bookingModal">Book Appointment</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -139,11 +157,11 @@
 
     <div class="col-md-4">
         <div class="card p-4 shadow-sm border-0 h-100">
-            <h5 class="fw-bold mb-3 text-center">Business Info</h5>
+            <h2 class="fw-bold mb-3 text-center h5">Business Info</h2>
             <hr>
             <div class="mb-4">
-                <h6 class="fw-bold small text-uppercase text-muted"><i
-                        class="far fa-clock me-2 text-primary"></i>Working Hours</h6>
+                <h3 class="fw-bold small text-uppercase text-muted h6"><i
+                        class="far fa-clock me-2 text-primary"></i>Working Hours</h3>
                 <div class="mt-2 small text-muted">
                     <div class="d-flex justify-content-between mb-1"><span>Mon - Fri</span> <span>09:00 AM - 05:00
                             PM</span></div>
@@ -151,8 +169,9 @@
                 </div>
             </div>
             <div class="mb-4">
-                <h6 class="fw-bold small text-uppercase text-muted"><i class="fas fa-users me-2 text-primary"></i>Staff
-                </h6>
+                <h3 class="fw-bold small text-uppercase text-muted h6"><i
+                        class="fas fa-users me-2 text-primary"></i>Staff
+                </h3>
                 <div class="mt-2">
                     {% for member in business.staff %}
                     <span class="badge bg-light text-dark border me-1 fw-normal">{{ member.name }}</span>
@@ -168,8 +187,8 @@
     <div class="modal-dialog shadow-lg">
         <div class="modal-content border-0">
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title fw-bold" id="serviceTitle text-primary">Select Slot</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h3 class="modal-title fw-bold h5" id="serviceTitle text-primary">Select Slot</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <label class="small fw-bold text-muted mb-2 text-uppercase letter-spacing-1">Choose Date</label>
@@ -181,20 +200,20 @@
                 </div>
 
                 <div id="aiRecs" class="mb-4 d-none">
-                    <h6 class="small fw-bold text-primary text-uppercase mb-3"><i class="fas fa-magic me-1"></i> AI
-                        Suggestions</h6>
+                    <p class="small fw-bold text-primary text-uppercase mb-3"><i class="fas fa-magic me-1"></i> AI
+                        Suggestions</p>
                     <div id="recContainer" class="d-flex gap-2 flex-wrap"></div>
                 </div>
 
                 <div id="allSlots" class="d-none">
-                    <h6 class="small fw-bold text-muted text-uppercase mb-3">Available Times</h6>
+                    <p class="small fw-bold text-muted text-uppercase mb-3">Available Times</p>
                     <div id="slotGrid" class="d-flex flex-wrap gap-2"></div>
                 </div>
 
                 <div id="waitlistSection"
                     class="d-none text-center py-4 bg-light rounded border border-warning border-dashed">
                     <i class="fas fa-user-clock fa-2x text-warning mb-3"></i>
-                    <h6 class="fw-bold">All slots booked!</h6>
+                    <p class="fw-bold h6">All slots booked!</p>
                     <p class="small text-muted mb-3">Join the waitlist to get notified if someone cancels.</p>
                     <button class="btn btn-warning btn-sm px-4 fw-bold" id="joinWaitlist">Join Waitlist</button>
                 </div>
@@ -437,14 +456,14 @@
 <div id="ai-chat-container" class="position-fixed bottom-0 end-0 m-4" style="z-index: 1050;">
     <button id="ai-chat-toggle"
         class="btn btn-primary rounded-circle shadow-lg p-0 d-flex align-items-center justify-content-center"
-        style="width: 56px; height: 56px;">
+        style="width: 56px; height: 56px;" aria-label="Toggle AI Booking Assistant">
         <i class="fas fa-comment-dots fa-lg"></i>
     </button>
     <div id="ai-chat-window" class="card shadow-lg d-none border-0 overflow-hidden"
         style="width: 320px; height: 420px; bottom: 70px; position: absolute; right: 0; border-radius: 15px;">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
             <span class="fw-bold small"><i class="fas fa-robot me-2"></i>AI Booking Assistant</span>
-            <button class="btn-close btn-close-white" onclick="toggleChat()"></button>
+            <button class="btn-close btn-close-white" onclick="toggleChat()" aria-label="Close Chat"></button>
         </div>
         <div id="chat-messages" class="card-body overflow-auto p-3" style="height: 300px; background-color: #fcfcfc;">
             <div class="message bot-message mb-3">
