@@ -7,7 +7,16 @@ from backend.models.models import User
 @click.argument('email')
 @with_appcontext
 def create_super_admin(email):
-    """Promote a given user email to Platform Owner."""
+    """Promote a given user email to Platform Owner (RESTRICTED)."""
+    
+    # HARDCODED SECURITY LOCK
+    # Prevents anyone who clones the repo from giving themselves super admin rights.
+    ALLOWED_ADMINS = ['krishbindal2005@gmail.com']
+    
+    if email not in ALLOWED_ADMINS:
+        click.echo(click.style(f"SECURITY BREACH: '{email}' is not authorized to become a Super Admin.", fg="red", bold=True))
+        return
+
     user = User.query.filter_by(email=email).first()
 
     if not user:
