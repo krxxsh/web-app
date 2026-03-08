@@ -1,5 +1,8 @@
 import requests
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
@@ -26,7 +29,7 @@ def get_travel_time(origin_lat, origin_lon, dest_lat, dest_lon, mode='driving'):
         'overview': 'false',
         'steps': 'false'
     }
-    
+
     try:
         response = requests.get(url, params=params)
         data = response.json()
@@ -34,8 +37,8 @@ def get_travel_time(origin_lat, origin_lon, dest_lat, dest_lon, mode='driving'):
             # Duration is in seconds
             return data['routes'][0]['duration']
     except Exception as e:
-        print(f"OSRM routing error: {e}")
-    
+        logger.error(f"OSRM routing error: {e}")
+
     # Fallback: estimate based on straight line distance (60 km/h average)
     dist_km = haversine_distance(origin_lat, origin_lon, dest_lat, dest_lon)
     return (dist_km / 60.0) * 3600.0  # seconds
@@ -50,10 +53,10 @@ def geocode_address(address):
     """
     if not address:
         return None, None
-    
+
     if address in _GEO_CACHE:
         return _GEO_CACHE[address]
-    
+
     url = "https://nominatim.openstreetmap.org/search"
     params = {
         'q': address,
@@ -63,7 +66,7 @@ def geocode_address(address):
     headers = {
         'User-Agent': 'Antigravity-Appointment-Manager/1.0'
     }
-    
+
     try:
         response = requests.get(url, params=params, headers=headers)
         data = response.json()
@@ -72,8 +75,8 @@ def geocode_address(address):
             _GEO_CACHE[address] = result
             return result
     except Exception as e:
-        print(f"Geocoding error: {e}")
-    
+        logger.error(f"Geocoding error: {e}")
+
     return None, None
 
 def find_emergency_nearby(lat, lng, radius_m=5000):
@@ -82,7 +85,7 @@ def find_emergency_nearby(lat, lng, radius_m=5000):
     radius_m is in meters (default 5km).
     """
     overpass_url = "https://overpass-api.de/api/interpreter"
-    
+
     # Query for hospitals, clinics, and ambulance stations
     overpass_query = f"""
     [out:json];
@@ -96,21 +99,21 @@ def find_emergency_nearby(lat, lng, radius_m=5000):
     );
     out center;
     """
-    
+
     try:
         response = requests.post(overpass_url, data={'data': overpass_query})
         data = response.json()
-        
+
         results = []
         for element in data.get('elements', []):
             tags = element.get('tags', {})
             # Get location (node has lat/lon, way has center)
             el_lat = element.get('lat') or element.get('center', {}).get('lat')
             el_lon = element.get('lon') or element.get('center', {}).get('lon')
-            
+
             if not el_lat or not el_lon:
                 continue
-                
+
             results.append({
                 'name': tags.get('name', f"Nearby {tags.get('amenity', 'Help')}"),
                 'type': tags.get('amenity') or tags.get('emergency') or 'medical',
@@ -121,5 +124,5 @@ def find_emergency_nearby(lat, lng, radius_m=5000):
             })
         return results
     except Exception as e:
-        print(f"Emergency search error: {e}")
+        logger.error(f"Emergency search error: {e}")
         return []

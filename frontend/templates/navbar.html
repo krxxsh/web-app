@@ -1,0 +1,72 @@
+<nav class="navbar navbar-expand-lg sticky-top mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="{{ url_for('main.home') }}">
+            <i class="fas fa-calendar-check me-2"></i>AI Sched
+        </a>
+
+        <button class="btn btn-link text-secondary d-lg-none ms-auto me-2" id="themeToggleMobile"
+            aria-label="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a href="{{ url_for('explore.explore') }}" class="nav-link"><i
+                            class="fas fa-compass me-1"></i>
+                        Discover</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-center">
+                {% if current_user.is_authenticated %}
+                <li class="nav-item dropdown ms-lg-3">
+                    <a class="nav-link dropdown-toggle fw-bold" href="#" id="accountDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="far fa-user-circle me-1 text-primary"></i> Account
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end glass-panel border-0 shadow-lg mt-2"
+                        aria-labelledby="accountDropdown">
+                        <li><a class="dropdown-item py-2" href="{{ url_for('main.my_account') }}">My Appointments</a>
+                        </li>
+
+                        {% if current_user.is_platform_owner or current_user.role == 'moderator' %}
+                        <li>
+                            <hr class="dropdown-divider opacity-10">
+                        </li>
+                        <li><a class="dropdown-item py-2 text-success" href="{{ url_for('admin.platform_dashboard') }}">
+                                <i class="fas fa-shield-alt me-1"></i> Platform Admin</a></li>
+                        {% endif %}
+
+                        {% if current_user.role in ['admin', 'business_owner', 'business'] and not
+                        current_user.is_platform_owner and current_user.role != 'moderator' %}
+                        <li>
+                            <hr class="dropdown-divider opacity-10">
+                        </li>
+                        <li><a class="dropdown-item py-2" href="{{ url_for('admin.dashboard') }}">Admin Panel</a></li>
+                        {% endif %}
+
+                        <li>
+                            <hr class="dropdown-divider opacity-10">
+                        </li>
+                        <li><a class="dropdown-item py-2 text-danger small" href="{{ url_for('auth.logout') }}">Sign
+                                Out</a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item"><a href="{{ url_for('auth.login') }}" class="nav-link">Customer Login</a></li>
+                <li class="nav-item ms-2"><a href="{{ url_for('auth.admin_login') }}"
+                        class="btn btn-primary btn-sm px-3">Business Login</a></li>
+                {% endif %}
+
+                <!-- Dark Mode Toggle Desktop -->
+                <li class="ms-3 d-none d-lg-flex align-items-center border-start ps-3">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="themeToggle"
+                        style="width: 32px; height: 32px; padding: 0;" aria-label="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

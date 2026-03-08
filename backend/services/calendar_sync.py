@@ -4,6 +4,9 @@ from googleapiclient.discovery import build
 from flask import url_for, current_app
 from backend.extensions import db
 from backend.models.models import OAuthToken
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Scopes needed for Google Calendar
 SCOPES = ['https://www.googleapis.com/auth/calendar.events']
@@ -34,14 +37,14 @@ def save_google_token(user_id, credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes
     }
-    
+
     existing = OAuthToken.query.filter_by(user_id=user_id, provider='google').first()
     if existing:
         existing.token_json = token_data
     else:
         new_token = OAuthToken(user_id=user_id, provider='google', token_json=token_data)
         db.session.add(new_token)
-    
+
     db.session.commit()
 
 def get_calendar_service(user_id):
@@ -49,7 +52,7 @@ def get_calendar_service(user_id):
     token_record = OAuthToken.query.filter_by(user_id=user_id, provider='google').first()
     if not token_record:
         return None
-        
+
     creds = Credentials.from_authorized_user_info(token_record.token_json, SCOPES)
     return build('calendar', 'v3', credentials=creds)
 
@@ -57,7 +60,7 @@ def sync_appointment_to_google(appointment):
     """Creates a Google Calendar event for a specific appointment."""
     # We sync to the business owner's or staff member's calendar
     provider_id = appointment.staff.user_id if appointment.staff and appointment.staff.user_id else appointment.business.owner_id
-    
+
     service = get_calendar_service(provider_id)
     if not service:
         return None
@@ -89,5 +92,5 @@ def sync_appointment_to_google(appointment):
         db.session.commit()
         return created_event['id']
     except Exception as e:
-        print(f"Failed to sync to Google Calendar: {e}")
+        logger.error(f"Failed to sync to Google Calendar: {e}")
         return None

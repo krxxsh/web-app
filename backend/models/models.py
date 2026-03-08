@@ -22,28 +22,60 @@ class BusinessCategory(db.Model):
             'is_health_related': self.is_health_related,
         }
 
+class SubscriptionPlan(db.Model):
+    """Tiered plans for Business Owners."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False) # Free, Monthly, Yearly
+    price = db.Column(db.Float, default=0.0)
+    duration_days = db.Column(db.Integer, default=30)
+    features = db.Column(db.JSON, nullable=True) # {"ai_insights": true, "multi_branch": true, ...}
+
+    subscriptions = db.relationship('Subscription', backref='plan', lazy=True)
+
+class Subscription(db.Model):
+    """Active subscriptions for users (Business Owners)."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey('subscription_plan.id'), nullable=False)
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default='active') # active, cancelled, expired
+    stripe_subscription_id = db.Column(db.String(100), nullable=True)
+    auto_renew = db.Column(db.Boolean, default=True)
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='customer') # admin, staff, customer
-    
+    role = db.Column(db.String(20), nullable=False, default='customer') # business_owner, staff, customer, platform_owner
+
     # Advanced Features Support
     membership_level = db.Column(db.String(20), default='free') # free, silver, gold, platinum
     loyalty_points = db.Column(db.Integer, default=0)
     referral_code = db.Column(db.String(20), unique=True, nullable=True)
     referred_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     preferred_language = db.Column(db.String(5), default='en') # en, hi
-    
+
     # Security & Verification
     is_verified = db.Column(db.Boolean, default=False)
     is_platform_owner = db.Column(db.Boolean, default=False)
-    
+    email_otp = db.Column(db.String(6), nullable=True)
+    phone_otp = db.Column(db.String(6), nullable=True)
+    email_verified_at = db.Column(db.DateTime, nullable=True)
+    phone_verified_at = db.Column(db.DateTime, nullable=True)
+    phone_number = db.Column(db.String(20), nullable=True)
+    firebase_uid = db.Column(db.String(128), unique=True, nullable=True)
+
     # Relationships
     businesses = db.relationship('Business', backref='owner', lazy=True)
     appointments = db.relationship('Appointment', backref='customer', lazy=True, foreign_keys='Appointment.customer_id')
     oauth_tokens = db.relationship('OAuthToken', backref='user', lazy=True)
+    subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+
+    # Marketplace Tracking
+    stripe_customer_id = db.Column(db.String(100), nullable=True)
+    favorite_businesses = db.Column(db.String(500), default='') # Comma separated IDs
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -80,8 +112,13 @@ class Business(db.Model):
     avg_service_time_override = db.Column(db.Integer, nullable=True) # for queue estimations
     status = db.Column(db.String(20), default='pending') # pending, active, suspended
 
+    # Multi-branch support
+    parent_business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=True)
+    is_main_branch = db.Column(db.Boolean, default=True)
+    branches = db.relationship('Business', backref=db.backref('parent', remote_side=[id]))
+
     # White-Labeling Settings
-    primary_color = db.Column(db.String(20), default='#6366f1')
+    primary_color = db.Column(db.String(20), default='#1d76f2')
     logo_url = db.Column(db.String(255), nullable=True)
 
     # Relationships
@@ -118,12 +155,12 @@ class Staff(db.Model):
     name = db.Column(db.String(100), nullable=False)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # If staff has login
-    
+
     # Advanced Features Support
     zoom_link = db.Column(db.String(255), nullable=True)
-    
+
     is_active = db.Column(db.Boolean, default=True)
-    
+
     # Relationships
     appointments = db.relationship('Appointment', backref='staff', lazy=True)
 
@@ -134,7 +171,7 @@ class Service(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
-    
+
     # Advanced Features Support
     requires_resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=True)
     is_virtual = db.Column(db.Boolean, default=False)
@@ -151,12 +188,12 @@ class Appointment(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
     staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=True)
     resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=True)
-    
+
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='booked') # booked, pending, cancelled, completed
     payment_status = db.Column(db.String(20), nullable=False, default='pending') # pending, paid, refunded
-    
+
     # Advanced Features Support
     google_event_id = db.Column(db.String(255), nullable=True)
     virtual_link = db.Column(db.String(255), nullable=True)
@@ -170,6 +207,7 @@ class Appointment(db.Model):
     checkin_pin = db.Column(db.String(6), nullable=True) # Secure check-in
 
     # Relationships
+    service = db.relationship('Service', backref='appointments', lazy=True)
     feedback = db.relationship('Feedback', backref='appointment', lazy=True, uselist=False)
 
 class Waitlist(db.Model):
@@ -190,6 +228,16 @@ class Feedback(db.Model):
     ai_category = db.Column(db.String(50), nullable=True) # waiting time, service quality, staff behavior
     sentiment_score = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AdminActivityLog(db.Model):
+    """Audit trail for business management actions."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=True)
+    action = db.Column(db.String(100), nullable=False) # e.g. "update_branding", "add_staff"
+    details = db.Column(db.JSON, nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Promotion(db.Model):
     id = db.Column(db.Integer, primary_key=True)

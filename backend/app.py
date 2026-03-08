@@ -1,6 +1,6 @@
 from flask import Flask
 from backend.config import Config
-from backend.extensions import db, bcrypt, login_manager
+from backend.extensions import db, bcrypt, login_manager, limiter
 from flask_talisman import Talisman
 
 def create_app(config_class=Config):
@@ -12,9 +12,13 @@ def create_app(config_class=Config):
     # Security Headers
     Talisman(app, content_security_policy=None) # Start with base headers, CSP tuned later
 
+    from backend.services.firebase_config import init_firebase
+    init_firebase()
+
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
 
     # Import and register blueprints
     from backend.routes.auth import auth_bp
@@ -24,14 +28,20 @@ def create_app(config_class=Config):
     from backend.routes.staff import staff_bp
     from backend.routes.explore import explore_bp
     from backend.routes.emergency import emergency_bp
-    
+    from backend.routes.verify import verify_bp
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(verify_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(staff_bp)
     app.register_blueprint(explore_bp)
     app.register_blueprint(emergency_bp)
+
+    # Register custom CLI commands
+    from backend.commands import register_commands
+    register_commands(app)
 
     with app.app_context():
         db.create_all()

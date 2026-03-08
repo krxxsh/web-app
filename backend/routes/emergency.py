@@ -12,9 +12,9 @@ def nearby_emergency():
     data = request.json
     lat = data.get('lat')
     lng = data.get('lng')
-    
+
     if not lat or not lng:
         return jsonify({'error': 'Location required'}), 400
-    
+
     results = find_emergency_nearby(lat, lng)
     return jsonify(results)

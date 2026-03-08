@@ -19,15 +19,15 @@ def handle_whatsapp_message(incoming_msg, sender_number):
     """
     resp = MessagingResponse()
     msg = resp.message()
-    
+
     # Initialize or fetch session
     if sender_number not in user_sessions:
         user_sessions[sender_number] = {"state": "GREETING"}
-        
+
     session = user_sessions[sender_number]
     state = session["state"]
     text = incoming_msg.strip().lower()
-    
+
     if text in ['hi', 'hello', 'start', 'reset']:
         session.clear()
         session["state"] = "SELECT_BUSINESS"
@@ -35,13 +35,13 @@ def handle_whatsapp_message(incoming_msg, sender_number):
         if not businesses:
             msg.body("Sorry, there are no businesses available for booking right now.")
             return str(resp)
-            
+
         reply = "👋 Welcome to AI Sched! Please reply with the ID of the business you want to book:\n\n"
         for b in businesses:
             reply += f"[{b.id}] {b.name}\n"
         msg.body(reply)
         return str(resp)
-        
+
     if state == "SELECT_BUSINESS":
         try:
             b_id = int(text)
@@ -50,7 +50,7 @@ def handle_whatsapp_message(incoming_msg, sender_number):
                 raise ValueError
             session["business_id"] = b_id
             session["state"] = "SELECT_SERVICE"
-            
+
             services = Service.query.filter_by(business_id=b_id).all()
             reply = f"Great! You chose {business.name}.\nWhat service do you need?\n\n"
             for s in services:
@@ -58,7 +58,7 @@ def handle_whatsapp_message(incoming_msg, sender_number):
             msg.body(reply)
         except ValueError:
             msg.body("Please reply with a valid business ID number.")
-            
+
     elif state == "SELECT_SERVICE":
         try:
             s_id = int(text)
@@ -70,14 +70,14 @@ def handle_whatsapp_message(incoming_msg, sender_number):
             msg.body(f"You selected {service.name}.\nPlease reply with your preferred date (YYYY-MM-DD):")
         except ValueError:
             msg.body("Please reply with a valid service ID number.")
-            
+
     elif state == "SELECT_DATE":
         try:
             # Validate simple date format
             datetime.strptime(text, '%Y-%m-%d')
             session["date"] = text
             session["state"] = "SELECT_TIME"
-            
+
             # Fetch slots
             service = Service.query.get(session["service_id"])
             slots = generate_slots(session["business_id"], service.duration, text)
@@ -85,7 +85,7 @@ def handle_whatsapp_message(incoming_msg, sender_number):
                 msg.body("Sorry, no slots available on that date. Try another date (YYYY-MM-DD):")
                 session["state"] = "SELECT_DATE"
                 return str(resp)
-                
+
             session["avail_slots"] = slots
             reply = f"Slots for {text}:\n\n"
             for i, slot in enumerate(slots):
@@ -94,26 +94,26 @@ def handle_whatsapp_message(incoming_msg, sender_number):
             msg.body(reply)
         except ValueError:
             msg.body("Please use the format YYYY-MM-DD (e.g., 2026-10-25).")
-            
+
     elif state == "SELECT_TIME":
         try:
             idx = int(text)
             slots = session.get("avail_slots", [])
             if idx < 0 or idx >= len(slots):
                 raise ValueError
-            
+
             selected_time = slots[idx]
             service = Service.query.get(session["service_id"])
-            
+
             # Create Razorpay Order
             order = create_razorpay_order(service.price)
             # In a real scenario, this links to a distinct payment intent UI or deep link
             payment_link = f"http://127.0.0.1:5000/pay?order_id={order['id']}"
-            
+
             msg.body(f"Awesome! Slot locked for {selected_time} on {session['date']}.\n\nTotal: ₹{service.price}\n\nPlease pay here to confirm your appointment:\n{payment_link}\n\n(Reply 'reset' to start over)")
             session["state"] = "AWAITING_PAYMENT"
-            
+
         except ValueError:
             msg.body("Please reply with a valid slot index number from the list.")
-    
+
     return str(resp)

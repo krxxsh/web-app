@@ -1,0 +1,73 @@
+/* AI Sched: Elite Design Tokens v1.0 */
+
+:root {
+    /* Color Palette: HSL for dynamic theming */
+    --primary-h: 210;
+    --primary-s: 85%;
+    --primary-l: 50%;
+    --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+    --primary-hover: hsl(var(--primary-h), var(--primary-s), 40%);
+    --primary-soft: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+
+    --accent-h: 25;
+    --accent-s: 90%;
+    --accent-l: 55%;
+    --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+
+    --bg-dark: hsl(220, 16%, 7%);
+    --bg-light: #f9fafb;
+    /* UX Audit: Reduced eye strain off-white */
+
+    --surface-dark: hsl(220, 16%, 10%);
+    --surface-light: #fefefe;
+
+    --text-primary-dark: hsl(210, 17%, 98%);
+    --text-primary-light: hsl(220, 15%, 15%);
+
+    --text-secondary-dark: hsl(210, 10%, 70%);
+    --text-secondary-light: hsl(210, 10%, 40%);
+
+    /* Typography Scales */
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-base: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.25rem;
+    --fs-2xl: 1.5rem;
+    --fs-3xl: 2rem;
+    --fs-4xl: 2.5rem;
+    --fs-5xl: 3.5rem;
+
+    /* Glassmorphism Constants */
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(12px);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+    /* Layout & Utilities */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 30px;
+    --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Base Semantic Mapping */
+[data-bs-theme="dark"] {
+    --bg-current: var(--bg-dark);
+    --surface-current: var(--surface-dark);
+    --text-current: var(--text-primary-dark);
+    --text-muted: var(--text-secondary-dark);
+    --glass-bg: rgba(0, 0, 0, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="light"] {
+    --bg-current: var(--bg-light);
+    --surface-current: var(--surface-light);
+    --text-current: var(--text-primary-light);
+    --text-muted: var(--text-secondary-light);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}

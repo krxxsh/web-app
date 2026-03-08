@@ -2,7 +2,7 @@
 {% block content %}
 <div class="row pt-4">
     <div class="col-md-4">
-        <div class="card p-4 border-0 shadow-sm mb-4 text-center">
+        <div class="card glass-card p-4 border-0 shadow-sm mb-4 text-center reveal-step">
             <div class="position-relative d-inline-block mx-auto mb-3">
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
                     style="width: 80px; height: 80px;">
@@ -13,7 +13,7 @@
                     {{ current_user.membership_level|upper if current_user.membership_level else 'FREE' }}
                 </span>
             </div>
-            <h4 class="fw-bold mb-1">{{ current_user.username }}</h4>
+            <h4 class="fw-bold mb-1 text-gradient">{{ current_user.username }}</h4>
             <p class="text-muted small mb-3">Member since Mar 2026</p>
 
             <div class="d-grid gap-2 mb-3">
@@ -36,8 +36,8 @@
             </div>
         </div>
 
-        <div class="card p-4 border-0 shadow-sm mb-4">
-            <h6 class="fw-bold mb-3">Loyalty Rewards</h6>
+        <div class="card glass-card p-4 border-0 shadow-sm mb-4 reveal-step" style="animation-delay: 0.1s;">
+            <h6 class="fw-bold mb-3 text-white-50 small uppercase">Loyalty Rewards</h6>
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="text-muted small text-uppercase">Points</span>
                 <span class="fw-bold text-primary">{{ current_user.loyalty_points or 0 }}</span>
@@ -45,7 +45,7 @@
             <div class="progress mb-3" style="height: 10px; border-radius: 5px;">
                 {% set p = current_user.loyalty_points or 0 %}
                 <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                    style="width: {{ (p % 100) }}%"></div>
+                    style="width: {{ (p % 100) }}%;"></div>
             </div>
             <p class="small text-muted" style="font-size: 0.75rem;">Earn {{ 100 - (p % 100) }} more for your next
                 discount!</p>
@@ -68,8 +68,8 @@
     </div>
 
     <div class="col-md-8">
-        <div class="card p-4 border-0 shadow-sm mb-4">
-            <h5 class="fw-bold mb-3">My Appointments</h5>
+        <div class="card glass-card p-4 border-0 shadow-sm mb-4 reveal-step" style="animation-delay: 0.2s;">
+            <h5 class="fw-bold mb-3 text-gradient">My Appointments</h5>
             <div class="list-group list-group-flush">
                 {% for appt in upcoming %}
                 <div class="list-group-item py-3 px-0 border-bottom appt-row" data-business-id="{{ appt.business_id }}">
@@ -109,14 +109,14 @@
                         {% endif %}
 
                         {% if appt.status == 'booked' %}
-                        <button onclick="checkIn({{ appt.id }})" class="btn btn-sm btn-success rounded-pill px-3">
+                        <button onclick="checkIn('{{ appt.id }}')" class="btn btn-sm btn-success rounded-pill px-3">
                             <i class="fas fa-map-marker-alt me-1"></i> Check-In
                         </button>
                         {% endif %}
 
                         {% if appt.status == 'arrived' or appt.status == 'completed' %}
                         {% if not appt.feedback %}
-                        <button onclick="openFeedbackModal({{ appt.id }})"
+                        <button onclick="openFeedbackModal('{{ appt.id }}')"
                             class="btn btn-sm btn-warning rounded-pill px-3">
                             <i class="far fa-star me-1"></i> Review
                         </button>
@@ -128,7 +128,7 @@
                             class="btn btn-sm btn-outline-primary rounded-pill px-3">
                             <i class="fas fa-clock me-1"></i> Live Queue
                         </a>
-                        <button onclick="cancelAppt({{ appt.id }})"
+                        <button onclick="cancelAppt('{{ appt.id }}')"
                             class="btn btn-sm btn-link text-danger text-decoration-none">
                             Cancel
                         </button>

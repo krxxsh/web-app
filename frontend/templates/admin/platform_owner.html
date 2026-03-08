@@ -2,32 +2,38 @@
 {% block content %}
 <div class="px-6 py-12 max-w-7xl mx-auto space-y-12">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-white/10">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-white/10 reveal-step">
         <div>
-            <h1 class="text-4xl font-black text-white mb-2 tracking-tight">Platform Master Control</h1>
+            <h1 class="text-4xl font-black text-white mb-2 tracking-tight text-gradient">Platform Master Control</h1>
             <p class="text-slate-400 text-lg">System-wide verification and authority console.</p>
         </div>
         <div class="flex gap-4">
+            {% if current_user.is_platform_owner %}
+            <a href="{{ url_for('admin.manage_team') }}"
+                class="px-4 py-2 rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition-all border border-white/10 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                Manage Team
+            </a>
+            {% endif %}
             <span
                 class="px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-sm font-bold uppercase tracking-widest">
-                Level 0 Access
+                {% if current_user.is_platform_owner %}Platform Owner{% else %}Moderator{% endif %} Access
             </span>
         </div>
     </div>
 
     <!-- Stats Row -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="p-8 rounded-3xl bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 reveal-step" style="animation-delay: 0.1s;">
+        <div class="p-8 rounded-3xl glass-card bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
             <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Pending Review</p>
             <p class="text-4xl font-black text-amber-500">{{ pending_users|length }}</p>
         </div>
-        <div class="p-8 rounded-3xl bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
+        <div class="p-8 rounded-3xl glass-card bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
             <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Total Partners</p>
             <p class="text-4xl font-black text-indigo-500">{{ businesses|length }}</p>
         </div>
-        <div class="p-8 rounded-3xl bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
+        <div class="p-8 rounded-3xl glass-card bg-slate-800/40 border border-white/5 backdrop-blur-xl shadow-xl">
             <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">System Status</p>
-            <p class="text-4xl font-black text-emerald-500">Nominal</p>
+            <p class="text-4xl font-black text-emerald-500">OPTIMAL</p>
         </div>
     </div>
 

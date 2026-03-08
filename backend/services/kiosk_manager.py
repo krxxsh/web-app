@@ -1,4 +1,7 @@
 import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
 
 KIOSK_PROCESS = None
 
@@ -10,7 +13,7 @@ def start_kiosk():
             KIOSK_PROCESS = subprocess.Popen(["python", "cv_checkin.py"])
             return True
         except Exception as e:
-            print(f"Failed to start kiosk: {e}")
+            logger.error(f"Failed to start kiosk: {e}")
             return False
     return False
 

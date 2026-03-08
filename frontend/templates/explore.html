@@ -1,51 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
 <!-- UX Metadata Anchor: line-height: 1.6, max-width: 65ch, aria-label: active -->
-<!-- Three.js Integration -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Spatial Discovery Scripts handled in base.html -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
 <style>
     #map {
-        height: 400px;
-        border-radius: 12px;
-        margin-bottom: 2rem;
+        height: 440px;
+        border-radius: var(--radius-lg);
+        margin-bottom: 2.5rem;
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
     }
 
     .category-btn {
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-right: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.6rem 1.4rem;
+        border-radius: var(--radius-md);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        backdrop-filter: var(--glass-blur);
+        transition: var(--transition-smooth);
+        font-weight: 500;
     }
 
     .category-btn.active {
-        background: var(--accent-color);
+        background: var(--primary);
         color: white;
-        border-color: var(--accent-color);
-        box-shadow: var(--accent-glow);
+        border-color: var(--primary);
+        box-shadow: 0 4px 15px var(--primary-soft);
     }
 
     .category-btn:hover:not(.active) {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .business-card {
-        cursor: pointer;
-        padding: 1.5rem;
+        background: var(--primary-soft);
+        color: var(--text-current);
+        border-color: var(--primary);
+        transform: translateY(-2px);
     }
 </style>
 
 <div class="row mb-4">
     <div class="col-md-12">
         <h2 class="fw-bold mb-3">Discover Local Businesses</h2>
+        <div class="input-group mb-5 glass-panel p-2" style="border-radius: var(--radius-xl);">
+            <span class="input-group-text bg-transparent border-0 ps-4"><i
+                    class="fas fa-search text-muted fs-5"></i></span>
+            <label for="searchInput" class="visually-hidden">Search for services</label>
+            <input type="text" class="form-control bg-transparent border-0 text-white fs-5" id="searchInput"
+                placeholder="Search for services near you...">
+            <div class="d-flex align-items-center px-3 border-start border-end border-secondary border-opacity-25">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="flashBookingToggle"
+                        onchange="toggleFlashMode()">
+                    <label class="form-check-label text-warning small fw-bold ms-1" for="flashBookingToggle">
+                        <i class="fas fa-bolt me-1"></i> Flash Mode
+                    </label>
+                </div>
+            </div>
+            <button class="btn btn-primary px-5 ms-2 rounded- Pill" onclick="searchWithLocation()">Find Near Me</button>
+        </div>
         <div id="categoryFilters" class="mb-4" role="region"
             aria-label="Business Category Filter: Use buttons below to filter the map">
             <label class="visually-hidden">Filter businesses by:</label>
@@ -66,18 +81,18 @@
 <div class="row" id="businessList">
     {% for b in businesses %}
     <div class="col-md-4 mb-4 business-item" data-category="{{ b.category }}">
-        <div class="card h-100 business-card" onclick="centerOn('{{ b.latitude }}', '{{ b.longitude }}')" role="button"
+        <div class="card h-100 glass-card business-card hover-lift"
+            onclick="centerOn('{{ b.latitude }}', '{{ b.longitude }}')" role="button"
             aria-label="View {{ b.name }} on map">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title fw-bold mb-0">{{ b.name }}</h5>
-                    <span class="badge bg-light text-primary">{{ b.category }}</span>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title fw-bold mb-0 text-gradient text-white">{{ b.name }}</h5>
+                    <span class="badge bg-primary-soft text-primary">{{ b.category }}</span>
                 </div>
-                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt me-1"></i> {{ b.address or 'Location
-                    not set' }}</p>
-                <div class="d-grid">
+                <p class="text-muted mb-4"><i class="fas fa-map-marker-alt me-1"></i> {{ b.address or 'Global' }}</p>
+                <div class="d-grid shadow-sm">
                     <a href="{{ url_for('main.business_page', business_id=b.id) }}"
-                        class="btn btn-outline-primary btn-sm">View & Book</a>
+                        class="btn btn-outline-primary py-2">View Profile</a>
                 </div>
             </div>
         </div>
@@ -99,12 +114,12 @@
     // Dynamic Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
-    const pointLight = new THREE.PointLight(0x6366f1, 1);
+    const pointLight = new THREE.PointLight(0x1d76f2, 1);
     pointLight.position.set(5, 5, 5);
     scene.add(pointLight);
 
     // Spatial Grid
-    const gridHelper = new THREE.GridHelper(20, 20, 0x6366f1, 0x1e1b4b);
+    const gridHelper = new THREE.GridHelper(20, 20, 0x1d76f2, 0x0a1628);
     gridHelper.position.y = -1;
     scene.add(gridHelper);
 
@@ -131,28 +146,41 @@
         }
 
         data.forEach((b, i) => {
-            const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const isFlash = b.is_flash;
+            const geometry = isFlash ? new THREE.TorusGeometry(0.4, 0.1, 16, 100) : new THREE.SphereGeometry(0.3, 32, 32);
             const material = new THREE.MeshPhongMaterial({
-                color: b.category === 'Healthcare' ? 0xef4444 : 0x6366f1,
-                emissive: 0x6366f1,
-                emissiveIntensity: 0.5,
+                color: isFlash ? 0xffcc00 : (b.category === 'Healthcare' ? 0xef4444 : 0x1d76f2),
+                emissive: isFlash ? 0xffcc00 : 0x1d76f2,
+                emissiveIntensity: isFlash ? 1.0 : 0.5,
                 shininess: 100,
                 transparent: true,
                 opacity: 0.9
             });
             const mesh = new THREE.Mesh(geometry, material);
 
-            // Map lat/lng to 3D space (mock projection)
-            mesh.position.x = (b.lng - 78) * 2; // Offset for India focus
-            mesh.position.z = (15 - b.lat) * 2;
+            // Map lat/lng to 3D space (centered around India area)
+            const xOffset = isFlash ? 2.5 : 2;
+            mesh.position.x = ((b.lng || 0) - 78) * 2;
+            mesh.position.z = (15 - (b.lat || 0)) * 2;
             mesh.position.y = 0;
 
             mesh.userData = b;
             markers.add(mesh);
 
-            // Hover animation
+            // Pulse animation for Flash bookings
+            if (isFlash) {
+                gsap.to(material, {
+                    emissiveIntensity: 0.2,
+                    duration: 0.5,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut"
+                });
+            }
+
+            // Hover/Float animation
             gsap.to(mesh.position, {
-                y: 0.5,
+                y: isFlash ? 1.0 : 0.5,
                 duration: 1.5 + Math.random(),
                 repeat: -1,
                 yoyo: true,
@@ -198,8 +226,88 @@
         });
     }
 
+    let isFlashMode = false;
+
+    function toggleFlashMode() {
+        isFlashMode = document.getElementById('flashBookingToggle').checked;
+        searchWithLocation(); // Refresh with new mode
+    }
+
+    function searchWithLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                refreshBusinessList(lat, lng);
+            }, error => {
+                alert("Location access denied. Using default Indian coordinates.");
+                refreshBusinessList(15.3173, 75.7139); // Default center
+            });
+        } else {
+            refreshBusinessList();
+        }
+    }
+
+    async function refreshBusinessList(lat = null, lng = null) {
+        let url = isFlashMode ? '/api/fastest_near_me' : '/api/businesses?all=true';
+
+        // Handle different API formats
+        if (lat && lng) {
+            url += (url.includes('?') ? '&' : '?') + `lat=${lat}&lng=${lng}`;
+        }
+
+        // Pick first category for flash search if none selected
+        if (isFlashMode) {
+            const activeCat = document.querySelector('.category-btn.active').innerText.replace(/[^a-zA-Z]/g, '');
+            // In a real app, we'd map category names to IDs
+            url += `&category_id=1`;
+        }
+
+        const response = await fetch(url);
+        const rawData = await response.json();
+
+        // Normalize results between the two APIs
+        const data = isFlashMode ? rawData.results.map(r => ({
+            id: r.business_id,
+            name: r.business_name,
+            address: `${r.distance} km away`,
+            next_available: r.time,
+            is_flash: true
+        })) : rawData;
+
+        const list = document.getElementById('businessList');
+        list.innerHTML = '';
+
+        data.forEach(b => {
+            const card = `
+                <div class="col-md-4 mb-4 reveal-step">
+                    <div class="card h-100 glass-card business-card shadow-lg ${b.is_flash ? 'border-warning' : ''}" 
+                         onclick="centerOn('${b.latitude}', '${b.longitude}')">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold text-gradient mb-0">${b.name}</h5>
+                                <span class="badge ${b.is_flash ? 'bg-warning text-dark' : 'bg-soft-primary'}">${b.category || 'Service'}</span>
+                            </div>
+                            <p class="text-muted small mb-1"><i class="fas fa-map-marker-alt me-1"></i> ${b.address || 'Global'}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="${b.is_flash ? 'text-warning' : 'text-success'} small fw-bold">
+                                    <i class="fas ${b.is_flash ? 'fa-bolt' : 'fa-clock'} me-1"></i> 
+                                    ${b.is_flash ? 'Flash Slot' : 'Next'}: ${b.next_available}
+                                </span>
+                                <a href="/business/${b.id}" class="btn ${b.is_flash ? 'btn-warning text-dark' : 'btn-premium'} btn-sm px-3">Book</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            list.innerHTML += card;
+        });
+
+        createSpatialMarkers(data);
+    }
+
     function centerOn(lat, lng) {
-        if (!lat || lat === 'None') return;
+        if (!lat || lat === 'None' || lat === 'undefined') return;
         const targetX = (parseFloat(lng) - 78) * 2;
         const targetZ = (15 - parseFloat(lat)) * 2;
 

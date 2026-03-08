@@ -1,7 +1,10 @@
 import google.generativeai as genai
 import os
+import logging
 from datetime import datetime, timedelta
 from backend.models.models import Appointment, Business
+
+logger = logging.getLogger(__name__)
 
 # Configure Gemini
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", "MOCK_KEY"))
@@ -24,17 +27,17 @@ def analyze_sentiment(text):
 
     Feedback: "{text}"
     """
-    
+
     try:
         if os.environ.get("GEMINI_API_KEY") == "MOCK_KEY":
              return {"sentiment": "positive", "score": 0.9, "key_issues": [], "user_reflection": "Thanks for your kind words!"}
-             
+
         response = model.generate_content(prompt)
         # Placeholder for real parsing logic (assuming strong JSON output from Flash)
         import json
         return json.loads(response.text.replace('```json', '').replace('```', ''))
     except Exception as e:
-        print(f"AI Sentiment Error: {e}")
+        logger.error(f"AI Sentiment Error: {e}")
         return {"sentiment": "neutral", "score": 0.5, "key_issues": [], "user_reflection": "Thank you for your feedback!"}
 
 def predict_wait_time(business_id):
@@ -57,7 +60,7 @@ def predict_wait_time(business_id):
     # Base wait from metadata + congestion factor
     base_wait = business.typical_wait_time or 15
     congestion = active * 5 # 5 mins per active customer
-    
+
     return base_wait + congestion
 
 def get_smart_recommendations(user_id, business_id=None):
@@ -68,10 +71,10 @@ def get_smart_recommendations(user_id, business_id=None):
     history = Appointment.query.filter_by(customer_id=user_id).all()
     if not history:
         return []
-    
+
     counts = {}
     for a in history:
         counts[a.service_id] = counts.get(a.service_id, 0) + 1
-    
+
     sorted_svcs = sorted(counts, key=counts.get, reverse=True)
     return sorted_svcs[:2] # Top 2 service IDs

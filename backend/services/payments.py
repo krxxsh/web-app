@@ -11,13 +11,13 @@ def create_razorpay_order(amount, currency='INR', business_account_id=None):
     total_amount_paise = int(amount * 100)
     platform_fee_paise = int(total_amount_paise * 0.05) # 5% SaaS commission
     business_routing_paise = total_amount_paise - platform_fee_paise
-    
+
     data = {
         'amount': total_amount_paise, 
         'currency': currency,
         'payment_capture': 1
     }
-    
+
     # If standard marketplace routing was fully configured with linked accounts
     if business_account_id:
         data['transfers'] = [
@@ -34,7 +34,7 @@ def create_razorpay_order(amount, currency='INR', business_account_id=None):
                 "on_hold": 0
             }
         ]
-        
+
     return client.order.create(data=data)
 
 def verify_payment_signature(payment_id, order_id, signature):

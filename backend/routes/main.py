@@ -27,14 +27,14 @@ def my_account():
         Appointment.start_time >= datetime.now(),
         Appointment.status != 'cancelled'
     ).order_by(Appointment.start_time).all()
-    
+
     past = Appointment.query.options(joinedload(Appointment.business), joinedload(Appointment.service)).filter(
         Appointment.customer_id == current_user.id,
         Appointment.start_time < datetime.now()
     ).order_by(Appointment.start_time.desc()).limit(5).all()
-    
+
     suggestion = get_rebook_suggestion(current_user.id)
-    
+
     return render_template("my_account.html", 
                            upcoming=upcoming, 
                            past=past, 
@@ -65,9 +65,9 @@ def waiting_room(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return "Unauthorized", 403
-    
+
     pos = calculate_queue_pos(appt)
-    return render_template('waiting_room.html', appointment=appt, pos=pos)
+    return render_template('customer_queue.html', appointment=appt, pos=pos)
 
 @main_bp.route("/waiting-room/data/<int:appt_id>")
 @login_required
@@ -75,7 +75,7 @@ def waiting_room_data(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return jsonify({"success": False}), 403
-        
+
     pos = calculate_queue_pos(appt)
     return jsonify({
         "success": True,

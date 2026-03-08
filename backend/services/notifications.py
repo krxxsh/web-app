@@ -1,13 +1,38 @@
+import random
+import json
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import logging
 from flask import current_app
 from twilio.rest import Client
+from azure.messaging.webpubsubservice import WebPubSubServiceClient
+
+logger = logging.getLogger(__name__)
+
+def send_verification_otp(user):
+    """Generate and send OTP via Email and SMS."""
+    # Generate 6-digit OTP
+    email_otp = str(random.randint(100000, 999999))
+    phone_otp = str(random.randint(100000, 999999))
+
+    user.email_otp = email_otp
+    user.phone_otp = phone_otp
+
+    # Send Email (Simulation/Placeholder)
+    logger.debug(f"Sending Email OTP {email_otp} to {user.email}")
+
+    # Send SMS (Simulation/Placeholder)
+    if user.phone_number:
+        logger.debug(f"Sending SMS OTP {phone_otp} to {user.phone_number}")
+
+    from backend.extensions import db
+    db.session.commit()
 
 def send_email(to_email, subject, body):
     """Sends an email using SMTP. Simulates if credentials missing."""
     if not current_app.config.get('MAIL_PASSWORD'):
-        print(f"DEBUG: [SIMULATED EMAIL] To: {to_email} | Subject: {subject}")
+        logger.debug(f"[SIMULATED EMAIL] To: {to_email} | Subject: {subject}")
         return True
 
     try:
@@ -24,7 +49,7 @@ def send_email(to_email, subject, body):
         server.quit()
         return True
     except Exception as e:
-        print(f"Error sending email: {e}")
+        logger.error(f"Error sending email: {e}")
         return False
 
 def send_whatsapp(to_number, message):
@@ -32,11 +57,11 @@ def send_whatsapp(to_number, message):
     account_sid = current_app.config.get('TWILIO_ACCOUNT_SID')
     auth_token = current_app.config.get('TWILIO_AUTH_TOKEN')
     from_number = current_app.config.get('TWILIO_WHATSAPP_NUMBER')
-    
+
     if not all([account_sid, auth_token, from_number]):
-        print(f"DEBUG [WHATSAPP]: {to_number} -> {message}")
+        logger.debug(f"[WHATSAPP]: {to_number} -> {message}")
         return True
-        
+
     try:
         client = Client(account_sid, auth_token)
         if not to_number.startswith('whatsapp:'):
@@ -44,7 +69,7 @@ def send_whatsapp(to_number, message):
         client.messages.create(from_=from_number, body=message, to=to_number)
         return True
     except Exception as e:
-        print(f"Failed to send WhatsApp: {e}")
+        logger.error(f"Failed to send WhatsApp: {e}")
         return False
 
 # Localization Mapping
@@ -73,13 +98,40 @@ def get_message(key, lang='en', **kwargs):
     template = MESSAGES.get(lang, MESSAGES['en']).get(key, '')
     return template.format(**kwargs)
 
+def send_realtime_update(target_type, target_id, data):
+    """Sends a real-time event via Azure Web PubSub."""
+    conn_str = current_app.config.get('AZURE_WEBPUBSUB_CONNECTION_STRING')
+    hub_name = current_app.config.get('AZURE_WEBPUBSUB_HUB', 'marketplace')
+
+    if not conn_str:
+        logger.debug(f"[REALTIME]: {target_type} {target_id} -> {data}")
+        return True
+
+    try:
+        client = WebPubSubServiceClient.from_connection_string(conn_str, hub=hub_name)
+        group = f"{target_type}_{target_id}" # e.g. user_1 or business_5
+        client.send_to_group(group, message=json.dumps(data), content_type="application/json")
+        return True
+    except Exception as e:
+        logger.error(f"Web PubSub error: {e}")
+        return False
+
 def notify_booking_confirmation(appointment, lang='en'):
     # Email
     subject = get_message('confirmed_subject', lang, service=appointment.service.name)
     body = get_message('confirmed_body', lang, user=appointment.customer.username, 
                        business=appointment.business.name, time=appointment.start_time.strftime('%b %d at %H:%M'))
     send_email(appointment.customer.email, subject, body)
-    
+
+    # Real-time update for Merchant & Customer
+    event_data = {
+        "type": "BOOKING_CONFIRMED",
+        "appointment_id": appointment.id,
+        "message": f"New booking for {appointment.service.name}"
+    }
+    send_realtime_update("business", appointment.business_id, event_data)
+    send_realtime_update("user", appointment.customer_id, event_data)
+
     # WhatsApp
     whatsapp_msg = get_message('whatsapp_confirmed', lang, service=appointment.service.name, 
                                 time=appointment.start_time.strftime('%d %b, %H:%M'))
@@ -100,14 +152,14 @@ def notify_time_to_leave(appointment, duration_mins, lang='en'):
     """Sends a push/WhatsApp alert based on OSRM travel estimation."""
     traffic_state = "high" if duration_mins > 30 else "moderate"
     msg_tmpl = MESSAGES['traffic_alert'].get(lang, MESSAGES['traffic_alert']['en'])
-    
+
     text = msg_tmpl.format(
         traffic_state=traffic_state,
         business=appointment.business.name,
         duration=duration_mins,
         time=appointment.start_time.strftime('%H:%M')
     )
-    
+
     send_whatsapp("+919876543210", text)
     # Also email
     send_email(appointment.customer.email, "🚨 Time to Leave - AI Sched", text)

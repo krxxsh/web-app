@@ -2,17 +2,18 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow-lg p-4">
-            <h2 class="text-center mb-4 fw-bold">Set Up Your Business</h2>
+        <div class="card glass-card shadow-lg p-5 border-0 reveal-step">
+            <h2 class="text-center mb-4 fw-bold text-gradient">Set Up Your Business</h2>
             <form method="POST">
                 <div class="mb-3">
                     <label class="form-label">Business Name</label>
-                    <input type="text" name="name" class="form-control" placeholder="e.g. Health Center" required px-3>
+                    <input type="text" name="name" class="form-control-premium w-100" placeholder="e.g. Health Center"
+                        required px-3>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Business Category</label>
-                    <select name="category" class="form-select" required>
+                    <select name="category" class="form-select form-control-premium w-100" required>
                         <option value="" disabled selected>Select Category</option>
                         {% for cat in categories %}
                         <option value="{{ cat.name }}">{{ cat.icon }} {{ cat.name }}</option>
@@ -22,7 +23,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">Business Address</label>
-                    <textarea name="address" class="form-control" rows="2" placeholder="Street, City, Zip"
+                    <textarea name="address" class="form-control-premium w-100" rows="2" placeholder="Street, City, Zip"
                         required></textarea>
                     <div class="form-text">We use this to show you on the discovery map!</div>
                 </div>
@@ -38,9 +39,10 @@
                     </div>
                 </div>
 
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary py-2 fw-bold">Finish Setup</button>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-link text-muted btn-sm">Sign out and do this
+                <div class="d-grid gap-3 mt-4">
+                    <button type="submit" class="btn-premium py-3 fw-bold">Finish Setup</button>
+                    <a href="{{ url_for('auth.logout') }}"
+                        class="text-white-50 small text-center text-decoration-none hover-white">Sign out and do this
                         later</a>
                 </div>
             </form>

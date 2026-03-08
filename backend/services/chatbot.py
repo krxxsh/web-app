@@ -19,14 +19,14 @@ def extract_booking_intent(user_text):
     Extract booking details from this text and return ONLY a JSON object.
     Text: "{user_text}"
     Current Date: {datetime.now().strftime('%Y-%m-%d')}
-    
+
     The JSON should contain:
     - service_name: string or null
     - date: YYYY-MM-DD or null
     - time: HH:MM (24h format) or null
     - action: "book", "cancel", "check_availability", or "other"
     """
-    
+
     try:
         response = model.generate_content(prompt)
         # Attempt to find JSON in response
@@ -47,5 +47,5 @@ def generate_chatbot_response(intent, context):
         return f"Got it. Looking for a slot for {intent['service_name']} on {intent['date']} at {intent['time']}. One moment..."
     elif intent.get('action') == 'check_availability':
         return "I can check that for you. What service are you interested in?"
-    
+
     return "I'm here to help with your bookings. You can say things like 'Book a massage for Friday at 4pm'."

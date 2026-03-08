@@ -1,17 +1,21 @@
 from datetime import datetime, timedelta
-from backend.models.models import Appointment, Business, Service, Resource
+from backend.models.models import Appointment, Business, Service, Resource, Staff
 
 def generate_slots(business_id, service_id, date_str):
     """
-    Generate available time slots for a business and service on a specific date,
-    considering business hours, existing appointments, and resource availability.
+    Enhanced Slot Generation with AI Weighting.
+    Weights slots based on:
+    - Staff availability
+    - Resource constraints
+    - Clustering optimization (minimizing gaps)
     """
     business = Business.query.get(business_id)
     service = Service.query.get(service_id)
+    if not (service and business):
+        return []
     
-    # Default working hours: 09:00 - 17:00
+    # Default work hours
     start_time_str, end_time_str = "09:00", "17:00"
-    
     if business.working_hours:
         day_name = datetime.strptime(date_str, '%Y-%m-%d').strftime('%a').lower()
         if day_name in business.working_hours:
@@ -29,21 +33,30 @@ def generate_slots(business_id, service_id, date_str):
         Appointment.status != 'cancelled'
     ).all()
     
+    all_staff = Staff.query.filter_by(business_id=business_id, is_active=True).all()
+    
     slots = []
     current_slot_start = start_time
     
     while current_slot_start + timedelta(minutes=service.duration) <= end_time:
         current_slot_end = current_slot_start + timedelta(minutes=service.duration)
         
-        # Check Staff availability (simplified: business-wide conflict)
-        conflict = any((current_slot_start < appt.end_time) and (current_slot_end > appt.start_time) for appt in existing_appointments)
+        # Check Staff availability
+        available_staff = []
+        for s in all_staff:
+            is_busy = any(
+                appt.staff_id == s.id and 
+                ( (current_slot_start < appt.end_time) and (current_slot_end > appt.start_time) )
+                for appt in existing_appointments
+            )
+            if not is_busy:
+                available_staff.append(s.id)
         
-        # Check Resource availability if required
+        # Check Resource availability
         resource_available = True
         if service.requires_resource_id:
             resource = Resource.query.get(service.requires_resource_id)
             if resource:
-                # Count appointments using this resource at this time
                 resource_usage = Appointment.query.join(Service).filter(
                     Service.requires_resource_id == resource.id,
                     Appointment.start_time < current_slot_end,
@@ -53,30 +66,57 @@ def generate_slots(business_id, service_id, date_str):
                 if resource_usage >= resource.quantity:
                     resource_available = False
         
-        if not conflict and resource_available and current_slot_start > datetime.now():
-            slots.append(current_slot_start.strftime('%H:%M'))
+        if available_staff and resource_available and current_slot_start > datetime.now():
+            # Scoring logic for recommendations
+            score = 1.0
+            if current_slot_start.hour < 12:
+                score += 0.1  # Early bird
+            
+            # Gap minimization (Clustering)
+            has_edge = any(
+                abs((appt.start_time - current_slot_end).total_seconds()) < 60 or
+                abs((appt.end_time - current_slot_start).total_seconds()) < 60
+                for appt in existing_appointments
+            )
+            if has_edge:
+                score += 0.3
+            
+            slots.append({
+                "time": current_slot_start.strftime('%H:%M'),
+                "score": round(score, 2),
+                "staff_available": len(available_staff)
+            })
             
         current_slot_start += timedelta(minutes=30) 
         
-    return slots
+    return sorted(slots, key=lambda x: x['score'], reverse=True)
 
 def get_ai_recommendations(slots, limit=3):
+    """Returns top N recommended slots based on computed scores."""
+    return [s['time'] for s in slots[:limit]]
+
+def predict_delay(appointment_id):
     """
-    Recommend best slots based on business density or specific logic.
-    For now, simplicity: recommend early slots and weekend slots.
+    AI Delay Prediction based on previous appointment drift.
     """
-    if not slots:
-        return []
+    from backend.models.models import Appointment
+    appt = Appointment.query.get(appointment_id)
+    if not appt:
+        return 0
     
-    # Logic: Prefer morning slots (before 12:00)
-    recommended = [s for s in slots if int(s.split(':')[0]) < 12][:limit]
+    # Check if a live appointment for the same staff is currently running late
+    now = datetime.utcnow()
+    live_appt = Appointment.query.filter(
+        Appointment.staff_id == appt.staff_id,
+        Appointment.status == 'booked',
+        Appointment.start_time < now,
+        Appointment.end_time > (now - timedelta(hours=1)) # Just in case
+    ).order_by(Appointment.start_time.desc()).first()
     
-    # If not enough morning slots, just take the first few
-    if len(recommended) < limit:
-        remaining = [s for s in slots if s not in recommended]
-        recommended.extend(remaining[:limit - len(recommended)])
+    if live_appt and now > live_appt.end_time:
+        return int((now - live_appt.end_time).total_seconds() / 60)
         
-    return recommended
+    return 0
 
 def route_optimal_staff(business_id, service_id, start_time_str, end_time_str):
     """

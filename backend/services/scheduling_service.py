@@ -1,8 +1,11 @@
 from datetime import datetime
 import random
 import string
+import logging
 from backend.extensions import db
 from backend.models.models import Appointment, Waitlist, Service
+
+logger = logging.getLogger(__name__)
 
 def check_conflict(user_id, start_time, end_time, staff_id=None):
     """
@@ -15,7 +18,7 @@ def check_conflict(user_id, start_time, end_time, staff_id=None):
         Appointment.start_time < end_time,
         Appointment.end_time > start_time
     ).first()
-    
+
     if user_conflicting:
         return True
 
@@ -47,16 +50,16 @@ def handle_cancellation(appointment):
         service_id=appointment.service_id,
         status='active'
     ).order_by(Waitlist.request_date.asc()).all()
-    
+
     if not waitlist_entries:
         return
-    
+
     # Notify the users (mocked here by setting 'notified' flag)
     for entry in waitlist_entries:
         entry.notified = True
         # In a real scenario, we'd send a link to a 'claim' page
-        print(f"NOTIFY: User {entry.user_id} notified of opening at {appointment.start_time}")
-    
+        logger.info(f"User {entry.user_id} notified of opening at {appointment.start_time}")
+
     db.session.commit()
 
 def get_rebook_suggestion(user_id):
@@ -65,12 +68,12 @@ def get_rebook_suggestion(user_id):
     Returns the service_id or None.
     """
     from sqlalchemy import func
-    
+
     result = db.session.query(
         Appointment.service_id, 
         func.count(Appointment.id).label('count')
     ).filter_by(customer_id=user_id).group_by(Appointment.service_id).order_by(db.desc('count')).first()
-    
+
     if result:
         return Service.query.get(result[0])
     return None
@@ -85,10 +88,10 @@ def join_waitlist(user_id, business_id, service_id):
         service_id=service_id,
         status='active'
     ).first()
-    
+
     if existing:
         return False, "Already on waitlist for this service."
-        
+
     new_entry = Waitlist(
         user_id=user_id,
         business_id=business_id,

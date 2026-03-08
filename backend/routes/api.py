@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, request, redirect, url_for, session
 from flask_login import current_user, login_required
 from datetime import datetime, timedelta
 from typing import Any
-from backend.extensions import db
-from backend.models.models import Business, Service, Appointment, Feedback, Promotion
+from backend.extensions import db, limiter
+from backend.models.models import Business, Service, Appointment, Feedback, Promotion, User
 from ai_engine.engine import generate_slots, get_ai_recommendations
 from backend.services.notifications import notify_booking_confirmation
 from backend.services.payments import create_razorpay_order, verify_payment_signature
@@ -11,8 +11,7 @@ from backend.ai_engine.pricing import calculate_dynamic_price
 from backend.ai_engine.predictive import calculate_noshow_probability
 from backend.services.kiosk_manager import start_kiosk, stop_kiosk, is_kiosk_running
 from backend.services.scheduling_service import check_conflict, generate_secure_pin
-from backend.services.waitlist import svc_join_waitlist, handle_cancellation
-from backend.services.geocoding import get_travel_time, haversine_distance
+from backend.services.waitlist import svc_join_waitlist
 from backend.services.calendar_sync import get_google_flow, save_google_token, sync_appointment_to_google
 from backend.services.virtual_rooms import create_virtual_meeting
 from backend.services.chatbot import extract_booking_intent, generate_chatbot_response
@@ -26,17 +25,17 @@ def get_slots() -> Any:
     business_id = request.args.get('business_id', type=int)
     service_id = request.args.get('service_id', type=int)
     date_str = request.args.get('date')
-    
+
     if not all([business_id, service_id, date_str]):
         return jsonify({"error": "Missing parameters"}), 400
-        
+
     service = Service.query.get_or_404(service_id)
     slots = generate_slots(business_id, service.duration, date_str)
     recommendations = get_ai_recommendations(slots)
-    
+
     # Calculate surge pricing
     dynamic_price, multiplier = calculate_dynamic_price(business_id, service.price, date_str, "00:00")
-    
+
     # Calculate ML No-show risk
     ml_risk = calculate_noshow_probability(
         current_user.id if current_user.is_authenticated else None,
@@ -45,7 +44,7 @@ def get_slots() -> Any:
         "00:00", 
         service_id
     )
-    
+
     return jsonify({
         "available_slots": slots,
         "recommendations": recommendations,
@@ -62,9 +61,9 @@ def create_order() -> Any:
     service_id = data.get('service_id')
     dynamic_price = data.get('dynamic_price') # Passed from frontend 
     service = Service.query.get_or_404(service_id)
-    
+
     final_price = dynamic_price if dynamic_price else service.price
-    
+
     order = create_razorpay_order(final_price)
     return jsonify({
         "order_id": order['id'],
@@ -94,15 +93,15 @@ def book_appointment() -> Any:
 
     start_time = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M')
     service = Service.query.get(service_id)
-    
+
     # Membership check
     if service.member_only and current_user.membership_level == 'free':
         return jsonify({"error": "This service requires a premium membership."}), 403
 
     end_time = start_time + timedelta(minutes=service.duration)
-    
+
     staff_id = data.get('staff_id')
-    
+
     # Conflict check (Business/Slot)
     existing = Appointment.query.filter(
         Appointment.business_id == business_id,
@@ -110,14 +109,14 @@ def book_appointment() -> Any:
         Appointment.end_time > start_time,
         Appointment.status != 'cancelled'
     ).first()
-    
+
     if existing:
         return jsonify({"error": "Slot already taken"}), 409
-        
+
     # NEW: Staff and User conflict check
     if check_conflict(current_user.id, start_time, end_time, staff_id=staff_id):
         return jsonify({"error": "Conflict detected. Please choose a different time or staff member."}), 409
-        
+
     appointment = Appointment(
         customer_id=current_user.id,
         business_id=business_id,
@@ -132,16 +131,26 @@ def book_appointment() -> Any:
     )
     # Create virtual link if service is virtual
     create_virtual_meeting(appointment)
-    
+
     db.session.add(appointment)
     db.session.commit()
-    
-    # Notify
+
+    # Notify - Email & WhatsApp
     notify_booking_confirmation(appointment)
-    
+
+    # NEW: Trigger real-time scheduling update for the business dashboard
+    # This keeps the merchant view in sync without page refreshes
+    from backend.services.notifications import send_realtime_update
+    send_realtime_update("business", business_id, {
+        "type": "NEW_BOOKING", 
+        "appointment_id": appointment.id,
+        "customer": current_user.username,
+        "service": service.name
+    })
+
     # Sync to Google Calendar if enabled
     sync_appointment_to_google(appointment)
-    
+
     return jsonify({
         "message": "Appointment booked successfully!", 
         "id": appointment.id,
@@ -156,18 +165,18 @@ def book_sequence():
     business_id = data.get('business_id')
     service_ids = data.get('service_ids') # list
     start_time_str = data.get('start_time')
-    
+
     current_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M')
     booked_ids = []
-    
+
     for sid in service_ids:
         service = Service.query.get(sid)
         end_time = current_time + timedelta(minutes=service.duration)
-        
+
         # Conflict check for each slot
         if check_conflict(current_user.id, current_time, end_time):
             return jsonify({"error": f"Conflict at {current_time}. Partial booking failed."}), 409
-            
+
         appt = Appointment(
             customer_id=current_user.id,
             business_id=business_id,
@@ -179,7 +188,7 @@ def book_sequence():
         db.session.add(appt)
         current_time = end_time # Set next start to current's end
         booked_ids.append(appt)
-        
+
     db.session.commit()
     return jsonify({"success": True, "booked_count": len(booked_ids)})
 
@@ -195,10 +204,10 @@ def google_login():
 def google_callback():
     flow = get_google_flow()
     flow.fetch_token(authorization_response=request.url)
-    
+
     credentials = flow.credentials
     save_google_token(current_user.id, credentials)
-    
+
     return redirect(url_for('admin.dashboard'))
 
 @api_bp.route("/waitlist", methods=['POST'])
@@ -207,7 +216,7 @@ def api_join_waitlist():
     data = request.get_json()
     business_id = data.get('business_id')
     service_id = data.get('service_id')
-    
+
     success, message = svc_join_waitlist(current_user.id, business_id, service_id)
     if success:
         return jsonify({"message": message})
@@ -219,15 +228,33 @@ def cancel_appointment(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id and current_user.role != 'admin':
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     appt.status = 'cancelled'
     appt.cancellation_reason = request.json.get('reason', 'User cancelled')
-    
-    # Trigger gap filler
-    handle_cancellation(appt.business_id, appt.service_id)
-    
+
+    # Trigger gap filler (AI Auto-fill)
+    from backend.services.waitlist import handle_cancellation
+    handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
+
     db.session.commit()
     return jsonify({"success": True, "message": "Appointment cancelled and filler notified."})
+
+@api_bp.route("/appointments/status/<int:appt_id>", methods=['GET'])
+@login_required
+def get_appointment_status(appt_id):
+    appt = Appointment.query.get_or_404(appt_id)
+
+    from ai_engine.engine import predict_delay
+    delay_mins = predict_delay(appt.id)
+
+    return jsonify({
+        "id": appt.id,
+        "status": appt.status,
+        "start_time": appt.start_time.isoformat(),
+        "predicted_delay": delay_mins,
+        "is_delayed": delay_mins > 5,
+        "message": f"Possible {delay_mins} min delay detected" if delay_mins > 5 else "On time"
+    })
 
 @api_bp.route("/fastest_near_me", methods=['GET'])
 def get_fastest_near_me():
@@ -238,76 +265,69 @@ def get_fastest_near_me():
     user_lat = request.args.get('lat', type=float)
     user_lng = request.args.get('lng', type=float)
     cat_id = request.args.get('category_id', type=int)
-    
+
     if not all([user_lat, user_lng, cat_id]):
         return jsonify({"error": "Missing coordinates or category"}), 400
-        
-    # 1. Filter businesses by category
+
+    # 1. Filter businesses by category and distance
     businesses = Business.query.filter_by(category_id=cat_id).all()
     candidates = []
-    
+
+    now = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
+    limit_time = now + timedelta(minutes=60)
+
+    from backend.services.geocoding import haversine_distance
+    from ai_engine.engine import generate_slots
+
     for b in businesses:
         if not b.latitude or not b.longitude:
             continue
-        
-        # 2. Haversine Pre-filter (within 50km for sanity)
+
         dist = haversine_distance(user_lat, user_lng, b.latitude, b.longitude)
-        if dist > 50:
+        if dist > 25: # 25km radius for 'nearby'
             continue
-        
-        # 3. Get Real Travel Time (OSRM)
-        travel_sec = get_travel_time(user_lat, user_lng, b.latitude, b.longitude)
-        arrival_time = datetime.now() + timedelta(seconds=travel_sec)
-        
-        # 4. Check earliest slot that is AFTER arrival_time
-        # We find earliest slot for the first service of the business
-        if not b.services:
-            continue
-        svc = b.services[0]
-        date_str = arrival_time.strftime('%Y-%m-%d')
-        slots = generate_slots(b.id, svc.duration, date_str)
-        
-        earliest_possible = None
-        for s in slots:
-            slot_dt = datetime.strptime(f"{date_str} {s}", '%Y-%m-%d %H:%M')
-            if slot_dt >= arrival_time:
-                earliest_possible = slot_dt
-                break
-        
-        if earliest_possible:
-            candidates.append({
-                "business_id": b.id,
-                "business_name": b.name,
-                "distance_km": round(dist, 2),
-                "travel_time_mins": round(travel_sec / 60),
-                "earliest_slot": earliest_possible.strftime('%H:%M'),
-                "earliest_arrival": arrival_time.strftime('%H:%M'),
-                "service_id": svc.id,
-                "lat": b.latitude,
-                "lng": b.longitude
-            })
 
-    # 5. Sort by earliest slot time
-    candidates.sort(key=lambda x: x['earliest_slot'])
-    
-    return jsonify(candidates[:5])
+        # 2. Get today's slots for all services of this business
+        for svc in b.services:
+            slots = generate_slots(b.id, svc.id, today_str)
 
+            # Find any slot within next 60 mins
+            for s in slots:
+                slot_time = datetime.strptime(f"{today_str} {s['time']}", '%Y-%m-%d %H:%M')
+                if now < slot_time <= limit_time:
+                    candidates.append({
+                        "business_id": b.id,
+                        "business_name": b.name,
+                        "service_id": svc.id,
+                        "service_name": svc.name,
+                        "price": svc.price,
+                        "time": s['time'],
+                        "distance": round(dist, 2),
+                        "score": s['score']
+                    })
+                    break # Take only the earliest for this service
+
+    # Sort by arrival time and score
+    return jsonify({
+        "results": sorted(candidates, key=lambda x: (x['time'], -x['score']))[:5]
+    })
 @api_bp.route("/check_in/<int:appt_id>", methods=['POST'])
 @login_required
 def check_in(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     # Check if appointment is within 30 mins of start
     now = datetime.now()
     if now < appt.start_time - timedelta(minutes=30):
         return jsonify({"error": "Too early to check-in"}), 400
-        
+
     appt.status = 'arrived'
     appt.check_in_time = now
     db.session.commit()
-    
+
     return jsonify({"success": True, "message": "Checked in successfully!"})
 
 @api_bp.route("/feedback/submit", methods=['POST'])
@@ -316,15 +336,22 @@ def submit_feedback():
     data = request.get_json()
     appt_id = data.get('appointment_id')
     rating = data.get('rating')
-    comment = data.get('comment')
-    
+    comment = data.get('comment', '')
+
     appt = Appointment.query.get_or_404(appt_id)
+
+    # AI Fraud Detection
+    from backend.services.fraud_detection import detect_review_fraud
+    is_fraud, reason = detect_review_fraud(current_user.id, appt.id, rating, comment)
+    if is_fraud:
+        return jsonify({"error": f"Review submission failed: {reason}"}), 400
+
     if appt.customer_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     # AI Analysis
     ai_result = analyze_sentiment(comment)
-    
+
     feedback = Feedback(
         appointment_id=appt_id,
         user_id=current_user.id,
@@ -333,14 +360,14 @@ def submit_feedback():
         sentiment_score=ai_result.get('score', 0.5),
         ai_category=", ".join(ai_result.get('key_issues', []))
     )
-    
+
     # Mark appointment as completed if it was in arrived state
     if appt.status == 'arrived':
         appt.status = 'completed'
-        
+
     db.session.add(feedback)
     db.session.commit()
-    
+
     return jsonify({
         "success": True, 
         "message": "Feedback submitted!", 
@@ -351,14 +378,14 @@ def submit_feedback():
 def get_business_stats(business_id):
     """Returns AI-calculated wait times and high-level sentiment summary for public view."""
     wait_time = predict_wait_time(business_id)
-    
+
     # Pull recent feedback categories
     feedback = Feedback.query.join(Appointment).filter(Appointment.business_id == business_id).limit(10).all()
     categories = []
     for f in feedback:
         if f.ai_category:
             categories.extend([c.strip() for c in f.ai_category.split(',')])
-    
+
     return jsonify({
         "live_wait_time": wait_time,
         "recent_ai_insights": list(set(categories))[:3]
@@ -369,7 +396,7 @@ def get_business_stats(business_id):
 def get_recommendations():
     business_id = request.args.get('business_id', type=int)
     ids = get_smart_recommendations(current_user.id, business_id)
-    
+
     # Fetch full service objects
     services = Service.query.filter(Service.id.in_(ids)).all()
     return jsonify([
@@ -383,7 +410,7 @@ def get_business_forecast(business_id):
     # Historical logic or mockup for heatmap
     days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     hours = ['09:00', '12:00', '15:00', '18:00']
-    
+
     import random
     forecast = []
     for day in days:
@@ -394,7 +421,7 @@ def get_business_forecast(business_id):
                 "hour": hour,
                 "occupancy": random.uniform(0.1, 0.9)
             })
-            
+
     return jsonify(forecast)
 
 @api_bp.route("/promotions/active/<int:business_id>")
@@ -407,7 +434,7 @@ def get_active_promotions(business_id):
         Promotion.start_date <= now,
         Promotion.end_date >= now
     ).all()
-    
+
     return jsonify([{
         "id": p.id,
         "title": p.title,
@@ -422,15 +449,15 @@ def request_priority():
     data = request.get_json()
     appt_id = data.get('appointment_id')
     data.get('reason')
-    
+
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
-        
+
     appt.is_priority = True
     appt.status = 'pending' # Triage state
     db.session.commit()
-    
+
     return jsonify({"success": True, "message": "Priority request sent to admin."})
 
 @api_bp.route("/admin/triage/process", methods=['POST'])
@@ -439,18 +466,18 @@ def admin_process_triage():
     """Admin approves or denies priority requests."""
     if current_user.role != 'admin':
         return jsonify({"error": "Admin only"}), 403
-        
+
     data = request.get_json()
     appt_id = data.get('appointment_id')
     action = data.get('action') # approve, reject
-    
+
     appt = Appointment.query.get_or_404(appt_id)
     if action == 'approve':
         appt.status = 'booked' # confirmed
     else:
         appt.status = 'cancelled'
         appt.cancellation_reason = "Priority request denied by admin."
-        
+
     db.session.commit()
     return jsonify({"success": True})
 
@@ -459,10 +486,10 @@ def chat():
     data = request.json
     user_text = data.get('message')
     business_id = data.get('business_id')
-    
+
     intent = extract_booking_intent(user_text)
     reply = generate_chatbot_response(intent, context={"business_id": business_id})
-    
+
     return jsonify({
         "reply": reply,
         "intent": intent
@@ -473,7 +500,7 @@ def whatsapp_webhook():
     """Endpoint for Twilio WhatsApp Webhook"""
     incoming_msg = request.values.get('Body', '')
     sender = request.values.get('From', '')
-    
+
     # Delegate to the whatsapp_bot state machine
     response_xml = handle_whatsapp_message(incoming_msg, sender)
     return response_xml, 200, {'Content-Type': 'text/xml'}
@@ -501,13 +528,13 @@ def get_calendar_events():
     """Fetch appointments formatted for FullCalendar.js"""
     if current_user.role not in ['business', 'admin']:
         return jsonify([])
-        
+
     request.args.get('start')
     request.args.get('end')
-    
+
     appts = Appointment.query.filter_by(business_id=current_user.businesses[0].id).all()
     events = []
-    
+
     for a in appts:
         color = '#198754' if a.status == 'arrived' else '#0d6efd'
         events.append({
@@ -518,30 +545,103 @@ def get_calendar_events():
             "backgroundColor": color,
             "borderColor": color
         })
-        
+
     return jsonify(events)
 
-@api_bp.route("/calendar/reschedule", methods=['POST'])
-@login_required
-def reschedule_calendar_event():
-    """Handle drag and drop rescheduling"""
-    if current_user.role not in ['business', 'admin']:
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
-        
-    data = request.json
-    appt = Appointment.query.get(data.get('appointment_id'))
-    
-    if not appt or appt.business_id != current_user.businesses[0].id:
-        return jsonify({"success": False, "message": "Appointment not found."}), 404
-        
-    try:
-        # FullCalendar sends ISO strings with timezone info sometimes, slice off the timezone for raw datetime
-        new_start = datetime.fromisoformat(data['new_start'].split('+')[0].replace('Z', ''))
-        new_end = datetime.fromisoformat(data['new_end'].split('+')[0].replace('Z', ''))
-        
-        appt.start_time = new_start
-        appt.end_time = new_end
+@api_bp.route("/firebase-login", methods=['POST'])
+@limiter.limit("5 per minute")
+def firebase_login():
+    data = request.get_json()
+    id_token = data.get('idToken')
+
+    # Optional metadata for registration
+    reg_username = data.get('username')
+    reg_role = data.get('role', 'customer')
+    reg_phone = data.get('phone')
+
+    from backend.services.firebase_config import verify_firebase_token
+    decoded_token = verify_firebase_token(id_token)
+
+    if not decoded_token:
+        return jsonify({"success": False, "message": "Invalid token"}), 401
+
+    uid = decoded_token.get('uid')
+    email = decoded_token.get('email')
+
+    # Sync with local DB
+    user = User.query.filter_by(firebase_uid=uid).first()
+    if not user:
+        # Check if user exists by email (link accounts)
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.firebase_uid = uid
+        else:
+            # Create a shadow user profile for the marketplace
+            # Use 'business_owner' instead of 'admin' from the form if applicable
+            role = 'business_owner' if reg_role == 'admin' or reg_role == 'business_owner' else 'customer'
+
+            user = User(
+                username=reg_username or decoded_token.get('name', email.split('@')[0]),
+                email=email,
+                firebase_uid=uid,
+                role=role,
+                phone_number=reg_phone,
+                is_verified=True, # Firebase users are pre-verified
+                is_platform_owner=False
+            )
+            db.session.add(user)
         db.session.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 400
+
+    from flask_login import login_user
+    login_user(user, remember=True)
+
+    return jsonify({"success": True, "message": "Session synchronized"})
+
+@api_bp.route("/subscription/plans", methods=['GET'])
+def get_plans():
+    from backend.models.models import SubscriptionPlan
+    plans = SubscriptionPlan.query.all()
+    return jsonify([{"id": p.id, "name": p.name, "price": p.price, "features": p.features} for p in plans])
+
+@api_bp.route("/subscription/checkout", methods=['POST'])
+@login_required
+def subscription_checkout():
+    data = request.get_json()
+    plan_id = data.get('plan_id')
+
+    from backend.models.models import SubscriptionPlan, Subscription
+    plan = SubscriptionPlan.query.get_or_404(plan_id)
+
+    end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
+    new_sub = Subscription(
+        user_id=current_user.id,
+        plan_id=plan.id,
+        end_date=end_date,
+        status='active'
+    )
+    db.session.add(new_sub)
+
+    current_user.membership_level = plan.name.lower()
+    db.session.commit()
+
+    return jsonify({
+        "success": True, 
+        "message": f"Successfully subscribed to {plan.name}!",
+        "expires_at": end_date.isoformat()
+    })
+
+@api_bp.route("/subscription/status", methods=['GET'])
+@login_required
+def get_subscription_status():
+    from backend.models.models import Subscription
+    sub = Subscription.query.filter_by(user_id=current_user.id, status='active').order_by(Subscription.end_date.desc()).first()
+
+    if not sub:
+        return jsonify({"has_active_sub": False, "level": "free"})
+
+    return jsonify({
+        "has_active_sub": True,
+        "plan_name": sub.plan.name,
+        "expires_at": sub.end_date.isoformat(),
+        "features": sub.plan.features
+    })

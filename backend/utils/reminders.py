@@ -11,7 +11,7 @@ def check_and_send_reminders():
     app = create_app()
     with app.app_context():
         now = datetime.now()
-        
+
         # 1. 24-hour Reminders
         target_24h = now + timedelta(hours=24)
         appts_24h = Appointment.query.filter(
@@ -19,7 +19,7 @@ def check_and_send_reminders():
             Appointment.start_time <= target_24h + timedelta(minutes=5),
             Appointment.status == 'booked'
         ).all()
-        
+
         for appt in appts_24h:
             subject = "Reminder: Appointment in 24 Hours"
             body = f"Hello {appt.customer.username},\n\nJust a reminder that you have an appointment with {appt.business.name} tomorrow at {appt.start_time.strftime('%H:%M')}.\n\nSee you then!"
@@ -32,7 +32,7 @@ def check_and_send_reminders():
             Appointment.start_time <= target_1h + timedelta(minutes=5),
             Appointment.status == 'booked'
         ).all()
-        
+
         for appt in appts_1h:
             subject = "Reminder: Appointment in 1 Hour"
             body = f"Hello {appt.customer.username},\n\nYour appointment with {appt.business.name} starts in 1 hour ({appt.start_time.strftime('%H:%M')}).\n\nDon't be late!"
