@@ -10,9 +10,18 @@ class Config:
     
     # Database
     basedir = os.path.abspath(os.path.dirname(__file__))
-    _db_url = os.environ.get('DATABASE_URL', f"sqlite:///{os.path.join(basedir, '../database/app.db')}")
+    _db_url = os.environ.get('DATABASE_URL')
+    
+    if not _db_url:
+        # On Vercel, the root filesystem is read-only. Use /tmp for SQLite fallback.
+        if os.environ.get('VERCEL'):
+            _db_url = "sqlite:////tmp/app.db"
+        else:
+            _db_url = f"sqlite:///{os.path.join(basedir, '../database/app.db')}"
+            
     if _db_url.startswith("postgres://"):
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -60,3 +69,7 @@ class Config:
     FIREBASE_STORAGE_BUCKET = os.environ.get('FIREBASE_STORAGE_BUCKET')
     FIREBASE_MESSAGING_SENDER_ID = os.environ.get('FIREBASE_MESSAGING_SENDER_ID')
     FIREBASE_APP_ID = os.environ.get('FIREBASE_APP_ID')
+
+    # Production Monitoring & Rate Limiting
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
+    REDIS_URL = os.environ.get('REDIS_URL')

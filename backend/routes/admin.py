@@ -208,8 +208,16 @@ def manage_resources():
 @admin_bp.before_request
 @login_required
 def check_verification():
-    # Allow access to waiting room and platform dashboard (if platform owner or moderator)
-    allowed_endpoints = ['admin.pending_verification', 'admin.platform_dashboard', 'admin.approve_business', 'admin.reject_business', 'admin.manage_team', 'admin.invite_moderator']
+    # Allow access to waiting room, business setup, and platform dashboard (if platform owner or moderator)
+    allowed_endpoints = [
+        'admin.pending_verification', 
+        'admin.setup_business',
+        'admin.platform_dashboard', 
+        'admin.approve_business', 
+        'admin.reject_business', 
+        'admin.manage_team', 
+        'admin.invite_moderator'
+    ]
     if request.endpoint in allowed_endpoints:
         return None
 

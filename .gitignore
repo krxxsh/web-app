@@ -47,3 +47,4 @@ desktop.ini
 
 # Flask instance folder
 instance/
+.vercel

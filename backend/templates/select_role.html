@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Select Your Role - Management App{% endblock %}
+
+{% block content %}
+<div class="auth-container min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="auth-card glass-morphism p-5 text-center animate-fade-in" style="max-width: 600px; width: 100%;">
+        <div class="brand-logo mb-4">
+            <i class="fas fa-user-tag fa-3x text-gradient"></i>
+        </div>
+        <h2 class="auth-title mb-2">Complete Your Profile</h2>
+        <p class="text-muted mb-5">Please select how you'll be using the platform to personalize your experience.</p>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="role-card p-4 h-100 d-flex flex-column align-items-center justify-content-center cursor-pointer transition-all" id="customer-role">
+                    <div class="icon-circle mb-3 bg-soft-primary">
+                        <i class="fas fa-shopping-bag fa-2x text-primary"></i>
+                    </div>
+                    <h4>Customer</h4>
+                    <p class="small text-muted mb-0">I want to discover businesses and book services.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="role-card p-4 h-100 d-flex flex-column align-items-center justify-content-center cursor-pointer transition-all" id="business-role">
+                    <div class="icon-circle mb-3 bg-soft-success">
+                        <i class="fas fa-store fa-2x text-success"></i>
+                    </div>
+                    <h4>Business Owner</h4>
+                    <p class="small text-muted mb-0">I want to manage my business and bookings.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="additional-details" class="mb-4 d-none text-start animate-fade-in">
+            <h5 class="mb-3">Optional Details</h5>
+            <div class="mb-3">
+                <label for="phone" class="form-label text-muted">Phone Number</label>
+                <input type="tel" class="form-control bg-dark text-white border-secondary" id="phone" placeholder="+1234567890">
+            </div>
+            <div class="mb-3 d-none" id="business-name-group">
+                <label for="business-name" class="form-label text-muted">Business Name</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" id="business-name" placeholder="Your Business Name">
+            </div>
+        </div>
+
+        <button id="confirm-role" class="btn btn-primary btn-lg w-100 py-3 shadow-lg transition-all" disabled>
+            Continue to Dashboard
+        </button>
+
+        <div id="selection-error" class="alert alert-danger mt-3 d-none">
+            Please select a role to continue.
+        </div>
+    </div>
+</div>
+
+<style>
+.role-card {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.role-card.active {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
+}
+
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
+.bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+
+.cursor-pointer { cursor: pointer; }
+
+#confirm-role:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const customerCard = document.getElementById('customer-role');
+    const businessCard = document.getElementById('business-role');
+    const confirmBtn = document.getElementById('confirm-role');
+    const additionalDetails = document.getElementById('additional-details');
+    const businessNameGroup = document.getElementById('business-name-group');
+    
+    let selectedRole = null;
+
+    const selectRole = (role) => {
+        selectedRole = role;
+        confirmBtn.disabled = false;
+        additionalDetails.classList.remove('d-none');
+        
+        if (role === 'customer') {
+            customerCard.classList.add('active');
+            businessCard.classList.remove('active');
+            businessNameGroup.classList.add('d-none');
+        } else {
+            businessCard.classList.add('active');
+            customerCard.classList.remove('active');
+            businessNameGroup.classList.remove('d-none');
+        }
+    };
+
+    customerCard.addEventListener('click', () => selectRole('customer'));
+    businessCard.addEventListener('click', () => selectRole('business_owner'));
+
+    confirmBtn.addEventListener('click', async () => {
+        if (!selectedRole) return;
+
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Setting things up...';
+        confirmBtn.disabled = true;
+
+        const phone = document.getElementById('phone').value.trim();
+        const businessName = document.getElementById('business-name').value.trim();
+
+        try {
+            const response = await fetch('/api/user/select-role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    role: selectedRole,
+                    phone: phone,
+                    business_name: selectedRole === 'business_owner' ? businessName : null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Redirect based on response or fallback
+                window.location.href = data.redirect || (selectedRole === 'business_owner' ? '/dashboard' : '/marketplace');
+            } else {
+                document.getElementById('selection-error').textContent = data.message || 'Error updating profile';
+                document.getElementById('selection-error').classList.remove('d-none');
+                confirmBtn.innerHTML = 'Continue to Dashboard';
+                confirmBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error selecting role:', error);
+            document.getElementById('selection-error').textContent = 'An unexpected error occurred. Please try again.';
+            document.getElementById('selection-error').classList.remove('d-none');
+            confirmBtn.innerHTML = 'Continue to Dashboard';
+            confirmBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

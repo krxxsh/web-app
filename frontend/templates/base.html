@@ -317,8 +317,15 @@
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ idToken: idToken })
-                        }).then(res => {
-                            if (res.ok) window.location.reload();
+                        }).then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (data.needs_role) {
+                                    window.location.href = '/select-role';
+                                } else {
+                                    window.location.reload();
+                                }
+                            }
                         });
                     } else if (!user && isAuth) {
                         window.location.href = '/logout';

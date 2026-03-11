@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, url_for, redirect, request, jsonify
-from flask_login import login_user, current_user, logout_user
+from flask_login import login_user, current_user, logout_user, login_required
 from backend.extensions import db, bcrypt
 from backend.models.models import User
 from backend.services.notifications import send_password_reset_otp
@@ -112,3 +112,4 @@ def reset_password():
 
     email = request.args.get('email', '')
     return render_template('reset_password.html', title='Reset Password', email=email)
+
