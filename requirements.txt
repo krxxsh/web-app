@@ -14,5 +14,8 @@ google-auth-oauthlib
 twilio
 langchain
 google-generativeai
+Flask-Migrate
+Flask-Talisman
+Flask-Limiter
 gunicorn
 psycopg2-binary
