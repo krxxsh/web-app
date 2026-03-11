@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sched - System Architecture</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <style>
+        body {
+            background-color: #0a1628;
+            color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #1d76f2;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .instructions {
+            margin-top: 30px;
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>AI Sched: System Architecture & User Journey Flow</h1>
+
+    <div class="mermaid">
+        graph TD
+        %% Styling
+        classDef unauth fill:#0a1628,stroke:#1d76f2,stroke-width:2px,color:#fff
+        classDef customer fill:#1d76f2,stroke:#0a1628,stroke-width:2px,color:#fff
+        classDef business fill:#f59e0b,stroke:#0a1628,stroke-width:2px,color:#000
+        classDef admin fill:#ef4444,stroke:#0a1628,stroke-width:2px,color:#fff
+
+        %% Entry Points
+        Entry((Land on Homepage)):::unauth --> |"Explore Service"| Explore[3D Explore Marketplace]:::unauth
+        Entry --> Auth{Log in / Sign up}:::unauth
+
+        %% Auth Flow
+        Auth --> |Google/Email| Router{Role Router}
+
+        %% --------------------------
+        %% 1. CUSTOMER JOURNEY
+        %% --------------------------
+        Router --> |Role: Customer| CustHome(Customer Dashboard):::customer
+        Explore --> |"Book Now"| CustHome
+        CustHome --> SelectBuz[Select Business]:::customer
+        SelectBuz --> SelectSvc[Select Service]:::customer
+        SelectSvc --> BookSlot[Book Time Slot]:::customer
+
+        %% The AI Engine Action
+        BookSlot --> AIEngine{{AI Delay Engine Processes Time}}
+        AIEngine --> |"Predicted on time"| Confirmed[Booking Confirmed]:::customer
+        AIEngine --> |"High Risk"| RequireDeposit[Request Deposit]:::customer
+
+        Confirmed --> WaitRoom[Live Waiting Room & Queue]:::customer
+        WaitRoom -.-> |WhatsApp/SMS Trigger| Notifications[Twilio Updates]
+
+        %% --------------------------
+        %% 2. BUSINESS JOURNEY
+        %% --------------------------
+        Router --> |Role: Business| BVerify{Is Verified?}:::business
+        BVerify --> |No| BPending[Pending Verification Page]:::business
+        BVerify --> |Yes| BDash[Business Dashboard]:::business
+
+        BDash --> BManageSvc[Manage Services & Staff]:::business
+        BDash --> BAnalytics[View AI Operational Insights]:::business
+        BDash --> BLiveView[Live Customer Queue Management]:::business
+        BDash --> BBrand[White-label Theme Editor]:::business
+
+        %% --------------------------
+        %% 3. PLATFORM OWNER / MODERATOR
+        %% --------------------------
+        Router --> |Role: Admin| PAdmin[Platform Super Admin]:::admin
+        PAdmin --> PVerify[Verify/Reject New Businesses]:::admin
+        PAdmin --> PTeam[Manage Moderator Team]:::admin
+
+        BPending -.-> |"Approval Action"| PVerify
+    </div>
+
+    <p class="instructions">Right-click anywhere on the diagram and select "Save image as..." to save it, or press
+        Ctrl+P to print to PDF.</p>
+
+</body>
+
+</html>

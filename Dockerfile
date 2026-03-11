@@ -1,21 +1,31 @@
 # Use official Python runtime as a parent image
+# Use a lightweight Python base image
 FROM python:3.11-slim
 
-# Set the working directory in the container
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=backend.app
+
+# Set work directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Install system dependencies (for psycopg2 and others)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir waitress psycopg2-binary Flask-Migrate
 
-# Make port 5000 available to the world outside this container
+# Copy project
+COPY . .
+
+# Expose port
 EXPOSE 5000
-
-# Define environment variable
-ENV FLASK_APP=backend/app.py
-ENV FLASK_RUN_HOST=0.0.0.0
 
 # Run flask
 CMD ["flask", "run", "--host=0.0.0.0"]

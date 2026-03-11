@@ -108,7 +108,9 @@ def handle_whatsapp_message(incoming_msg, sender_number):
             # Create Razorpay Order
             order = create_razorpay_order(service.price)
             # In a real scenario, this links to a distinct payment intent UI or deep link
-            payment_link = f"http://127.0.0.1:5000/pay?order_id={order['id']}"
+            from flask import current_app
+            base_url = current_app.config.get('BASE_URL', 'http://127.0.0.1:5000')
+            payment_link = f"{base_url}/pay?order_id={order['id']}"
 
             msg.body(f"Awesome! Slot locked for {selected_time} on {session['date']}.\n\nTotal: ₹{service.price}\n\nPlease pay here to confirm your appointment:\n{payment_link}\n\n(Reply 'reset' to start over)")
             session["state"] = "AWAITING_PAYMENT"

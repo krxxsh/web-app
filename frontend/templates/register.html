@@ -86,7 +86,13 @@
                             window.location.href = (role === 'business_owner') ? '/admin/setup_business' : '/';
                         }
                     } catch (error) {
-                        alert("Registration Failed: " + error.message);
+                        if (error.code === 'auth/email-already-in-use') {
+                            if (confirm("This email is already registered. Would you like to login instead?")) {
+                                window.location.href = '/login';
+                            }
+                        } else {
+                            alert("Registration Failed: " + error.message);
+                        }
                     }
                 });
             </script>

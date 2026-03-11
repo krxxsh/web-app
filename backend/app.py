@@ -1,6 +1,6 @@
 from flask import Flask
 from backend.config import Config
-from backend.extensions import db, bcrypt, login_manager, limiter
+from backend.extensions import db, bcrypt, login_manager, limiter, migrate
 from flask_talisman import Talisman
 
 def create_app(config_class=Config):
@@ -16,6 +16,7 @@ def create_app(config_class=Config):
     init_firebase()
 
     db.init_app(app)
+    migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
