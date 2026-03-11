@@ -16,6 +16,9 @@
                     <input type="password" id="password" name="password" class="form-control-premium w-100" required
                         aria-label="Password">
                 </div>
+                <div class="mb-3 text-end">
+                    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small">Forgot password?</a>
+                </div>
                 <div class="d-grid mb-3">
                     <button type="submit" class="btn-premium py-3 fw-bold">Sign In to Dashboard</button>
                 </div>

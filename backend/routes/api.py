@@ -645,3 +645,81 @@ def get_subscription_status():
         "expires_at": sub.end_date.isoformat(),
         "features": sub.plan.features
     })
+
+@api_bp.route("/dashboard/stats/<int:business_id>")
+@login_required
+def get_dashboard_stats(business_id):
+    """Aggregated KPIs for the business dashboard."""
+    from backend.models.models import Staff, Feedback
+    from sqlalchemy import func
+
+    business = Business.query.get_or_404(business_id)
+    if business.owner_id != current_user.id and current_user.role not in ('admin', 'platform_owner'):
+        return jsonify({"error": "Unauthorized"}), 403
+
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+
+    # Core counts
+    total_bookings = Appointment.query.filter_by(business_id=business_id).count()
+    today_bookings = Appointment.query.filter(
+        Appointment.business_id == business_id,
+        Appointment.start_time >= today_start,
+        Appointment.start_time < today_end
+    ).count()
+    completed = Appointment.query.filter_by(business_id=business_id, status='completed').count()
+    pending = Appointment.query.filter_by(business_id=business_id, status='booked').count()
+    cancelled = Appointment.query.filter_by(business_id=business_id, status='cancelled').count()
+
+    # Revenue from completed appointments
+    revenue_result = (
+        db.session.query(func.coalesce(func.sum(Service.price), 0))
+        .join(Appointment, Appointment.service_id == Service.id)
+        .filter(Appointment.business_id == business_id, Appointment.status == 'completed')
+        .scalar()
+    )
+    total_revenue = float(revenue_result or 0)
+
+    # Staff count
+    active_staff = Staff.query.filter_by(business_id=business_id, is_active=True).count()
+
+    # Average rating
+    avg_rating_result = (
+        db.session.query(func.avg(Feedback.rating))
+        .join(Appointment, Appointment.id == Feedback.appointment_id)
+        .filter(Appointment.business_id == business_id)
+        .scalar()
+    )
+    avg_rating = round(float(avg_rating_result), 1) if avg_rating_result else 0.0
+
+    # 7-day booking trend
+    trend_labels = []
+    trend_data = []
+    for i in range(6, -1, -1):
+        day = (now - timedelta(days=i)).date()
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = day_start + timedelta(days=1)
+        count = Appointment.query.filter(
+            Appointment.business_id == business_id,
+            Appointment.start_time >= day_start,
+            Appointment.start_time < day_end
+        ).count()
+        trend_labels.append(day.strftime('%a'))
+        trend_data.append(count)
+
+    return jsonify({
+        "total_bookings": total_bookings,
+        "today_bookings": today_bookings,
+        "completed_bookings": completed,
+        "pending_bookings": pending,
+        "cancelled_bookings": cancelled,
+        "total_revenue": total_revenue,
+        "active_staff": active_staff,
+        "avg_rating": avg_rating,
+        "booking_trend": {
+            "labels": trend_labels,
+            "data": trend_data
+        }
+    })
+

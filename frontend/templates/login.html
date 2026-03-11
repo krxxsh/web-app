@@ -13,6 +13,9 @@
                     <label for="password" class="form-label">Password</label>
                     <input type="password" id="password" name="password" class="form-control" required>
                 </div>
+                <div class="mb-3 text-end">
+                    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small">Forgot password?</a>
+                </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-primary">Login with Email</button>
                     <button type="button" class="btn btn-outline-light" onclick="signInWithGoogle()">
@@ -65,6 +68,10 @@
                 });
 
                 async function signInWithGoogle() {
+                    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+                        alert("Google Sign-in is currently unavailable (Incomplete Firebase Configuration). Please use email login for local development.");
+                        return;
+                    }
                     const provider = new firebase.auth.GoogleAuthProvider();
                     try {
                         await firebase.auth().signInWithPopup(provider);

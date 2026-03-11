@@ -32,6 +32,15 @@ class SubscriptionPlan(db.Model):
 
     subscriptions = db.relationship('Subscription', backref='plan', lazy=True)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'price': self.price,
+            'duration_days': self.duration_days,
+            'features': self.features
+        }
+
 class Subscription(db.Model):
     """Active subscriptions for users (Business Owners)."""
     id = db.Column(db.Integer, primary_key=True)
@@ -42,6 +51,17 @@ class Subscription(db.Model):
     status = db.Column(db.String(20), default='active') # active, cancelled, expired
     stripe_subscription_id = db.Column(db.String(100), nullable=True)
     auto_renew = db.Column(db.Boolean, default=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'plan_id': self.plan_id,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'status': self.status,
+            'auto_renew': self.auto_renew
+        }
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +85,7 @@ class User(db.Model, UserMixin):
     email_verified_at = db.Column(db.DateTime, nullable=True)
     phone_verified_at = db.Column(db.DateTime, nullable=True)
     phone_number = db.Column(db.String(20), nullable=True)
+    otp_created_at = db.Column(db.DateTime, nullable=True)
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True)
 
     # Relationships
@@ -77,6 +98,18 @@ class User(db.Model, UserMixin):
     stripe_customer_id = db.Column(db.String(100), nullable=True)
     favorite_businesses = db.Column(db.String(500), default='') # Comma separated IDs
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'membership_level': self.membership_level,
+            'loyalty_points': self.loyalty_points,
+            'is_verified': self.is_verified,
+            'phone_number': self.phone_number
+        }
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -87,6 +120,14 @@ class OAuthToken(db.Model):
     provider = db.Column(db.String(20), nullable=False) # google, outlook
     token_json = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'provider': self.provider,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class Business(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -140,6 +181,9 @@ class Business(db.Model):
             'website': self.website,
             'logo_url': self.logo_url,
             'primary_color': self.primary_color,
+            'use_ai_recommendations': self.use_ai_recommendations,
+            'queue_enabled': self.queue_enabled,
+            'status': self.status
         }
 
 class Resource(db.Model):
@@ -149,6 +193,15 @@ class Resource(db.Model):
     resource_type = db.Column(db.String(50), nullable=False) # Room, Laser Machine, etc.
     quantity = db.Column(db.Integer, default=1)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'resource_type': self.resource_type,
+            'quantity': self.quantity,
+            'business_id': self.business_id
+        }
 
 class Staff(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -163,6 +216,15 @@ class Staff(db.Model):
 
     # Relationships
     appointments = db.relationship('Appointment', backref='staff', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'business_id': self.business_id,
+            'user_id': self.user_id,
+            'is_active': self.is_active
+        }
 
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -180,6 +242,17 @@ class Service(db.Model):
     prep_instructions = db.Column(db.Text, nullable=True)
     is_group_allowed = db.Column(db.Boolean, default=False)
     max_group_size = db.Column(db.Integer, default=1)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'duration': self.duration,
+            'price': self.price,
+            'description': self.description,
+            'business_id': self.business_id,
+            'is_virtual': self.is_virtual
+        }
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -210,6 +283,20 @@ class Appointment(db.Model):
     service = db.relationship('Service', backref='appointments', lazy=True)
     feedback = db.relationship('Feedback', backref='appointment', lazy=True, uselist=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'customer_id': self.customer_id,
+            'business_id': self.business_id,
+            'service_id': self.service_id,
+            'staff_id': self.staff_id,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'status': self.status,
+            'payment_status': self.payment_status,
+            'virtual_link': self.virtual_link
+        }
+
 class Waitlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -218,6 +305,16 @@ class Waitlist(db.Model):
     request_date = db.Column(db.DateTime, nullable=False)
     notified = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default='active') # active, converted, expired
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'business_id': self.business_id,
+            'service_id': self.service_id,
+            'request_date': self.request_date.isoformat() if self.request_date else None,
+            'status': self.status
+        }
 
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -229,6 +326,16 @@ class Feedback(db.Model):
     sentiment_score = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'appointment_id': self.appointment_id,
+            'user_id': self.user_id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class AdminActivityLog(db.Model):
     """Audit trail for business management actions."""
     id = db.Column(db.Integer, primary_key=True)
@@ -239,6 +346,15 @@ class AdminActivityLog(db.Model):
     ip_address = db.Column(db.String(45), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'business_id': self.business_id,
+            'action': self.action,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None
+        }
+
 class Promotion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
@@ -248,3 +364,46 @@ class Promotion(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'business_id': self.business_id,
+            'title': self.title,
+            'description': self.description,
+            'discount_pct': self.discount_pct,
+            'is_active': self.is_active
+        }
+
+class Payment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey('subscription.id'), nullable=True)
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='INR')
+    status = db.Column(db.String(20), default='pending') # pending, paid, failed, refunded
+    payment_method = db.Column(db.String(50), nullable=True) # razorpay, stripe, cash
+    gateway_transaction_id = db.Column(db.String(100), nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'appointment_id': self.appointment_id,
+            'subscription_id': self.subscription_id,
+            'business_id': self.business_id,
+            'user_id': self.user_id,
+            'amount': self.amount,
+            'currency': self.currency,
+            'status': self.status,
+            'payment_method': self.payment_method,
+            'gateway_transaction_id': self.gateway_transaction_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+

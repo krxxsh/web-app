@@ -10,21 +10,43 @@ from azure.messaging.webpubsubservice import WebPubSubServiceClient
 
 logger = logging.getLogger(__name__)
 
+from datetime import datetime, timezone
+
 def send_verification_otp(user):
-    """Generate and send OTP via Email and SMS."""
+    """Generate and send one unified OTP via Email and SMS."""
     # Generate 6-digit OTP
-    email_otp = str(random.randint(100000, 999999))
-    phone_otp = str(random.randint(100000, 999999))
+    otp = str(random.randint(100000, 999999))
+    
+    user.email_otp = otp
+    user.phone_otp = otp  # Unified
+    user.otp_created_at = datetime.now(timezone.utc)
 
-    user.email_otp = email_otp
-    user.phone_otp = phone_otp
+    # Contextual Message
+    subject = "Verify your AI Sched Account"
+    body = f"Hello {user.username},\n\nYour verification code is: {otp}\n\nThis code expires in 10 minutes."
 
-    # Send Email (Simulation/Placeholder)
-    logger.debug(f"Sending Email OTP {email_otp} to {user.email}")
+    # Send Email
+    send_email(user.email, subject, body)
 
-    # Send SMS (Simulation/Placeholder)
+    # Send SMS/WhatsApp if phone exists
     if user.phone_number:
-        logger.debug(f"Sending SMS OTP {phone_otp} to {user.phone_number}")
+        logger.debug(f"Sending OTP {otp} to {user.phone_number}")
+        send_whatsapp(user.phone_number, f"Your AI Sched verification code is: {otp}")
+
+    from backend.extensions import db
+    db.session.commit()
+
+def send_password_reset_otp(user):
+    """Generate and send OTP for password recovery."""
+    otp = str(random.randint(100000, 999999))
+    
+    user.email_otp = otp
+    user.otp_created_at = datetime.now(timezone.utc)
+
+    subject = "Password Reset Request - AI Sched"
+    body = f"Hello {user.username},\n\nWe received a request to reset your password. Use the following code: {otp}\n\nIf you didn't request this, please ignore this email."
+
+    send_email(user.email, subject, body)
 
     from backend.extensions import db
     db.session.commit()

@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, url_for, redirect, request, jsonif
 from flask_login import login_user, current_user, logout_user
 from backend.extensions import db, bcrypt
 from backend.models.models import User
+from backend.services.notifications import send_password_reset_otp
+from datetime import datetime, timezone, timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -72,3 +74,41 @@ def admin_login():
 def logout():
     logout_user()
     return redirect(url_for('main.home'))
+
+@auth_bp.route("/forgot-password", methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        email = data.get('email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            send_password_reset_otp(user)
+            return jsonify({"success": True, "message": "OTP sent to your email."})
+        return jsonify({"success": False, "message": "Email not found."}), 404
+    return render_template('forgot_password.html', title='Forgot Password')
+
+@auth_bp.route("/reset-password", methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        email = data.get('email')
+        otp = data.get('otp')
+        new_password = data.get('password')
+
+        user = User.query.filter_by(email=email).first()
+        if not user or user.email_otp != otp:
+            return jsonify({"success": False, "message": "Invalid email or OTP."}), 400
+
+        # Check OTP expiration (10 minutes)
+        if user.otp_created_at:
+            if datetime.now(timezone.utc) - user.otp_created_at.replace(tzinfo=timezone.utc) > timedelta(minutes=10):
+                return jsonify({"success": False, "message": "OTP expired."}), 400
+
+        # Update password
+        user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        user.email_otp = None  # Clear OTP after use
+        db.session.commit()
+        return jsonify({"success": True, "message": "Password reset successful."})
+
+    email = request.args.get('email', '')
+    return render_template('reset_password.html', title='Reset Password', email=email)

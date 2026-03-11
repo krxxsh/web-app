@@ -16,6 +16,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # CORS (for separate Vercel frontend)
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
+
     # Base URL for absolute links (Payments, WhatsApp, etc)
     BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000')
     

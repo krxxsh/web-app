@@ -7,6 +7,10 @@ logger = logging.getLogger(__name__)
 
 def init_firebase():
     """Initialize Firebase Admin SDK using service account or environment variables."""
+    # Check if a default app already exists to avoid ValueError
+    if len(firebase_admin._apps) > 0:
+        return
+
     # Priority 1: Service Account JSON file in root directory 
     path_to_json = os.path.join(os.path.dirname(__file__), '..', '..', 'serviceAccountKey.json')
 

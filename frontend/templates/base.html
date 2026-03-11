@@ -288,7 +288,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Firebase Configuration (Placeholders - User should replace these)
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "{{ config.FIREBASE_API_KEY }}",
             authDomain: "{{ config.FIREBASE_AUTH_DOMAIN }}",
@@ -298,29 +298,37 @@
             appId: "{{ config.FIREBASE_APP_ID }}"
         };
 
-        // Initialize Firebase
-        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'None' && firebaseConfig.apiKey !== '') {
-            firebase.initializeApp(firebaseConfig);
+        const isFirebaseEnabled = {{ 'true' if is_firebase_enabled else 'false' }};
+        window.isFirebaseActive = false;
 
-            // Handle Auth State Changes
-            firebase.auth().onAuthStateChanged(async (user) => {
-                const isAuth = "{{ current_user.is_authenticated }}".toLowerCase() === 'true';
+        if (isFirebaseEnabled) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                window.isFirebaseActive = true;
+                console.log("Firebase initialized successfully.");
 
-                if (user && !isAuth) {
-                    // Firebase has a user but Flask doesn't - Sync!
-                    const idToken = await user.getIdToken();
-                    fetch('/api/firebase-login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken: idToken })
-                    }).then(res => {
-                        if (res.ok) window.location.reload();
-                    });
-                } else if (!user && isAuth) {
-                    // Flask has a user but Firebase doesn't - Logout!
-                    window.location.href = '/logout';
-                }
-            });
+                // Handle Auth State Changes
+                firebase.auth().onAuthStateChanged(async (user) => {
+                    const isAuth = "{{ current_user.is_authenticated }}".toLowerCase() === 'true';
+
+                    if (user && !isAuth) {
+                        const idToken = await user.getIdToken();
+                        fetch('/api/firebase-login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ idToken: idToken })
+                        }).then(res => {
+                            if (res.ok) window.location.reload();
+                        });
+                    } else if (!user && isAuth) {
+                        window.location.href = '/logout';
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase Initialization Failed:", err);
+            }
+        } else {
+            console.warn("Firebase is disabled. Ensure FIREBASE_API_KEY is set in environment.");
         }
     </script>
     <!-- Custom Scripts -->

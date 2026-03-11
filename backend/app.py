@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from backend.config import Config
 from backend.extensions import db, bcrypt, login_manager, limiter, migrate
 from flask_talisman import Talisman
@@ -7,10 +8,14 @@ def create_app(config_class=Config):
     app = Flask(__name__, 
                 template_folder='../frontend/templates',
                 static_folder='../frontend/static')
-    app.config.from_object(Config)
+    app.config.from_object(config_class)
+
+    # CORS — scoped to /api/* for Vercel frontend
+    cors_origins = app.config.get('CORS_ORIGINS', '*')
+    CORS(app, resources={r"/api/*": {"origins": cors_origins}}, supports_credentials=True)
 
     # Security Headers
-    Talisman(app, content_security_policy=None) # Start with base headers, CSP tuned later
+    Talisman(app, content_security_policy=None, force_https=app.config.get('TALISMAN_FORCE_HTTPS', True)) # Start with base headers, CSP tuned later
 
     from backend.services.firebase_config import init_firebase
     init_firebase()
@@ -39,6 +44,13 @@ def create_app(config_class=Config):
     app.register_blueprint(staff_bp)
     app.register_blueprint(explore_bp)
     app.register_blueprint(emergency_bp)
+    
+    @app.context_processor
+    def inject_config():
+        is_firebase_enabled = bool(app.config.get('FIREBASE_API_KEY') and 
+                                 app.config.get('FIREBASE_API_KEY') != 'None' and
+                                 app.config.get('FIREBASE_API_KEY') != '')
+        return dict(config=app.config, is_firebase_enabled=is_firebase_enabled)
 
     # Register custom CLI commands
     from backend.commands import register_commands

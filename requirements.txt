@@ -17,6 +17,7 @@ google-generativeai
 Flask-Migrate
 Flask-Talisman
 Flask-Limiter
+Flask-Cors
 gunicorn
 psycopg2-binary
 firebase-admin
