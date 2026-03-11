@@ -2,6 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, auth
 import os
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -11,19 +12,32 @@ def init_firebase():
     if len(firebase_admin._apps) > 0:
         return
 
-    # Priority 1: Service Account JSON file in root directory 
+    # Priority 1: FIREBASE_SERVICE_ACCOUNT environment variable (Best for Cloud/Vercel)
+    firebase_service_account = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+    if firebase_service_account:
+        try:
+            # Parse the JSON string
+            cred_dict = json.loads(firebase_service_account)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase initialized via FIREBASE_SERVICE_ACCOUNT environment variable")
+            return
+        except Exception as e:
+            logger.error(f"Failed to initialize Firebase via env var: {e}")
+
+    # Priority 2: Service Account JSON file in root directory 
     path_to_json = os.path.join(os.path.dirname(__file__), '..', '..', 'serviceAccountKey.json')
 
     if os.path.exists(path_to_json):
         cred = credentials.Certificate(path_to_json)
         firebase_admin.initialize_app(cred)
         logger.info("Firebase initialized via serviceAccountKey.json")
-    # Priority 2: Google Application Credentials environment variable
+    # Priority 3: Google Application Credentials environment variable
     elif os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
         firebase_admin.initialize_app()
         logger.info("Firebase initialized via GOOGLE_APPLICATION_CREDENTIALS")
     else:
-        # Priority 3: Mock/Simulation mode for development if no creds found
+        # Priority 4: Mock/Simulation mode for development if no creds found
         logger.warning("No Firebase credentials found. Running in simulation mode.")
 
 def verify_firebase_token(id_token):
