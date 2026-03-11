@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, jsonify, redirect, url_for, flash
+from flask import Blueprint, render_template, jsonify, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from backend.extensions import db
 from backend.models.models import Business, Appointment, Service
 from sqlalchemy.orm import joinedload
 from backend.services.scheduling_service import get_rebook_suggestion
@@ -12,6 +13,48 @@ main_bp = Blueprint('main', __name__)
 def home():
     businesses = Business.query.filter_by(status='active').all()
     return render_template('home.html', businesses=businesses)
+
+@main_bp.route("/select-role", methods=['GET', 'POST'])
+@login_required
+def select_role():
+    if request.method == 'POST':
+        data = request.get_json()
+        role = data.get('role')
+        phone = data.get('phone')
+        business_name = data.get('business_name')
+
+        if role not in ['customer', 'business_owner']:
+            return jsonify({"success": False, "message": "Invalid role"}), 400
+
+        current_user.role = role
+        if phone:
+            current_user.phone_number = phone
+
+        if role == 'business_owner':
+            if not business_name:
+                return jsonify({"success": False, "message": "Business name is required"}), 400
+            # Create a pending business profile
+            from backend.models.models import BusinessCategory
+            default_category = BusinessCategory.query.first()
+            business = Business(
+                name=business_name,
+                owner_id=current_user.id,
+                status='pending',
+                category_id=default_category.id if default_category else None
+            )
+            db.session.add(business)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "redirect": "/admin/dashboard" if role == 'business_owner' else "/"
+        })
+
+    if current_user.role != 'pending':
+        return redirect(url_for('main.home'))
+    return render_template('select_role.html')
+
 
 @main_bp.route("/business/<int:business_id>")
 def business_page(business_id):

@@ -556,7 +556,7 @@ def firebase_login():
 
     # Optional metadata for registration
     reg_username = data.get('username')
-    reg_role = data.get('role', 'customer')
+    reg_role = data.get('role') # If None, it's a login from the login page, so we set 'pending' later
     reg_phone = data.get('phone')
 
     from backend.services.firebase_config import verify_firebase_token
@@ -577,11 +577,28 @@ def firebase_login():
             user.firebase_uid = uid
         else:
             # Create a shadow user profile for the marketplace
-            # Use 'business_owner' instead of 'admin' from the form if applicable
-            role = 'business_owner' if reg_role == 'admin' or reg_role == 'business_owner' else 'customer'
+            # Shadow user profile for marketplace
+            # reg_role from registration will be 'customer' or 'admin' (which maps to business_owner)
+            # If reg_role is None, it means it's a direct Google Login -> 'pending'
+            role = reg_role
+            if role == 'admin':
+                role = 'business_owner'
+            if not role:
+                role = 'pending'
+
+            import re
+            # Generate unique username — strip spaces and non-alphanumeric chars
+            raw = reg_username or decoded_token.get('name', email.split('@')[0])
+            base_username = re.sub(r'[^a-zA-Z0-9_]', '', raw.replace(' ', '_'))[:15] or 'user'
+
+            username = base_username
+            counter = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{base_username}{counter}"
+                counter += 1
 
             user = User(
-                username=reg_username or decoded_token.get('name', email.split('@')[0]),
+                username=username,
                 email=email,
                 firebase_uid=uid,
                 role=role,
@@ -592,10 +609,53 @@ def firebase_login():
             db.session.add(user)
         db.session.commit()
 
+    # Log in the user
     from flask_login import login_user
-    login_user(user, remember=True)
+    login_user(user)
 
-    return jsonify({"success": True, "message": "Session synchronized"})
+    return jsonify({
+        "success": True, 
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "is_verified": user.is_verified
+        }
+    })
+
+@api_bp.route('/user/select-role', methods=['POST'])
+@login_required
+def select_role():
+    data = request.json
+    role = data.get('role')
+    
+    if role not in ['customer', 'business_owner']:
+        return jsonify({"success": False, "message": "Invalid role selected"}), 400
+        
+    current_user.role = role
+    
+    # Optional fields
+    phone = data.get('phone')
+    if phone:
+        current_user.phone_number = phone
+        
+    business_name = data.get('business_name')
+    if role == 'business_owner' and business_name:
+        # Create a business entry if possible, or just hold it
+        # Actually, let's just make the user role business_owner. The business onboarding will ask for business name later.
+        pass
+        
+    db.session.commit()
+    
+    return jsonify({
+        "success": True,
+        "message": "Role updated successfully",
+        "redirect": "/dashboard" if role == "business_owner" else "/marketplace"
+    })
+
+
+
 
 @api_bp.route("/subscription/plans", methods=['GET'])
 def get_plans():

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Select Your Role - Management App{% endblock %}
+
+{% block content %}
+<div class="auth-container min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="auth-card glass-morphism p-5 text-center animate-fade-in" style="max-width: 600px; width: 100%;">
+        <div class="brand-logo mb-4">
+            <i class="fas fa-user-tag fa-3x text-gradient"></i>
+        </div>
+        <h2 class="auth-title mb-2">Complete Your Profile</h2>
+        <p class="text-muted mb-5">Please select how you'll be using the platform to personalize your experience.</p>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="role-card p-4 h-100 d-flex flex-column align-items-center justify-content-center cursor-pointer transition-all" id="customer-role">
+                    <div class="icon-circle mb-3 bg-soft-primary">
+                        <i class="fas fa-shopping-bag fa-2x text-primary"></i>
+                    </div>
+                    <h4>Customer</h4>
+                    <p class="small text-muted mb-0">I want to discover businesses and book services.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="role-card p-4 h-100 d-flex flex-column align-items-center justify-content-center cursor-pointer transition-all" id="business-role">
+                    <div class="icon-circle mb-3 bg-soft-success">
+                        <i class="fas fa-store fa-2x text-success"></i>
+                    </div>
+                    <h4>Business Owner</h4>
+                    <p class="small text-muted mb-0">I want to manage my business and bookings.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label for="phone-input" class="form-label fw-bold">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+            <input type="tel" id="phone-input" class="form-control form-control-lg" placeholder="+91 98765 43210">
+        </div>
+
+        <div class="mb-4 text-start d-none" id="business-name-group">
+            <label for="business-name-input" class="form-label fw-bold">Business Name <span class="text-danger">*</span></label>
+            <input type="text" id="business-name-input" class="form-control form-control-lg" placeholder="e.g. Krish's Wellness Clinic">
+            <div class="form-text">You can update this later from your dashboard.</div>
+        </div>
+
+        <button id="confirm-role" class="btn btn-primary btn-lg w-100 py-3 shadow-lg transition-all" disabled>
+            Complete Setup
+        </button>
+
+        <div id="selection-error" class="alert alert-danger mt-3 d-none">
+            Please select a role to continue.
+        </div>
+    </div>
+</div>
+
+<style>
+.role-card {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.role-card.active {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
+}
+
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
+.bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+
+.cursor-pointer { cursor: pointer; }
+
+#confirm-role:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const customerCard = document.getElementById('customer-role');
+    const businessCard = document.getElementById('business-role');
+    const confirmBtn = document.getElementById('confirm-role');
+    const businessNameGroup = document.getElementById('business-name-group');
+    const errorEl = document.getElementById('selection-error');
+    let selectedRole = null;
+
+    const selectRole = (role) => {
+        selectedRole = role;
+        confirmBtn.disabled = false;
+        errorEl.classList.add('d-none');
+
+        if (role === 'customer') {
+            customerCard.classList.add('active');
+            businessCard.classList.remove('active');
+            businessNameGroup.classList.add('d-none');
+        } else {
+            businessCard.classList.add('active');
+            customerCard.classList.remove('active');
+            businessNameGroup.classList.remove('d-none');
+        }
+    };
+
+    customerCard.addEventListener('click', () => selectRole('customer'));
+    businessCard.addEventListener('click', () => selectRole('business_owner'));
+
+    confirmBtn.addEventListener('click', async () => {
+        if (!selectedRole) {
+            errorEl.textContent = 'Please select a role to continue.';
+            errorEl.classList.remove('d-none');
+            return;
+        }
+
+        const phoneVal = document.getElementById('phone-input').value.trim();
+        const businessNameVal = document.getElementById('business-name-input').value.trim();
+
+        if (selectedRole === 'business_owner' && !businessNameVal) {
+            errorEl.textContent = 'Please enter your business name.';
+            errorEl.classList.remove('d-none');
+            return;
+        }
+
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Setting things up...';
+        confirmBtn.disabled = true;
+
+        try {
+            const response = await fetch('/select-role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: selectedRole,
+                    phone: phoneVal || null,
+                    business_name: businessNameVal || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect || '/';
+            } else {
+                errorEl.textContent = data.message || 'An error occurred. Please try again.';
+                errorEl.classList.remove('d-none');
+                confirmBtn.innerHTML = 'Complete Setup';
+                confirmBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error selecting role:', error);
+            errorEl.textContent = 'An unexpected error occurred. Please try again.';
+            errorEl.classList.remove('d-none');
+            confirmBtn.innerHTML = 'Complete Setup';
+            confirmBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}
