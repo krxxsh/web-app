@@ -627,31 +627,23 @@ def firebase_login():
 @api_bp.route('/user/select-role', methods=['POST'])
 @login_required
 def select_role():
-    data = request.json
+    data = request.json or {}
     role = data.get('role')
-    
+    phone = data.get('phone')
+
     if role not in ['customer', 'business_owner']:
         return jsonify({"success": False, "message": "Invalid role selected"}), 400
-        
+
     current_user.role = role
-    
-    # Optional fields
-    phone = data.get('phone')
     if phone:
         current_user.phone_number = phone
-        
-    business_name = data.get('business_name')
-    if role == 'business_owner' and business_name:
-        # Create a business entry if possible, or just hold it
-        # Actually, let's just make the user role business_owner. The business onboarding will ask for business name later.
-        pass
-        
+
     db.session.commit()
-    
+
     return jsonify({
         "success": True,
         "message": "Role updated successfully",
-        "redirect": "/dashboard" if role == "business_owner" else "/marketplace"
+        "redirect": "/admin/dashboard" if role == "business_owner" else "/",
     })
 
 

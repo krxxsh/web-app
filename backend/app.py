@@ -134,7 +134,7 @@ def create_app(config_class=Config):
         app.register_blueprint(emergency_bp)
 
         from flask_login import current_user
-        from flask import redirect, url_for, request
+        from flask import redirect, request
 
         @app.before_request
         def check_role_selection():
@@ -176,10 +176,6 @@ def create_app(config_class=Config):
     register_commands(app)
 
     # DB initialization logic wrapped in try-except
-    @app.before_listens_for(db.engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        # Optimized for performance if using sqlite fallback
-        pass
 
     try:
         with app.app_context():

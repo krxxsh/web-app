@@ -18,29 +18,31 @@ def home():
 @login_required
 def select_role():
     if request.method == 'POST':
-        data = request.get_json()
+        data = request.get_json() or {}
         role = data.get('role')
         phone = data.get('phone')
-        business_name = data.get('business_name')
+        business_name = (data.get('business_name') or '').strip()
 
+        # --- Validate first, mutate nothing yet ---
         if role not in ['customer', 'business_owner']:
             return jsonify({"success": False, "message": "Invalid role"}), 400
 
+        if role == 'business_owner' and not business_name:
+            return jsonify({"success": False, "message": "Business name is required"}), 400
+
+        # --- All valid: apply changes ---
         current_user.role = role
         if phone:
             current_user.phone_number = phone
 
         if role == 'business_owner':
-            if not business_name:
-                return jsonify({"success": False, "message": "Business name is required"}), 400
-            # Create a pending business profile
             from backend.models.models import BusinessCategory
             default_category = BusinessCategory.query.first()
             business = Business(
                 name=business_name,
                 owner_id=current_user.id,
                 status='pending',
-                category_id=default_category.id if default_category else None
+                category_id=default_category.id if default_category else None,
             )
             db.session.add(business)
 
@@ -48,7 +50,7 @@ def select_role():
 
         return jsonify({
             "success": True,
-            "redirect": "/admin/dashboard" if role == 'business_owner' else "/"
+            "redirect": "/admin/dashboard" if role == 'business_owner' else "/",
         })
 
     if current_user.role != 'pending':
