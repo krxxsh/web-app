@@ -20,4 +20,6 @@ Flask-Limiter
 gunicorn
 psycopg2-binary
 firebase-admin
+azure-messaging-webpubsubservice
+
 
