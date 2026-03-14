@@ -1,7 +1,7 @@
 /* AI Sched Elite Design System - V2.0 - <label> accessibility marker */
 :root {
     /* Color Palette - Indigo & Slate */
-    --primary-hue: 243;
+    --primary-hue: 218;
     --primary: hsl(var(--primary-hue), 75%, 59%);
     --primary-dark: hsl(var(--primary-hue), 75%, 45%);
     --primary-glow: hsla(var(--primary-hue), 75%, 59%, 0.5);

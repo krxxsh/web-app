@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmBtn.disabled = true;
 
         try {
-            const response = await fetch('/select-role', {
+            const response = await fetch('/api/user/select-role', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

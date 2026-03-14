@@ -48,6 +48,7 @@ def create_app(config_class=Config):
             'https://cdn.jsdelivr.net',
             'https://www.gstatic.com',
             'https://apis.google.com',
+            'https://accounts.google.com',
             'https://checkout.razorpay.com'
         ],
         'style-src': [
@@ -81,7 +82,8 @@ def create_app(config_class=Config):
         ],
         'frame-src': [
             "'self'",
-            'https://api.razorpay.com'
+            'https://api.razorpay.com',
+            'https://accounts.google.com'
         ]
     }
     
