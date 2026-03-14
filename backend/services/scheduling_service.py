@@ -101,3 +101,28 @@ def join_waitlist(user_id, business_id, service_id):
     db.session.add(new_entry)
     db.session.commit()
     return True, "Joined waitlist successfully."
+
+def check_in_with_pin(pin):
+    """
+    Locates an appointment for the current time window matching the 6-digit PIN.
+    Marks it as checked-in.
+    """
+    # Find appointments starting within 15 mins before/after now
+    from datetime import timedelta
+    now = datetime.utcnow()
+    window_start = now - timedelta(minutes=15)
+    window_end = now + timedelta(minutes=60) # Broad window for check-in
+
+    appt = Appointment.query.filter(
+        Appointment.checkin_pin == pin,
+        Appointment.start_time >= window_start,
+        Appointment.start_time <= window_end
+    ).first()
+
+    if appt:
+        appt.status = 'arrived'
+        appt.check_in_time = now
+        db.session.commit()
+        return True, f"Successfully checked in for {appt.service.name}"
+    
+    return False, "Invalid PIN or appointment not found today"

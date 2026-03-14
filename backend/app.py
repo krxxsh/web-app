@@ -83,9 +83,9 @@ def create_app(config_class=Config):
     
     Talisman(app, 
              content_security_policy=csp, 
-             force_https=app.config.get('TALISMAN_FORCE_HTTPS', True),
-             strict_transport_security=True,
-             session_cookie_secure=True,
+             force_https=app.config.get('TALISMAN_FORCE_HTTPS', not app.debug),
+             strict_transport_security=not app.debug,
+             session_cookie_secure=not app.debug,
              content_security_policy_nonce_in=['script-src'])
 
     @app.route("/api/ping")

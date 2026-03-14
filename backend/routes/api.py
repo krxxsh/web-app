@@ -330,6 +330,20 @@ def check_in(appt_id):
 
     return jsonify({"success": True, "message": "Checked in successfully!"})
 
+@api_bp.route("/kiosk/check_in", methods=['POST'])
+def kiosk_check_in():
+    """Endpoint for the Kiosk to check in appointments via PIN."""
+    data = request.get_json()
+    pin = data.get('pin')
+    if not pin:
+        return jsonify({'error': 'PIN required'}), 400
+    
+    from backend.services.scheduling_service import check_in_with_pin
+    success, message = check_in_with_pin(pin)
+    if success:
+        return jsonify({'success': True, 'message': message})
+    return jsonify({'error': message}), 400
+
 @api_bp.route("/feedback/submit", methods=['POST'])
 @login_required
 def submit_feedback():
@@ -615,6 +629,7 @@ def firebase_login():
 
     return jsonify({
         "success": True, 
+        "needs_role": user.role == 'pending',
         "user": {
             "id": user.id,
             "username": user.username,

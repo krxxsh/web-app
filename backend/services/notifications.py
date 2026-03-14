@@ -1,6 +1,7 @@
 import random
 import json
 import smtplib
+import secrets
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import logging
@@ -12,10 +13,14 @@ logger = logging.getLogger(__name__)
 
 from datetime import datetime, timezone
 
+def generate_secure_otp():
+    """Generates a cryptographically secure 6-digit OTP."""
+    return "".join([str(secrets.randbelow(10)) for _ in range(6)])
+
 def send_verification_otp(user):
     """Generate and send one unified OTP via Email and SMS."""
     # Generate 6-digit OTP
-    otp = str(random.randint(100000, 999999))
+    otp = generate_secure_otp()
     
     user.email_otp = otp
     user.phone_otp = otp  # Unified
@@ -38,10 +43,13 @@ def send_verification_otp(user):
 
 def send_password_reset_otp(user):
     """Generate and send OTP for password recovery."""
-    otp = str(random.randint(100000, 999999))
+    otp = generate_secure_otp()
     
     user.email_otp = otp
     user.otp_created_at = datetime.now(timezone.utc)
+
+    # SECURE LOGGING: Never log the actual OTP in production
+    logger.info(f"Password reset OTP generated for user ID: {user.id}")
 
     subject = "Password Reset Request - AI Sched"
     body = f"Hello {user.username},\n\nWe received a request to reset your password. Use the following code: {otp}\n\nIf you didn't request this, please ignore this email."
@@ -54,6 +62,11 @@ def send_password_reset_otp(user):
 def send_email(to_email, subject, body):
     """Sends an email using SMTP. Simulates if credentials missing."""
     if not current_app.config.get('MAIL_PASSWORD'):
+        print("\n" + "="*50)
+        print(f"📧 [SIMULATED EMAIL] To: {to_email}")
+        print(f"Subject: {subject}")
+        print(f"Body: {body}")
+        print("="*50 + "\n")
         logger.debug(f"[SIMULATED EMAIL] To: {to_email} | Subject: {subject}")
         return True
 
@@ -81,6 +94,10 @@ def send_whatsapp(to_number, message):
     from_number = current_app.config.get('TWILIO_WHATSAPP_NUMBER')
 
     if not all([account_sid, auth_token, from_number]):
+        print("\n" + "="*50)
+        print(f"📱 [SIMULATED WHATSAPP] To: {to_number}")
+        print(f"Message: {message}")
+        print("="*50 + "\n")
         logger.debug(f"[WHATSAPP]: {to_number} -> {message}")
         return True
 

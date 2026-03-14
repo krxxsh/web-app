@@ -82,10 +82,44 @@ def forgot_password():
         email = data.get('email')
         user = User.query.filter_by(email=email).first()
         if user:
+            # Rate limiting: only send OTP every 60 seconds
+            if user.otp_created_at:
+                now = datetime.now(timezone.utc)
+                last_otp = user.otp_created_at.replace(tzinfo=timezone.utc)
+                if now - last_otp < timedelta(seconds=60):
+                    return jsonify({"success": False, "message": "Please wait before requesting another OTP."}), 429
+            
             send_password_reset_otp(user)
             return jsonify({"success": True, "message": "OTP sent to your email."})
         return jsonify({"success": False, "message": "Email not found."}), 404
     return render_template('forgot_password.html', title='Forgot Password')
+
+@auth_bp.route("/google-auth", methods=['POST'])
+def google_auth():
+    """Handles Google/External auth by creating or logging in the user."""
+    data = request.get_json()
+    email = data.get('email')
+    username = data.get('username')
+    uid = data.get('uid') # Firebase UUID or Google ID
+
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Create user if it doesn't exist
+        user = User(
+            username=username or email.split('@')[0],
+            email=email,
+            password='EXTERNAL_AUTH', # Placeholder
+            role='customer',
+            is_verified=True
+        )
+        db.session.add(user)
+        db.session.commit()
+    
+    login_user(user, remember=True)
+    return jsonify({"success": True})
 
 @auth_bp.route("/reset-password", methods=['GET', 'POST'])
 def reset_password():
