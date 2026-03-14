@@ -3,6 +3,7 @@ from flask_login import login_user, current_user, logout_user, login_required
 from backend.extensions import db, bcrypt
 from backend.models.models import User
 from backend.services.notifications import send_password_reset_otp
+from backend.services.firebase_config import verify_firebase_token
 from datetime import datetime, timezone, timedelta
 
 auth_bp = Blueprint('auth', __name__)
@@ -96,20 +97,31 @@ def forgot_password():
 
 @auth_bp.route("/google-auth", methods=['POST'])
 def google_auth():
-    """Handles Google/External auth by creating or logging in the user."""
+    """Handles Google/External auth by verifying the ID token."""
     data = request.get_json()
-    email = data.get('email')
-    username = data.get('username')
-    uid = data.get('uid') # Firebase UUID or Google ID
-
-    if not email:
-        return jsonify({"success": False, "message": "Email is required"}), 400
+    id_token = data.get('idToken')
+    
+    if not id_token:
+        # Fallback for manual data if token is missing (useful for dev-login patterns if needed)
+        email = data.get('email')
+        username = data.get('username')
+        uid = data.get('uid')
+        if not email:
+            return jsonify({"success": False, "message": "idToken or Email is required"}), 400
+    else:
+        decoded_token = verify_firebase_token(id_token)
+        if not decoded_token:
+            return jsonify({"success": False, "message": "Invalid or expired token"}), 401
+        
+        email = decoded_token.get('email')
+        username = decoded_token.get('name') or email.split('@')[0]
+        uid = decoded_token.get('uid')
 
     user = User.query.filter_by(email=email).first()
     if not user:
         # Create user if it doesn't exist
         user = User(
-            username=username or email.split('@')[0],
+            username=username,
             email=email,
             password='EXTERNAL_AUTH', # Placeholder
             role='customer',
