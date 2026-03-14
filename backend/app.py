@@ -73,7 +73,11 @@ def create_app(config_class=Config):
             'https://*.vercel.app',
             'https://*.render.com',
             'https://*.sentry.io',
-            'https://*.google-analytics.com'
+            'https://*.google-analytics.com',
+            'https://*.googleapis.com',
+            'https://*.firebaseio.com',
+            'https://*.firebaseapp.com',
+            'https://identitytoolkit.googleapis.com'
         ],
         'frame-src': [
             "'self'",

@@ -74,3 +74,34 @@
     padding: 0.4rem 1rem;
     font-size: 0.85rem;
 }
+
+/* Google Login Button */
+.btn-google-login {
+    background: #fff;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.btn-google-login:hover {
+    background: #f8f8f8;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+[data-bs-theme="dark"] .btn-google-login {
+    background: #222;
+    color: #eee;
+    border-color: #444;
+}
+
+[data-bs-theme="dark"] .btn-google-login:hover {
+    background: #333;
+}

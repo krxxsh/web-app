@@ -18,7 +18,7 @@
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-primary">Login with Email</button>
-                    <button type="button" class="btn btn-outline-light" onclick="signInWithGoogle()">
+                    <button type="button" class="btn btn-google-login" onclick="signInWithGoogle()">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"
                             class="me-2" alt="Google Logo">
                         Sign in with Google
@@ -29,7 +29,7 @@
                 <small><i class="fas fa-lock me-1"></i> Secure 256-bit SSL Connection</small>
             </div>
 
-            <script>
+            <script nonce="{{ csp_nonce() }}">
                 document.getElementById('loginForm').addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const email = document.getElementById('email').value;
