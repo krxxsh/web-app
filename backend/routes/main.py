@@ -127,3 +127,14 @@ def waiting_room_data(appt_id):
         "pos": pos,
         "status": appt.status
     })
+@main_bp.route("/about")
+def about():
+    return render_template('about.html')
+
+@main_bp.route("/services")
+def services():
+    return render_template('services.html')
+
+@main_bp.route("/support")
+def support():
+    return render_template('support.html')

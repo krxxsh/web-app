@@ -44,23 +44,26 @@ def create_app(config_class=Config):
         'script-src': [
             "'self'",
             "'unsafe-inline'",
-            "'unsafe-eval'",  # Required for some Three.js/GSAP patterns if dynamically loading
+            "'unsafe-eval'",
             'https://cdn.jsdelivr.net',
             'https://www.gstatic.com',
             'https://apis.google.com',
             'https://accounts.google.com',
-            'https://checkout.razorpay.com'
+            'https://checkout.razorpay.com',
+            'https://cdnjs.cloudflare.com'
         ],
         'style-src': [
             "'self'",
             "'unsafe-inline'",
             'https://fonts.googleapis.com',
-            'https://cdn.jsdelivr.net'
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com'
         ],
         'font-src': [
             "'self'",
             'https://fonts.gstatic.com',
-            'https://cdn.jsdelivr.net'
+            'https://cdn.jsdelivr.net',
+            'https://cdnjs.cloudflare.com'
         ],
         'img-src': [
             "'self'",

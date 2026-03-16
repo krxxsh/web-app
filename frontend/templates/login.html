@@ -18,7 +18,7 @@
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-primary">Login with Email</button>
-                    <button type="button" class="btn btn-google-login" onclick="signInWithGoogle()">
+                    <button id="googleAuthBtn" type="button" class="btn btn-google-login">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"
                             class="me-2" alt="Google Logo">
                         Sign in with Google
@@ -69,17 +69,39 @@
 
                 async function signInWithGoogle() {
                     if (typeof firebase === 'undefined' || !firebase.apps.length) {
-                        alert("Google Sign-in is currently unavailable (Incomplete Firebase Configuration). Please use email login for local development.");
+                        alert("Google Sign-in is currently unavailable. Please use email login for local development.");
                         return;
                     }
+                    
                     const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    
                     try {
-                        await firebase.auth().signInWithPopup(provider);
-                        window.location.href = '/';
+                        const result = await firebase.auth().signInWithPopup(provider);
+                        const idToken = await result.user.getIdToken();
+                        
+                        // Sync with backend
+                        const response = await fetch('/api/firebase-login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ idToken: idToken })
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            window.location.href = data.redirect || '/dashboard';
+                        } else {
+                            throw new Error(data.error || "Session synchronization failed");
+                        }
                     } catch (error) {
+                        console.error("Google Auth Error:", error);
                         alert("Google Sign-in Failed: " + error.message);
                     }
                 }
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('googleAuthBtn')?.addEventListener('click', signInWithGoogle);
+                });
             </script>
             <div class="mt-3 text-center">
                 <small class="text-muted">Don't have an account? <a
