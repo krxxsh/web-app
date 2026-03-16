@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Support Center - AI Sched{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Support Intro -->
+        <div class="col-lg-8 mx-auto text-center mb-5">
+            <h1 class="display-4 fw-bold text-gradient">How can we help?</h1>
+            <p class="lead text-muted">Browse our frequently asked questions or get in touch with our elite support team. We're here to ensure your scheduling runs perfectly.</p>
+            <div class="mt-4">
+                <input type="text" class="form-control form-control-lg glass-panel text-center border-0 shadow-sm" 
+                       placeholder="Search for answers..." style="max-width: 500px; margin: 0 auto;">
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto">
+            <div class="glass-panel p-4 border-0 shadow-lg">
+                <h3 class="fw-bold mb-4 px-2">Frequently Asked Questions</h3>
+                <div class="accordion accordion-flush" id="faqAccordion">
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                How do I register my business?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Simply click on "Business Login" and follow the registration flow. You'll need to provide your business name, specialty, and contact information.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Can I manage multiple locations?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Yes, AI Sched supports multi-location management for business owners. You can add locations and assign staff to specific branches within your dashboard.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Is my data secure?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Absolutely. We are ISO 27001 certified and use end-to-end encryption for all sensitive data. Your security is our highest priority at AI Sched.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Form Section -->
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="glass-panel p-4 h-100 border-0 shadow-sm">
+                <h3 class="fw-bold mb-4">Direct Contact</h3>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="p-3 bg-primary-soft text-primary rounded-circle me-3"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <div class="small text-muted">Email Us</div>
+                        <div class="fw-bold">support@aisched.ai</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="p-3 bg-success-soft text-success rounded-circle me-3"><i class="fas fa-phone"></i></div>
+                    <div>
+                        <div class="small text-muted">Call Priority Support</div>
+                        <div class="fw-bold">+1 (888) AI-SCHED</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="p-3 bg-info-soft text-info rounded-circle me-3"><i class="fas fa-map-marker-alt"></i></div>
+                    <div>
+                        <div class="small text-muted">HQ Location</div>
+                        <div class="fw-bold">Palo Alto, CA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="glass-panel p-4 border-0 shadow-lg">
+                <h3 class="fw-bold mb-4">Send a Message</h3>
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Full Name</label>
+                            <input type="text" class="form-control glass-panel border-0" placeholder="John Doe">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Email Address</label>
+                            <input type="email" class="form-control glass-panel border-0" placeholder="john@example.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Message Subject</label>
+                            <select class="form-select glass-panel border-0">
+                                <option selected>Account Support</option>
+                                <option>Technical Issue</option>
+                                <option>Billing Question</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">How can we help?</label>
+                            <textarea class="form-control glass-panel border-0" rows="4" placeholder="Describe your inquiry..."></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-primary px-4 py-2 hover-lift">Submit Request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - AI Sched{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <h1 class="display-4 fw-bold text-gradient mb-3">Reimagining Time<br>with Intelligence</h1>
+            <p class="lead text-muted">AI Sched is the next generation of appointment handling. We bridge the gap between businesses and customers using state-of-the-art AI to eliminate scheduling friction.</p>
+            <div class="d-flex gap-3 pt-3">
+                <div class="p-3 glass-panel text-center border-0 shadow-sm" style="flex: 1;">
+                    <h3 class="fw-bold text-primary mb-0">99.9%</h3>
+                    <small class="text-muted">Accuracy</small>
+                </div>
+                <div class="p-3 glass-panel text-center border-0 shadow-sm" style="flex: 1;">
+                    <h3 class="fw-bold text-success mb-0">24/7</h3>
+                    <small class="text-muted">Availability</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="position-relative">
+                <div class="glass-panel p-4 border-0 shadow-lg rounded-4 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=2070" 
+                         alt="Team working" class="img-fluid rounded-3 shadow-sm hover-lift">
+                </div>
+                <!-- Decorative elements -->
+                <div class="position-absolute top-0 start-0 translate-middle-y bg-primary rounded-circle opacity-10" style="width: 100px; height: 100px; z-index: -1;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission & Vision -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="glass-panel p-5 h-100 border-0 shadow-sm hover-lift">
+                <div class="badge bg-primary-soft text-primary mb-3"><i class="fas fa-bullseye me-2"></i> Our Mission</div>
+                <h2 class="fw-bold mb-3">Empowering Local Expertise</h2>
+                <p class="text-muted">Our mission is to provide small and medium-sized businesses with the same high-level scheduling tools used by global enterprises, leveling the playing field through accessible innovation.</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="glass-panel p-5 h-100 border-0 shadow-sm hover-lift">
+                <div class="badge bg-success-soft text-success mb-3"><i class="fas fa-eye me-2"></i> Our Vision</div>
+                <h2 class="fw-bold mb-3">A Frictionless World</h2>
+                <p class="text-muted">We envision a world where every service provider is just one tap away, and no time is wasted on the administrative burden of traditional booking systems.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Values -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Our Core Values</h2>
+        <div class="row g-4 mt-4">
+            <div class="col-md-4">
+                <div class="p-4">
+                    <div class="fs-1 text-primary mb-3"><i class="fas fa-lock"></i></div>
+                    <h4 class="fw-bold">Security First</h4>
+                    <p class="text-muted small">We prioritize data privacy and security in every line of code we write.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4">
+                    <div class="fs-1 text-success mb-3"><i class="fas fa-bolt"></i></div>
+                    <h4 class="fw-bold">Seamless Speed</h4>
+                    <p class="text-muted small">Minimalist interfaces designed for the fastest booking experience possible.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4">
+                    <div class="fs-1 text-info mb-3"><i class="fas fa-brain"></i></div>
+                    <h4 class="fw-bold">AI Native</h4>
+                    <p class="text-muted small">Not just an add-on, intelligence is baked into the foundation of AI Sched.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

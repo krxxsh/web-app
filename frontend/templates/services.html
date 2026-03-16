@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Our Services - AI Sched{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-gradient">Solutions for Every Business</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">Explore how AI Sched adapts to your industry needs, providing a tailored experience for both providers and their clients.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Service 1 -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 h-100 border-0 shadow-lg hover-lift transition-all">
+                <div class="mb-4 d-inline-block p-3 bg-primary-soft rounded-circle">
+                    <i class="fas fa-store fs-3 text-primary"></i>
+                </div>
+                <h3 class="fw-bold">Business Onboarding</h3>
+                <p class="text-muted">Register your business, define your specialties, and start accepting appointments in minutes. Our AI assistant helps you setup your availability and services effortlessly.</p>
+                <ul class="list-unstyled mt-4 text-muted small">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Custom Business Profile</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Role-Based Team Management</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Automated Availability Logic</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 h-100 border-0 border-top border-primary border-4 shadow-lg hover-lift transition-all">
+                <div class="mb-4 d-inline-block p-3 bg-success-soft rounded-circle">
+                    <i class="fas fa-robot fs-3 text-success"></i>
+                </div>
+                <h3 class="fw-bold">Smart Scheduling</h3>
+                <p class="text-muted">Our intelligent engine prevents double bookings and optimizes staff schedules. Customers see real-time availability and receive instant confirmation.</p>
+                <ul class="list-unstyled mt-4 text-muted small">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Instant Slot Booking</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> SMS/Email Notifications</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Queue Management System</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 h-100 border-0 shadow-lg hover-lift transition-all">
+                <div class="mb-4 d-inline-block p-3 bg-info-soft rounded-circle">
+                    <i class="fas fa-user-tie fs-3 text-info"></i>
+                </div>
+                <h3 class="fw-bold">Admin Insights</h3>
+                <p class="text-muted">Comprehensive dashboards for owners and staff. Monitor appointment trends, customer satisfaction, and staff performance with data-driven reports.</p>
+                <ul class="list-unstyled mt-4 text-muted small">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Real-time Dashboard</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Performance Analytics</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Customer Database Entry</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Industry Specific Section -->
+    <div class="mt-5 pt-5 text-center">
+        <h2 class="fw-bold">The Perfect Fit for Any Industry</h2>
+        <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+            <span class="badge glass-panel border-0 px-4 py-3 text-muted shadow-sm"><i class="fas fa-cut me-2"></i> Salons & Barbers</span>
+            <span class="badge glass-panel border-0 px-4 py-3 text-muted shadow-sm"><i class="fas fa-stethoscope me-2"></i> Medical Clinics</span>
+            <span class="badge glass-panel border-0 px-4 py-3 text-muted shadow-sm"><i class="fas fa-gavel me-2"></i> Legal Services</span>
+            <span class="badge glass-panel border-0 px-4 py-3 text-muted shadow-sm"><i class="fas fa-dumbbell me-2"></i> Fitness Centers</span>
+            <span class="badge glass-panel border-0 px-4 py-3 text-muted shadow-sm"><i class="fas fa-laptop-code me-2"></i> Consulting</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
