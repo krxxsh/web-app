@@ -90,8 +90,15 @@ def forgot_password():
                 if now - last_otp < timedelta(seconds=60):
                     return jsonify({"success": False, "message": "Please wait before requesting another OTP."}), 429
             
-            send_password_reset_otp(user)
-            return jsonify({"success": True, "message": "OTP sent to your email."})
+            if send_password_reset_otp(user):
+                return jsonify({"success": True, "message": "OTP sent to your email."})
+            
+            # Internal logging for failure tracking
+            logger.error(f"Failed to dispatch password reset OTP for user: {user.email}")
+            return jsonify({
+                "success": False, 
+                "message": "We're experiencing temporary issues with our notification service. Please try again in a few minutes or contact support if the issue persists."
+            }), 503
         return jsonify({"success": False, "message": "Email not found."}), 404
     return render_template('forgot_password.html', title='Forgot Password')
 

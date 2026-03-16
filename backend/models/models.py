@@ -89,8 +89,6 @@ class User(db.Model, UserMixin):
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True)
 
     # Relationships
-    businesses = db.relationship('Business', backref='owner', lazy=True)
-    appointments = db.relationship('Appointment', backref='customer', lazy=True, foreign_keys='Appointment.customer_id')
     oauth_tokens = db.relationship('OAuthToken', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
 
@@ -162,11 +160,7 @@ class Business(db.Model):
     primary_color = db.Column(db.String(20), default='#1d76f2')
     logo_url = db.Column(db.String(255), nullable=True)
 
-    # Relationships
-    services = db.relationship('Service', backref='business', lazy=True)
-    staff = db.relationship('Staff', backref='business', lazy=True)
-    appointments = db.relationship('Appointment', backref='business', lazy=True)
-    resources = db.relationship('Resource', backref='business', lazy=True)
+    # Relationships are handled via backrefs in Service, Staff, Appointment, Resource
     promotions = db.relationship('Promotion', backref='business', lazy=True)
 
     def to_dict(self):
@@ -194,6 +188,10 @@ class Resource(db.Model):
     quantity = db.Column(db.Integer, default=1)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
 
+    # Relationships
+    business = db.relationship('Business', backref=db.backref('resources', lazy=True))
+
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -215,7 +213,8 @@ class Staff(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     # Relationships
-    appointments = db.relationship('Appointment', backref='staff', lazy=True)
+    business = db.relationship('Business', backref=db.backref('staff', lazy=True))
+    user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
 
     def to_dict(self):
         return {
@@ -233,6 +232,7 @@ class Service(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    business = db.relationship('Business', backref=db.backref('services', lazy=True))
 
     # Advanced Features Support
     requires_resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'), nullable=True)
@@ -279,9 +279,12 @@ class Appointment(db.Model):
     cancellation_reason = db.Column(db.String(255), nullable=True)
     checkin_pin = db.Column(db.String(6), nullable=True) # Secure check-in
 
-    # Relationships
-    service = db.relationship('Service', backref='appointments', lazy=True)
-    feedback = db.relationship('Feedback', backref='appointment', lazy=True, uselist=False)
+    # Unified Relationship source of truth with explicit backrefs
+    customer = db.relationship('User', backref=db.backref('appointments', lazy=True), foreign_keys=[customer_id])
+    business = db.relationship('Business', backref=db.backref('appointments', lazy=True), foreign_keys=[business_id])
+    service = db.relationship('Service', backref=db.backref('appointments', lazy=True), foreign_keys=[service_id])
+    staff = db.relationship('Staff', backref=db.backref('appointments', lazy=True), foreign_keys=[staff_id])
+    resource = db.relationship('Resource', backref=db.backref('appointments', lazy=True), foreign_keys=[resource_id])
 
     def to_dict(self):
         return {

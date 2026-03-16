@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch
 
 # Set environment variables BEFORE importing the app to avoid loading production config
+os.environ['TALISMAN_FORCE_HTTPS'] = 'False'
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['SECRET_KEY'] = 'test_secret'
 os.environ['FIREBASE_API_KEY'] = 'fake'
@@ -19,12 +20,14 @@ from backend.extensions import db
 def app():
     # Mock firebase initialization to avoid external calls
     with patch('backend.services.firebase_config.init_firebase'):
-        app = create_app()
-        app.config.update({
-            "TESTING": True,
-            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-            "TALISMAN_FORCE_HTTPS": False
-        })
+        from backend.config import Config
+        class TestConfig(Config):
+            TESTING = True
+            SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+            TALISMAN_FORCE_HTTPS = False
+            DEBUG = True # Ensure Talisman doesn't force HTTPS or HSTS
+
+        app = create_app(config_class=TestConfig)
 
         with app.app_context():
             db.create_all()

@@ -1,8 +1,11 @@
 import os
+import logging
 from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_12345')
@@ -27,6 +30,9 @@ class Config:
     
     # CORS (for separate Vercel frontend)
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
+
+    # HTTPS enforcement (Talisman)
+    TALISMAN_FORCE_HTTPS = os.environ.get('TALISMAN_FORCE_HTTPS', 'True').lower() == 'true'
 
     # Base URL for absolute links (Payments, WhatsApp, etc)
     BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000')
@@ -57,6 +63,23 @@ class Config:
     MAIL_USERNAME = 'apikey'
     MAIL_PASSWORD = os.environ.get('SENDGRID_API_KEY')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'notifications@ai-sched.com')
+    
+    @staticmethod
+    def validate():
+        """Validates critical infrastructure configurations."""
+        is_prod = os.environ.get('VERCEL') == '1' or os.environ.get('FLASK_ENV') == 'production'
+        if is_prod:
+            missing = []
+            if not os.environ.get('SENDGRID_API_KEY'):
+                missing.append('SENDGRID_API_KEY')
+            
+            if missing:
+                error_msg = f"Critical environment variables missing: {', '.join(missing)}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
+            
+            if not os.environ.get('MAIL_DEFAULT_SENDER'):
+                logger.warning("PROD WARNING: MAIL_DEFAULT_SENDER is missing. Using fallback.")
     
     # AI Engine Config
     AI_SLOT_THRESHOLD = 5 # Number of recommendations

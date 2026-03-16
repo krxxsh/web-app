@@ -1,3 +1,4 @@
+import os
 import random
 import json
 import smtplib
@@ -12,6 +13,7 @@ from azure.messaging.webpubsubservice import WebPubSubServiceClient
 logger = logging.getLogger(__name__)
 
 from datetime import datetime, timezone
+import sentry_sdk
 
 def generate_secure_otp():
     """Generates a cryptographically secure 6-digit OTP."""
@@ -42,7 +44,7 @@ def send_verification_otp(user):
     db.session.commit()
 
 def send_password_reset_otp(user):
-    """Generate and send OTP for password recovery."""
+    """Generate and send OTP for password recovery. Returns success status."""
     otp = generate_secure_otp()
     
     user.email_otp = otp
@@ -54,14 +56,24 @@ def send_password_reset_otp(user):
     subject = "Password Reset Request - AI Sched"
     body = f"Hello {user.username},\n\nWe received a request to reset your password. Use the following code: {otp}\n\nIf you didn't request this, please ignore this email."
 
-    send_email(user.email, subject, body)
-
-    from backend.extensions import db
-    db.session.commit()
+    success = send_email(user.email, subject, body)
+    
+    if success:
+        from backend.extensions import db
+        db.session.commit()
+    
+    return success
 
 def send_email(to_email, subject, body):
-    """Sends an email using SMTP. Simulates if credentials missing."""
-    if not current_app.config.get('MAIL_PASSWORD'):
+    """Sends an email using SMTP. Simulates if credentials missing in non-prod."""
+    is_prod = current_app.config.get('ENV') == 'production' or os.environ.get('VERCEL') == '1'
+    mail_password = current_app.config.get('MAIL_PASSWORD')
+
+    if not mail_password:
+        if is_prod:
+            logger.error("Email failed: MAIL_PASSWORD missing in production environment.")
+            return False
+        
         print("\n" + "="*50)
         print(f"📧 [SIMULATED EMAIL] To: {to_email}")
         print(f"Subject: {subject}")
@@ -79,12 +91,13 @@ def send_email(to_email, subject, body):
 
         server = smtplib.SMTP(current_app.config.get('MAIL_SERVER'), current_app.config.get('MAIL_PORT'))
         server.starttls()
-        server.login(current_app.config.get('MAIL_USERNAME'), current_app.config.get('MAIL_PASSWORD'))
+        server.login(current_app.config.get('MAIL_USERNAME'), mail_password)
         server.send_message(msg)
         server.quit()
+        logger.info(f"Email sent successfully to {to_email}")
         return True
     except Exception as e:
-        logger.error(f"Error sending email: {e}")
+        log_and_notify_critical_failure("Email Dispatch", e, {"to": to_email, "subject": subject})
         return False
 
 def send_whatsapp(to_number, message):
@@ -108,7 +121,7 @@ def send_whatsapp(to_number, message):
         client.messages.create(from_=from_number, body=message, to=to_number)
         return True
     except Exception as e:
-        logger.error(f"Failed to send WhatsApp: {e}")
+        log_and_notify_critical_failure("WhatsApp Dispatch", e, {"to": to_number})
         return False
 
 # Localization Mapping
@@ -154,6 +167,21 @@ def send_realtime_update(target_type, target_id, data):
     except Exception as e:
         logger.error(f"Web PubSub error: {e}")
         return False
+
+def log_and_notify_critical_failure(operation, error, details=None):
+    """Logs a critical failure to Sentry and local logs for fast incident response."""
+    msg = f"CRITICAL FAILURE: {operation} | Error: {str(error)}"
+    logger.critical(msg)
+    
+    # Send to Sentry if configured
+    with sentry_sdk.push_scope() as scope:
+        if details:
+            for k, v in details.items():
+                scope.set_extra(k, v)
+        sentry_sdk.capture_message(msg, level="fatal")
+    
+    # Potential future: Send to Slack/PagerDuty here
+    print(f"🚨 ALERT: {msg}")
 
 def notify_booking_confirmation(appointment, lang='en'):
     # Email
