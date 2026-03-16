@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from backend.extensions import db, limiter
 from backend.models.models import Business, Service, Appointment, Feedback, Promotion, User
-from ai_engine.engine import generate_slots, get_ai_recommendations
+from backend.ai_engine.engine import generate_slots, get_ai_recommendations
 from backend.services.notifications import notify_booking_confirmation
 from backend.services.payments import create_razorpay_order, verify_payment_signature
 from backend.ai_engine.pricing import calculate_dynamic_price
@@ -244,7 +244,7 @@ def cancel_appointment(appt_id):
 def get_appointment_status(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
 
-    from ai_engine.engine import predict_delay
+    from backend.ai_engine.engine import predict_delay
     delay_mins = predict_delay(appt.id)
 
     return jsonify({
@@ -462,7 +462,7 @@ def request_priority():
     """Allows user to flag an appointment for 'Urgent' triage by admin."""
     data = request.get_json()
     appt_id = data.get('appointment_id')
-    data.get('reason')
+    reason = data.get('reason')
 
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
@@ -543,10 +543,15 @@ def get_calendar_events():
     if current_user.role not in ['business', 'admin']:
         return jsonify([])
 
-    request.args.get('start')
-    request.args.get('end')
+    start_param = request.args.get('start')
+    end_param = request.args.get('end')
 
-    appts = Appointment.query.filter_by(business_id=current_user.businesses[0].id).all()
+    query = Appointment.query.filter_by(business_id=current_user.businesses[0].id)
+    if start_param:
+        query = query.filter(Appointment.start_time >= start_param)
+    if end_param:
+        query = query.filter(Appointment.end_time <= end_param)
+    appts = query.all()
     events = []
 
     for a in appts:

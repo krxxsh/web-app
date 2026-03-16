@@ -182,8 +182,6 @@ def create_app(config_class=Config):
         is_firebase_enabled = bool(app.config.get('FIREBASE_API_KEY') and 
                                  app.config.get('FIREBASE_API_KEY') != 'None' and
                                  app.config.get('FIREBASE_API_KEY') != '')
-        print(f"DEBUG: is_firebase_enabled = {is_firebase_enabled}")
-        print(f"DEBUG: API_KEY = {app.config.get('FIREBASE_API_KEY')}")
         return dict(config=app.config, is_firebase_enabled=is_firebase_enabled)
 
     # Register custom CLI commands

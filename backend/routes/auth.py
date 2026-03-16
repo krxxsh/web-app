@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, render_template, url_for, redirect, request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from backend.extensions import db, bcrypt
@@ -5,6 +6,8 @@ from backend.models.models import User
 from backend.services.notifications import send_password_reset_otp
 from backend.services.firebase_config import verify_firebase_token
 from datetime import datetime, timezone, timedelta
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 

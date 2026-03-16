@@ -67,7 +67,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
+    password = db.Column(db.String(60), nullable=True)
     role = db.Column(db.String(20), nullable=False, default='customer') # business_owner, staff, customer, platform_owner
 
     # Advanced Features Support
@@ -91,6 +91,7 @@ class User(db.Model, UserMixin):
     # Relationships
     oauth_tokens = db.relationship('OAuthToken', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+    businesses = db.relationship('Business', backref='owner', lazy=True, foreign_keys='Business.owner_id')
 
     # Marketplace Tracking
     stripe_customer_id = db.Column(db.String(100), nullable=True)

@@ -116,8 +116,12 @@ def add_service():
     business = Business.query.filter_by(owner_id=current_user.id).first()
     if request.method == 'POST':
         name = request.form.get('name')
-        duration = int(request.form.get('duration'))
-        price = float(request.form.get('price'))
+        try:
+            duration = int(request.form.get('duration'))
+            price = float(request.form.get('price'))
+        except (TypeError, ValueError):
+            flash('Invalid duration or price value.', 'danger')
+            return redirect(url_for('admin.add_service'))
         description = request.form.get('description')
 
         service = Service(name=name, duration=duration, price=price, 
@@ -204,7 +208,7 @@ def manage_resources():
 
     resources = Resource.query.filter_by(business_id=business.id).all()
     return render_template("admin/resources.html", business=business, resources=resources)
-    return redirect(url_for('admin.dashboard'))
+
 @admin_bp.before_request
 @login_required
 def check_verification():
