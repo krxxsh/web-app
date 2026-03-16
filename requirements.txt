@@ -23,5 +23,6 @@ psycopg2-binary
 firebase-admin
 azure-messaging-webpubsubservice
 sentry-sdk[flask]
+PyJWT
 
 
