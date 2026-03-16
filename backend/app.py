@@ -217,14 +217,17 @@ def create_app(config_class=Config):
 try:
     app = create_app()
 except Exception as e:
-    logger.error(f"Application creation failed: {e}")
-    logger.error(traceback.format_exc())
+    import traceback
+    error_text = str(e)
+    error_tb = traceback.format_exc()
+    logger.error(f"Application creation failed: {error_text}")
+    logger.error(error_tb)
     # Fallback app for diagnostics if main one fails
     app = Flask(__name__)
     @app.route("/", defaults={'path': ''})
     @app.route("/<path:path>")
     def error_page(path):
-        error_msg = f"CRITICAL_STARTUP_ERROR: {path}<br><br>Exception: {e}<br><pre>{traceback.format_exc()}</pre>"
+        error_msg = f"CRITICAL_STARTUP_ERROR: {path}<br><br>Exception: {error_text}<br><pre>{error_tb}</pre>"
         return error_msg, 500
 
 if __name__ == '__main__':

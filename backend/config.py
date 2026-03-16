@@ -81,10 +81,10 @@ class Config:
                 missing.append('SENDGRID_API_KEY')
             
             if missing:
-                error_msg = f"CRITICAL CONFIG ERROR: Missing production environment variables: {', '.join(missing)}. " \
-                            f"Set BYPASS_CONFIG_VALIDATION=True to force startup if this is intentional."
-                logger.error(error_msg)
-                raise RuntimeError(error_msg)
+                error_msg = f"PROD WARNING: Missing production environment variables: {', '.join(missing)}. " \
+                            f"Email sending may fail."
+                logger.warning(error_msg)
+                # We no longer raise RuntimeError here to prevent Vercel 500 crashes for optional features
             
             if not os.environ.get('MAIL_DEFAULT_SENDER'):
                 logger.warning("PROD WARNING: MAIL_DEFAULT_SENDER is missing. Using fallback.")
