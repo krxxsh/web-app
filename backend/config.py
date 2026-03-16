@@ -37,6 +37,9 @@ class Config:
     # Base URL for absolute links (Payments, WhatsApp, etc)
     BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000')
     
+    # Bypass configuration validation for emergency troubleshooting
+    BYPASS_CONFIG_VALIDATION = os.environ.get('BYPASS_CONFIG_VALIDATION', 'False').lower() == 'true'
+    
     # Authentication
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
     
@@ -67,6 +70,10 @@ class Config:
     @staticmethod
     def validate():
         """Validates critical infrastructure configurations."""
+        if Config.BYPASS_CONFIG_VALIDATION:
+            logger.warning("BYPASS WARNING: Configuration validation skipped via BYPASS_CONFIG_VALIDATION=True")
+            return
+
         is_prod = os.environ.get('VERCEL') == '1' or os.environ.get('FLASK_ENV') == 'production'
         if is_prod:
             missing = []
@@ -74,7 +81,8 @@ class Config:
                 missing.append('SENDGRID_API_KEY')
             
             if missing:
-                error_msg = f"Critical environment variables missing: {', '.join(missing)}"
+                error_msg = f"CRITICAL CONFIG ERROR: Missing production environment variables: {', '.join(missing)}. " \
+                            f"Set BYPASS_CONFIG_VALIDATION=True to force startup if this is intentional."
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
             

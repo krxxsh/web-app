@@ -226,7 +226,8 @@ except Exception as e:
     @app.route("/", defaults={'path': ''})
     @app.route("/<path:path>")
     def error_page(path):
-        return f"CRITICAL_STARTUP_ERROR: {path}", 500
+        error_msg = f"CRITICAL_STARTUP_ERROR: {path}<br><br>Exception: {e}<br><pre>{traceback.format_exc()}</pre>"
+        return error_msg, 500
 
 if __name__ == '__main__':
     app.run(debug=True)
