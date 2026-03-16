@@ -57,7 +57,7 @@ def generate_slots(business_id, service_id, date_str):
         if service.requires_resource_id:
             resource = Resource.query.get(service.requires_resource_id)
             if resource:
-                resource_usage = Appointment.query.join(Service).filter(
+                resource_usage = Appointment.query.join(Service, Appointment.service_id == Service.id).filter(
                     Service.requires_resource_id == resource.id,
                     Appointment.start_time < current_slot_end,
                     Appointment.end_time > current_slot_start,
