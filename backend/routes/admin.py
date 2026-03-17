@@ -12,7 +12,7 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route("/dashboard/<int:business_id>")
 @login_required
 def dashboard(business_id=None):
-    if current_user.role not in ['admin', 'business_owner', 'business']:
+    if current_user.role not in ['admin', 'business_owner']:
         flash('Access denied. Business owner role required.', 'danger')
         return redirect(url_for('main.home'))
 

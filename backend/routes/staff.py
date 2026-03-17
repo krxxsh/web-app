@@ -10,22 +10,23 @@ staff_bp = Blueprint('staff', __name__)
 @login_required
 def dashboard():
     if current_user.role != 'staff':
-        return "Unauthorized", 403
+        flash('Access denied. Staff role required.', 'danger')
+        return redirect(url_for('main.home'))
 
     staff_profile = Staff.query.filter_by(user_id=current_user.id).first()
     if not staff_profile:
-        return "No profile linked.", 404
+        flash('Staff profile not found. Please contact administrator.', 'danger')
+        return redirect(url_for('main.home'))
 
     # Get today's appointments for this staff member
-    datetime.now().replace(hour=0, minute=0, second=0)
-    datetime.now().replace(hour=23, minute=59, second=59)
-
     # Actually just grab all upcoming ones to make testing easy
     appointments = Appointment.query.filter_by(staff_id=staff_profile.id).order_by(Appointment.start_time).all()
 
     # As a fallback if tracking logic is disconnected, just show all business appointments
-    if not appointments:
+    if not appointments and staff_profile.business_id:
         appointments = Appointment.query.filter_by(business_id=staff_profile.business_id).order_by(Appointment.start_time).all()
+    elif not appointments:
+        appointments = []
 
     return render_template('staff_dashboard.html', staff=staff_profile, appointments=appointments)
 

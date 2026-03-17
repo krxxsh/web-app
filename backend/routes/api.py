@@ -1,8 +1,11 @@
+import logging
 from flask import Blueprint, jsonify, request, redirect, url_for, session
 from flask_login import current_user, login_required
 from datetime import datetime, timedelta
 from typing import Any
 from backend.extensions import db, limiter
+
+logger = logging.getLogger(__name__)
 from backend.models.models import Business, Service, Appointment, Feedback, Promotion, User
 from backend.ai_engine.engine import generate_slots, get_ai_recommendations
 from backend.services.notifications import notify_booking_confirmation
@@ -234,7 +237,9 @@ def cancel_appointment(appt_id):
 
     # Trigger gap filler (AI Auto-fill)
     from backend.services.waitlist import handle_cancellation
-    handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
+    success, message = handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
+    if not success:
+        logger.warning(f"Waitlist auto-fill failed: {message}")
 
     db.session.commit()
     return jsonify({"success": True, "message": "Appointment cancelled and filler notified."})
@@ -632,9 +637,26 @@ def firebase_login():
     from flask_login import login_user
     login_user(user)
 
+    # Determine redirect URL based on user role and verification status
+    if user.role == 'pending':
+        redirect_url = '/select-role'
+    elif user.role == 'business_owner':
+        if not user.is_verified:
+            redirect_url = '/admin/pending_verification'
+        else:
+            # Check if user has a business setup
+            business = Business.query.filter_by(owner_id=user.id).first()
+            if business:
+                redirect_url = url_for('admin.dashboard')
+            else:
+                redirect_url = '/admin/setup_business'
+    else:  # customer or other roles
+        redirect_url = '/'
+
     return jsonify({
         "success": True, 
         "needs_role": user.role == 'pending',
+        "redirect": redirect_url,
         "user": {
             "id": user.id,
             "username": user.username,

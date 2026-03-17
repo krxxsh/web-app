@@ -199,10 +199,11 @@ def notify_booking_confirmation(appointment, lang='en'):
     send_realtime_update("business", appointment.business_id, event_data)
     send_realtime_update("user", appointment.customer_id, event_data)
 
-    # WhatsApp
-    whatsapp_msg = get_message('whatsapp_confirmed', lang, service=appointment.service.name, 
+    # WhatsApp - use customer's phone number if available
+    whatsapp_msg = get_message('whatsapp_confirmed', lang, service=appointment.service.name,
                                 time=appointment.start_time.strftime('%d %b, %H:%M'))
-    send_whatsapp("+919876543210", whatsapp_msg)
+    if appointment.customer and appointment.customer.phone_number:
+        send_whatsapp(appointment.customer.phone_number, whatsapp_msg)
 
 def notify_appointment_reminder(appointment, lang='en'):
     subject = get_message('reminder_subject', lang)
@@ -227,6 +228,8 @@ def notify_time_to_leave(appointment, duration_mins, lang='en'):
         time=appointment.start_time.strftime('%H:%M')
     )
 
-    send_whatsapp("+919876543210", text)
+    # Send WhatsApp to customer's phone if available
+    if appointment.customer and appointment.customer.phone_number:
+        send_whatsapp(appointment.customer.phone_number, text)
     # Also email
     send_email(appointment.customer.email, "🚨 Time to Leave - AI Sched", text)

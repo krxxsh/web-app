@@ -37,7 +37,11 @@ def dev_register():
         db.session.commit()
 
     login_user(user, remember=True)
-    return jsonify({"success": True})
+    # Determine redirect based on user role
+    if role in ['admin', 'business_owner']:
+        return jsonify({"success": True, "redirect": url_for('admin.setup_business')})
+    else:
+        return jsonify({"success": True, "redirect": url_for('main.home')})
 
 @auth_bp.route("/dev-login", methods=['POST'])
 def dev_login():
@@ -49,7 +53,18 @@ def dev_login():
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.check_password_hash(user.password, password):
         login_user(user, remember=True)
-        return jsonify({"success": True})
+        # Determine redirect based on user role
+        if user.role == 'business_owner':
+            # Check if user has a business setup
+            business = Business.query.filter_by(owner_id=user.id).first()
+            if business:
+                return jsonify({"success": True, "redirect": url_for('admin.dashboard')})
+            else:
+                return jsonify({"success": True, "redirect": url_for('admin.setup_business')})
+        elif user.role == 'pending':
+            return jsonify({"success": True, "redirect": url_for('main.select_role')})
+        else:
+            return jsonify({"success": True, "redirect": url_for('main.home')})
     return jsonify({"success": False, "message": "Invalid local credentials"}), 401
 
 @auth_bp.route("/register", methods=['GET'])
