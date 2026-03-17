@@ -39,7 +39,9 @@ def create_app(config_class=Config):
 
     # CORS — scoped to /api/* for Vercel frontend
     cors_origins = app.config.get('CORS_ORIGINS', '*')
-    CORS(app, resources={r"/api/*": {"origins": cors_origins}}, supports_credentials=True)
+    frontend_url = app.config.get("FRONTEND_URL", "*")
+    cors_origins_list = [frontend_url] if frontend_url != "*" else "*"
+    CORS(app, resources={r"/api/*": {"origins": cors_origins_list}, r"/auth/*": {"origins": cors_origins_list}}, supports_credentials=False)
 
     # Security Headers - Comprehensive CSP
     csp = {

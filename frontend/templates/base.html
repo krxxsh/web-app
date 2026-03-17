@@ -359,8 +359,78 @@
             console.warn("Firebase is disabled. Ensure FIREBASE_API_KEY is set in environment.");
         }
     </script>
+    
     <!-- Custom Scripts -->
     <script src="/static/js/hero-3d.js" nonce="{{ csp_nonce() }}"></script>
-</body>
+            <!-- Toast Notification Container -->
+    <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100; max-width: 400px;"></div>
+
+    <!-- Toast Notification CSS -->
+    <style>
+        .toast {
+            min-width: 250px;
+            margin-bottom: 1rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            font-family: 'Outfit', sans-serif;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast-success {
+            background: var(--glass-bg);
+            border-left: 4px solid var(--success);
+            color: var(--text-current);
+        }
+        .toast-error {
+            background: var(--glass-bg);
+            border-left: 4px solid var(--danger);
+            color: var(--text-current);
+        }
+        .toast-warning {
+            background: var(--glass-bg);
+            border-left: 4px solid var(--warning);
+            color: var(--text-current);
+        }
+        .toast-info {
+            background: var(--glass-bg);
+            border-left: 4px solid var(--info);
+            color: var(--text-current);
+        }
+        .toast-header {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .toast-body {
+            padding: 0.5rem 1rem;
+            word-wrap: break-word;
+        }
+        .toast-close-button {
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            font-weight: bold;
+            line-height: 1;
+            color: var(--text-current);
+            opacity: 0.5;
+            padding: 0;
+            cursor: pointer;
+            margin: 0;
+        }
+    </style></body>
 
 </html>

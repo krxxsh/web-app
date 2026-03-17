@@ -6,6 +6,10 @@ from backend.models.models import User
 from backend.services.notifications import send_password_reset_otp
 from backend.services.firebase_config import verify_firebase_token
 from datetime import datetime, timezone, timedelta
+import jwt
+import secrets
+from flask import current_app, session
+from backend.services.calendar_sync import get_google_flow
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +45,7 @@ def dev_register():
     if role in ['admin', 'business_owner']:
         return jsonify({"success": True, "redirect": url_for('admin.setup_business')})
     else:
-        return jsonify({"success": True, "redirect": url_for('main.home')})
-
-@auth_bp.route("/dev-login", methods=['POST'])
+        return jsonify({"success": True, "redirect": url_for('main.home')})@auth_bp.route("/dev-login", methods=['POST'])
 def dev_login():
     """Local development fallback for login when Firebase is missing."""
     data = request.get_json()
@@ -65,9 +67,7 @@ def dev_login():
             return jsonify({"success": True, "redirect": url_for('main.select_role')})
         else:
             return jsonify({"success": True, "redirect": url_for('main.home')})
-    return jsonify({"success": False, "message": "Invalid local credentials"}), 401
-
-@auth_bp.route("/register", methods=['GET'])
+    return jsonify({"success": False, "message": "Invalid local credentials"}), 401@auth_bp.route("/register", methods=['GET'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
@@ -183,4 +183,122 @@ def reset_password():
 
     email = request.args.get('email', '')
     return render_template('reset_password.html', title='Reset Password', email=email)
+
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/google/login")
+def google_login():
+    """Initiate Google OAuth flow"""
+    if not current_app.config.get("GOOGLE_CLIENT_ID") or not current_app.config.get("GOOGLE_CLIENT_SECRET"):
+        return jsonify({"error": "Google OAuth not configured"}), 500
+    
+    flow = get_google_flow()
+    # Generate state token to prevent CSRF
+    state = secrets.token_urlsafe(32)
+    session["oauth_state"] = state
+    
+    authorization_url, _ = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
+        state=state
+    )
+    
+    return redirect(authorization_url)
+
+
+@auth_bp.route("/google/callback")
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        # Get parameters from request
+        error = request.args.get("error")
+        if error:
+            return jsonify({"error": f"Google OAuth error: {error}"}), 400
+            
+        code = request.args.get("code")
+        state = request.args.get("state")
+        
+        # Validate state to prevent CSRF
+        if not state or state != session.get("oauth_state"):
+            session.pop("oauth_state", None)
+            return jsonify({"error": "Invalid state parameter"}), 400
+        
+        if not code:
+            return jsonify({"error": "Missing authorization code"}), 400
+        
+        # Exchange code for tokens
+        flow = get_google_flow()
+        flow.fetch_token(code=code)
+        
+        credentials = flow.credentials
+        
+        # Verify the ID token
+        id_info = jwt.decode(
+            credentials.id_token,
+            current_app.config["GOOGLE_CLIENT_ID"],
+            algorithms=["RS256"],
+            audience=current_app.config["GOOGLE_CLIENT_ID"]
+        )
+        
+        # Extract user info
+        email = id_info.get("email")
+        if not email:
+            return jsonify({"error": "No email in token"}), 400
+            
+        email_verified = id_info.get("email_verified", False)
+        name = id_info.get("name", "")
+        picture = id_info.get("picture", "")
+        google_user_id = id_info.get("sub")
+        
+        # Find or create user
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            # Create new user
+            username = email.split("@")[0]
+            # Ensure username is unique
+            counter = 1
+            original_username = username
+            while User.query.filter_by(username=username).first():
+                username = f"{original_username}{counter}"
+                counter += 1
+            
+            user = User(
+                username=username,
+                email=email,
+                password=secrets.token_urlsafe(32),  # Random unusable password
+                role="customer",
+                is_verified=email_verified
+            )
+            db.session.add(user)
+        else:
+            # Update existing user
+            if email_verified and not user.is_verified:
+                user.is_verified = True
+            # Optionally update name/picture if needed
+        
+        db.session.commit()
+        
+        # Generate JWT token
+        jwt_payload = {
+            "user_id": user.id,
+            "exp": datetime.utcnow() + timedelta(seconds=current_app.config["JWT_ACCESS_TOKEN_EXPIRES"])
+        }
+        access_token = jwt.encode(jwt_payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
+        
+        # Clear OAuth state
+        session.pop("oauth_state", None)
+        
+        # Redirect to frontend with token
+        frontend_url = current_app.config.get("FRONTEND_URL", "https://management-one-gilt.vercel.app")
+        redirect_url = f"{frontend_url}/dashboard?token={access_token}"
+        
+        return redirect(redirect_url)
+        
+    except Exception as e:
+        # Clear OAuth state on error
+        session.pop("oauth_state", None)
+        logger.error(f"Google OAuth callback error: {str(e)}")
+        return jsonify({"error": "Authentication failed"}), 500
+
 
