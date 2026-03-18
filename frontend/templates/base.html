@@ -323,7 +323,17 @@
         const isFirebaseEnabled = {{ 'true' if is_firebase_enabled else 'false' }};
         window.isFirebaseActive = false;
 
-        async function syncFcmToken(token) {
+        if (isFirebaseEnabled) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                window.isFirebaseActive = true;
+                console.log("✅ Firebase Initialized Successfully.");
+            } catch (err) {
+                console.error("❌ Firebase Initialization Failed:", err);
+            }
+        } else {
+            console.warn("⚠️ Firebase is DISABLED. Check environment variables (FIREBASE_API_KEY) on Vercel/Render.");
+        }
             if (!token) return;
             try {
                 await fetch('/api/update-fcm-token', {
