@@ -1,15 +1,10 @@
 import logging
-from flask import Blueprint, render_template, url_for, redirect, request, jsonify
+from flask import Blueprint, render_template, url_for, redirect, request, jsonify, current_app, session
 from flask_login import login_user, current_user, logout_user, login_required
 from backend.extensions import db, bcrypt
 from backend.models.models import User, Business
-from backend.services.notifications import send_password_reset_otp
-from backend.services.firebase_config import verify_firebase_token
 from datetime import datetime, timezone, timedelta
-import jwt
 import secrets
-from flask import current_app, session
-from backend.services.calendar_sync import get_google_flow
 
 logger = logging.getLogger(__name__)
 
