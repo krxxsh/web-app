@@ -29,6 +29,13 @@
                         <option value="business_owner">Manage my Business</option>
                     </select>
                 </div>
+                <!-- Dynamic Business Name Field -->
+                <div id="businessNameContainer" class="mb-3 d-none">
+                    <label for="businessName" class="form-label text-white-50 small uppercase">Business Name</label>
+                    <input type="text" id="businessName" name="businessName" class="form-control-premium w-100"
+                        placeholder="My Awesome Studio">
+                </div>
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary">Create Account</button>
                 </div>
@@ -53,6 +60,7 @@
         const username = document.getElementById('username').value;
         const role = document.getElementById('role').value;
         const phone = document.getElementById('phone').value;
+        const business_name = document.getElementById('businessName')?.value || "";
         const submitBtn = e.target.querySelector('button[type="submit"]');
 
         submitBtn.disabled = true;
@@ -76,7 +84,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${idToken}`
                 },
-                body: JSON.stringify({ role, phone })
+                body: JSON.stringify({ role, phone, business_name })
             });
             const data = await response.json();
 
@@ -97,6 +105,20 @@
         }
     });
 
-    // No local showToast needed (using global from base.html)
+    document.addEventListener('DOMContentLoaded', () => {
+        const roleSelect = document.getElementById('role');
+        const bizContainer = document.getElementById('businessNameContainer');
+        const bizInput = document.getElementById('businessName');
+
+        roleSelect.addEventListener('change', () => {
+            if (roleSelect.value === 'business_owner') {
+                bizContainer.classList.remove('d-none');
+                bizInput.setAttribute('required', '');
+            } else {
+                bizContainer.classList.add('d-none');
+                bizInput.removeAttribute('required');
+            }
+        });
+    });
 </script>
 {% endblock scripts %}

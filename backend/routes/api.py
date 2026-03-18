@@ -485,23 +485,44 @@ def select_role():
     if role not in ['customer', 'business_owner']:
         return jsonify({"success": False, "message": "Invalid role"}), 400
     
-    current_user.role = role
-    if phone:
-        current_user.phone_number = phone
-    
-    if role == 'business_owner' and business_name:
-        default_category = BusinessCategory.query.first()
-        business = Business(
-            name=business_name,
-            owner_id=current_user.id,
-            status='pending',
-            category_id=default_category.id if default_category else None
-        )
-        db.session.add(business)
-    
-    db.session.commit()
+    try:
+        current_user.role = role
+        if phone:
+            current_user.phone_number = phone
+        
+        if role == 'business_owner' and business_name:
+            from backend.models.models import BusinessCategory, Business
+            default_category = BusinessCategory.query.first()
+            business = Business(
+                name=business_name,
+                owner_id=current_user.id,
+                status='pending',
+                category_id=default_category.id if default_category else None
+            )
+            db.session.add(business)
+        
+        db.session.commit()
+        return jsonify({
+            "success": True, 
+            "message": "Role updated", 
+            "redirect": "/admin/dashboard" if role == "business_owner" else "/"
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error in select_role: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@api_bp.route('/auth/sync', methods=['POST'])
+@firebase_token_required
+def auth_sync():
+    """
+    Sync endpoint to establish backend session after Firebase login.
+    firebase_token_required handles login_user(user).
+    """
+    from flask_login import current_user
     return jsonify({
-        "success": True, 
-        "message": "Role updated", 
-        "redirect": "/admin/dashboard" if role == "business_owner" else "/"
+        "success": True,
+        "message": "Session synchronized",
+        "role": current_user.role,
+        "redirect": "/admin/dashboard" if current_user.role == "business_owner" else "/"
     })

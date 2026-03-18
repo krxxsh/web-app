@@ -34,8 +34,6 @@ def create_app(config_class=Config):
                 template_folder='../frontend/templates',
                 static_folder='../frontend/static')
     app.config.from_object(config_class)
-    
-    # app.config.from_object(config_class) # Line 35 above
 
     # CORS — scoped to /api/* for Vercel frontend
     cors_origins = app.config.get('CORS_ORIGINS', '*')
@@ -90,7 +88,8 @@ def create_app(config_class=Config):
             'https://*.firebaseio.com',
             'https://*.firebaseapp.com',
             'https://identitytoolkit.googleapis.com',
-            'https://securetoken.googleapis.com'
+            'https://securetoken.googleapis.com',
+            'https://fcmregistrations.googleapis.com'
         ],
         'frame-src': [
             "'self'",
@@ -184,11 +183,10 @@ def create_app(config_class=Config):
         logger.error(traceback.format_exc())
 
     @app.context_processor
-    def inject_config():
-        is_firebase_enabled = bool(app.config.get('FIREBASE_API_KEY') and 
-                                 app.config.get('FIREBASE_API_KEY') != 'None' and
-                                 app.config.get('FIREBASE_API_KEY') != '')
-        return dict(config=app.config, is_firebase_enabled=is_firebase_enabled)
+    def inject_firebase_status():
+        is_enabled = bool(app.config.get('FIREBASE_API_KEY') and 
+                        app.config.get('FIREBASE_API_KEY') not in [None, 'None', ''])
+        return dict(is_firebase_enabled=is_enabled)
 
     # Register custom CLI commands
     from backend.commands import register_commands

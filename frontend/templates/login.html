@@ -46,6 +46,24 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ csp_nonce() }}">
+    async function syncSession() {
+        try {
+            const idToken = await firebase.auth().currentUser.getIdToken();
+            const syncResponse = await fetch('/api/auth/sync', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${idToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const syncData = await syncResponse.json();
+            return syncData;
+        } catch (error) {
+            console.error('Session sync error:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -55,17 +73,20 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
 
-        // Use Firebase only
         try {
             await firebase.auth().signInWithEmailAndPassword(email, password);
-            showToast('Login successful!', 'success');
             
-            // Redirect after a short delay to allow toast visibility
-            setTimeout(() => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const nextUrl = urlParams.get('next') || '/';
-                window.location.href = nextUrl;
-            }, 1000);
+            const syncData = await syncSession();
+            if (syncData.success) {
+                showToast('Login successful!', 'success');
+                setTimeout(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const nextUrl = urlParams.get('next') || syncData.redirect || '/';
+                    window.location.href = nextUrl;
+                }, 1000);
+            } else {
+                throw new Error(syncData.message || 'Session sync failed');
+            }
         } catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Login with Email';
@@ -73,18 +94,22 @@
         }
     });
 
-    // Google Sign-In via Firebase popup
     async function signInWithGoogle() {
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
             await firebase.auth().signInWithPopup(provider);
-            showToast('Google login successful!', 'success');
             
-            setTimeout(() => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const nextUrl = urlParams.get('next') || '/';
-                window.location.href = nextUrl;
-            }, 1000);
+            const syncData = await syncSession();
+            if (syncData.success) {
+                showToast('Google login successful!', 'success');
+                setTimeout(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const nextUrl = urlParams.get('next') || syncData.redirect || '/';
+                    window.location.href = nextUrl;
+                }, 1000);
+            } else {
+                throw new Error(syncData.message || 'Session sync failed');
+            }
         } catch (error) {
             if (error.code !== 'auth/popup-closed-by-user') {
                 showToast('Google login failed: ' + error.message, 'error');
@@ -95,7 +120,5 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('googleAuthBtn')?.addEventListener('click', signInWithGoogle);
     });
-
-    // No local showToast needed (using global from base.html)
 </script>
 {% endblock scripts %}

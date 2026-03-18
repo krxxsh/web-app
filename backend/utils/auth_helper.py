@@ -42,6 +42,7 @@ def firebase_token_required(f):
                     firebase_uid=uid,
                     email=email,
                     username=email.split('@')[0],
+                    password="firebase_managed", # Dummy to satisfy NOT NULL constraint
                     role='customer',
                     is_verified=True
                 )
