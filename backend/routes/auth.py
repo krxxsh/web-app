@@ -93,6 +93,8 @@ def logout():
     logout_user()
     return redirect(url_for('main.home'))
 
+@auth_bp.route("/forgot-password", methods=['GET', 'POST'])
+def forgot_password():
     if request.method == 'POST':
         return jsonify({"success": False, "message": "Please use the Firebase reset flow."}), 400
     return render_template('forgot_password.html', title='Forgot Password')
