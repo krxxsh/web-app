@@ -19,8 +19,8 @@
                         Discover</a></li>
             </ul>
             <ul class="navbar-nav ms-auto align-items-center">
-                {% if current_user.is_authenticated %}
-                <li class="nav-item dropdown ms-lg-3">
+                <!-- AUTHENTICATED LINKS (Hidden by default) -->
+                <li class="nav-item dropdown ms-lg-3" id="navbar-auth" style="display: none;">
                     <a class="nav-link dropdown-toggle fw-bold" href="#" id="accountDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="far fa-user-circle me-1 text-primary"></i> Account
@@ -30,34 +30,23 @@
                         <li><a class="dropdown-item py-2" href="{{ url_for('main.my_account') }}">My Appointments</a>
                         </li>
 
-                        {% if current_user.is_platform_owner or current_user.role == 'moderator' %}
+                        <!-- Role-based links will be handled via JS/API or simplified -->
+                        <li><a class="dropdown-item py-2" id="nav-item-admin" href="{{ url_for('admin.dashboard') }}" style="display: none;">Admin Panel</a></li>
+                        
                         <li>
                             <hr class="dropdown-divider opacity-10">
                         </li>
-                        <li><a class="dropdown-item py-2 text-success" href="{{ url_for('admin.platform_dashboard') }}">
-                                <i class="fas fa-shield-alt me-1"></i> Platform Admin</a></li>
-                        {% endif %}
-
-                        {% if current_user.role in ['admin', 'business_owner', 'business'] and not
-                        current_user.is_platform_owner and current_user.role != 'moderator' %}
-                        <li>
-                            <hr class="dropdown-divider opacity-10">
-                        </li>
-                        <li><a class="dropdown-item py-2" href="{{ url_for('admin.dashboard') }}">Admin Panel</a></li>
-                        {% endif %}
-
-                        <li>
-                            <hr class="dropdown-divider opacity-10">
-                        </li>
-                        <li><a class="dropdown-item py-2 text-danger small" href="{{ url_for('auth.logout') }}">Sign
-                                Out</a></li>
+                        <li><a class="dropdown-item py-2 text-danger small" href="#" onclick="handleLogout(); return false;">Sign Out</a></li>
                     </ul>
                 </li>
-                {% else %}
-                <li class="nav-item"><a href="{{ url_for('auth.login') }}" class="nav-link">Customer Login</a></li>
-                <li class="nav-item ms-2"><a href="{{ url_for('auth.admin_login') }}"
-                        class="btn btn-primary btn-sm px-3">Business Login</a></li>
-                {% endif %}
+
+                <!-- GUEST LINKS (Hidden by default) -->
+                <li class="nav-item" id="navbar-guest-login" style="display: none;">
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">Customer Login</a>
+                </li>
+                <li class="nav-item ms-2" id="navbar-guest-admin" style="display: none;">
+                    <a href="{{ url_for('auth.admin_login') }}" class="btn btn-primary btn-sm px-3">Business Login</a>
+                </li>
 
                 <!-- Dark Mode Toggle Desktop -->
                 <li class="ms-3 d-none d-lg-flex align-items-center border-start ps-3">

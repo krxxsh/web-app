@@ -168,8 +168,6 @@ def create_app(config_class=Config):
                 '/admin/login',
                 '/forgot-password',
                 '/reset-password',
-                '/dev-login',
-                '/dev-register',
             }
             path = request.path
 

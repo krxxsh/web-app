@@ -48,3 +48,6 @@ desktop.ini
 # Flask instance folder
 instance/
 .vercel
+backend/firebase-key.json
+__pycache__/
+**/__pycache__/

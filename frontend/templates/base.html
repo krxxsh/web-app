@@ -215,7 +215,9 @@
 
         window.addEventListener('online', () => {
             document.body.classList.remove('offline-mode');
-            alert("Back online! Syncing bookings...");
+            if (typeof showToast === 'function') {
+                showToast("Back online! Syncing data...", "success");
+            }
         });
         window.addEventListener('offline', () => {
             document.body.classList.add('offline-mode');
@@ -368,42 +370,65 @@
                 }
 
                 // Handle Auth State Changes
+                // UI Elements for Navbar Toggling
+                const authEl = document.getElementById('navbar-auth');
+                const guestLoginEl = document.getElementById('navbar-guest-login');
+                const guestAdminEl = document.getElementById('navbar-guest-admin');
+                const adminItemEl = document.getElementById('nav-item-admin');
+
                 firebase.auth().onAuthStateChanged(async (user) => {
-                    const isAuth = "{{ current_user.is_authenticated }}".toLowerCase() === 'true';
-                    // Skip automatic sync only on specific non-login guest pages where 401s often occur
-                    const isResetPage = window.location.pathname.includes('/forgot-password') || 
-                                      window.location.pathname.includes('/reset-password');
-
-                    if (user && !isAuth && !isResetPage) {
-                        const idToken = await user.getIdToken();
+                    if (user) {
+                        console.log("User is signed in:", user.email);
+                        if (authEl) authEl.style.display = 'block';
+                        if (guestLoginEl) guestLoginEl.style.display = 'none';
+                        if (guestAdminEl) guestAdminEl.style.display = 'none';
                         
-                        // Try to get FCM token to send during login
-                        let fcmToken = null;
-                        try {
-                            const messaging = firebase.messaging();
-                            if (Notification.permission === 'granted') {
-                                fcmToken = await messaging.getToken();
-                            }
-                        } catch (e) {}
+                        // Storage for API calls
+                        const idToken = await user.getIdToken();
+                        localStorage.setItem('firebaseToken', idToken);
 
-                        fetch('/api/firebase-login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ idToken: idToken, fcmToken: fcmToken })
-                        }).then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                if (data.needs_role) {
-                                    window.location.href = '/select-role';
-                                } else {
-                                    window.location.reload();
-                                }
-                            }
-                        });
-                    } else if (!user && isAuth) {
-                        window.location.href = '/logout';
+                        if (adminItemEl) adminItemEl.style.display = 'block';
+                    } else {
+                        console.log("User is signed out");
+                        if (authEl) authEl.style.display = 'none';
+                        if (guestLoginEl) guestLoginEl.style.display = 'block';
+                        if (guestAdminEl) guestAdminEl.style.display = 'block';
+                        localStorage.removeItem('firebaseToken');
                     }
                 });
+
+                // Global Logout Handler
+                window.handleLogout = async function() {
+                    try {
+                        await firebase.auth().signOut();
+                        window.location.href = '/';
+                    } catch (error) {
+                        console.error("Logout Error:", error);
+                    }
+                };
+
+                // Global Toast Utility
+                window.showToast = function(message, type = 'info') {
+                    const container = document.getElementById('toastContainer');
+                    if (!container) return;
+                    
+                    const toast = document.createElement('div');
+                    // Use standard string concat to avoid potential linter/jinja issues with backticks
+                    toast.className = 'toast show toast-' + type;
+                    toast.innerHTML = 
+                        '<div class="toast-header">' +
+                            '<strong class="me-auto">' + type.toUpperCase() + '</strong>' +
+                            '<button type="button" class="toast-close-button" onclick="this.parentElement.parentElement.remove()">&times;</button>' +
+                        '</div>' +
+                        '<div class="toast-body">' + message + '</div>';
+                    
+                    container.appendChild(toast);
+                    
+                    // Auto-remove after 5 seconds
+                    setTimeout(() => {
+                        if (toast.parentElement) toast.remove();
+                    }, 5000);
+                };
             } catch (err) {
                 console.error("Firebase Initialization Failed:", err);
             }

@@ -55,60 +55,40 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
 
-        // Use Firebase when active, otherwise fall back to local dev login
-        if (window.isFirebaseActive) {
-            try {
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                showToast('Login successful!', 'success');
-                // onAuthStateChanged in base.html will sync the session and reload
-            } catch (error) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Login with Email';
-                showToast('Login failed: ' + error.message, 'error');
-            }
-        } else {
-            // Local dev fallback (no Firebase)
-            try {
-                const response = await fetch('/dev-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await response.json();
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Login with Email';
-
-                if (response.ok && data.success) {
-                    showToast('Login successful!', 'success');
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '/';
-                    }, 1000);
-                } else {
-                    showToast(data.message || 'Invalid credentials', 'error');
-                }
-            } catch (err) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Login with Email';
-                showToast('Server error: ' + err.message, 'error');
-            }
+        // Use Firebase only
+        try {
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+            showToast('Login successful!', 'success');
+            
+            // Redirect after a short delay to allow toast visibility
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const nextUrl = urlParams.get('next') || '/';
+                window.location.href = nextUrl;
+            }, 1000);
+        } catch (error) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Login with Email';
+            showToast('Login failed: ' + error.message, 'error');
         }
     });
 
     // Google Sign-In via Firebase popup
     async function signInWithGoogle() {
-        if (window.isFirebaseActive) {
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await firebase.auth().signInWithPopup(provider);
-                showToast('Google login successful!', 'success');
-                // onAuthStateChanged in base.html will sync the session and reload
-            } catch (error) {
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    showToast('Google login failed: ' + error.message, 'error');
-                }
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await firebase.auth().signInWithPopup(provider);
+            showToast('Google login successful!', 'success');
+            
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const nextUrl = urlParams.get('next') || '/';
+                window.location.href = nextUrl;
+            }, 1000);
+        } catch (error) {
+            if (error.code !== 'auth/popup-closed-by-user') {
+                showToast('Google login failed: ' + error.message, 'error');
             }
-        } else {
-            showToast('Google Sign-In requires Firebase configuration.', 'warning');
         }
     }
 
@@ -116,23 +96,6 @@
         document.getElementById('googleAuthBtn')?.addEventListener('click', signInWithGoogle);
     });
 
-    // Toast utility function
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = \`toast align-items-center text-bg-${type} border-0\`;
-        toast.role = 'alert';
-        toast.innerHTML = \`
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        \`;
-        container.appendChild(toast);
-        const bootstrapToast = new bootstrap.Toast(toast, { delay: 5000 });
-        bootstrapToast.show();
-        toast.addEventListener('hidden.bs.toast', () => toast.remove());
-    }
+    // No local showToast needed (using global from base.html)
 </script>
 {% endblock scripts %}
