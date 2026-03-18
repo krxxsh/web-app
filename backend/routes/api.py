@@ -1,8 +1,11 @@
+import logging
 from flask import Blueprint, jsonify, request, redirect, url_for, session
 from flask_login import current_user, login_required
 from datetime import datetime, timedelta
 from typing import Any
 from backend.extensions import db, limiter
+
+logger = logging.getLogger(__name__)
 from backend.models.models import Business, Service, Appointment, Feedback, Promotion, User
 from backend.ai_engine.engine import generate_slots, get_ai_recommendations
 from backend.services.notifications import notify_booking_confirmation
@@ -234,7 +237,9 @@ def cancel_appointment(appt_id):
 
     # Trigger gap filler (AI Auto-fill)
     from backend.services.waitlist import handle_cancellation
-    handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
+    success, message = handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
+    if not success:
+        logger.warning(f"Waitlist auto-fill failed: {message}")
 
     db.session.commit()
     return jsonify({"success": True, "message": "Appointment cancelled and filler notified."})
@@ -632,9 +637,26 @@ def firebase_login():
     from flask_login import login_user
     login_user(user)
 
+    # Determine redirect URL based on user role and verification status
+    if user.role == 'pending':
+        redirect_url = '/select-role'
+    elif user.role == 'business_owner':
+        if not user.is_verified:
+            redirect_url = '/admin/pending_verification'
+        else:
+            # Check if user has a business setup
+            business = Business.query.filter_by(owner_id=user.id).first()
+            if business:
+                redirect_url = url_for('admin.dashboard')
+            else:
+                redirect_url = '/admin/setup_business'
+    else:  # customer or other roles
+        redirect_url = '/'
+
     return jsonify({
         "success": True, 
         "needs_role": user.role == 'pending',
+        "redirect": redirect_url,
         "user": {
             "id": user.id,
             "username": user.username,
@@ -795,3 +817,169 @@ def get_dashboard_stats(business_id):
         }
     })
 
+
+# Authentication API Endpoints
+@api_bp.route("/signup", methods=["POST"])
+def api_signup():
+    data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ["email", "password", "username", "role", "phone"]
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"success": False, "message": f"Missing required field: {field}"}), 400
+    
+    email = data["email"]
+    password = data["password"]
+    username = data["username"]
+    role = data["role"]
+    phone = data["phone"]
+    
+    # Check if user already exists
+    if User.query.filter_by(email=email).first():
+        return jsonify({"success": False, "message": "Email already registered"}), 409
+    
+    if User.query.filter_by(username=username).first():
+        return jsonify({"success": False, "message": "Username already taken"}), 409
+    
+    # Create new user
+    hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+    user = User(
+        username=username,
+        email=email,
+        password=hashed_pw,
+        role="business_owner" if role in ["admin", "business_owner"] else "customer",
+        phone_number=phone,
+        is_verified=True
+    )
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    # Generate JWT token
+    jwt_payload = {
+        "user_id": user.id,
+        "exp": datetime.utcnow() + timedelta(seconds=current_app.config["JWT_ACCESS_TOKEN_EXPIRES"])
+    }
+    access_token = jwt.encode(jwt_payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
+    
+    return jsonify({
+        "success": True,
+        "message": "Account created successfully",
+        "data": {
+            "token": access_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "role": user.role
+            }
+        }
+    })
+
+@api_bp.route("/login", methods=["POST"])
+def api_login():
+    data = request.get_json()
+    
+    # Validate required fields
+    if not data.get("email") or not data.get("password"):
+        return jsonify({"success": False, "message": "Email and password are required"}), 400
+    
+    email = data["email"]
+    password = data["password"]
+    
+    # Find user
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"success": False, "message": "Invalid email or password"}), 401
+    
+    # Verify password
+    if not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"success": False, "message": "Invalid email or password"}), 401
+    
+    # Generate JWT token
+    jwt_payload = {
+        "user_id": user.id,
+        "exp": datetime.utcnow() + timedelta(seconds=current_app.config["JWT_ACCESS_TOKEN_EXPIRES"])
+    }
+    access_token = jwt.encode(jwt_payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
+    
+    return jsonify({
+        "success": True,
+        "message": "Login successful",
+        "data": {
+            "token": access_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "role": user.role
+            }
+        }
+    })
+
+@api_bp.route("/forgot-password", methods=["POST"])
+def api_forgot_password():
+    data = request.get_json()
+    
+    if not data.get("email"):
+        return jsonify({"success": False, "message": "Email is required"}), 400
+    
+    email = data["email"]
+    user = User.query.filter_by(email=email).first()
+    
+    if not user:
+        # Don't reveal whether email exists for security
+        return jsonify({"success": True, "message": "If the email exists, an OTP has been sent"}), 200
+    
+    # Rate limiting: only send OTP every 60 seconds
+    if user.otp_created_at:
+        now = datetime.now(timezone.utc)
+        last_otp = user.otp_created_at.replace(tzinfo=timezone.utc)
+        if now - last_otp < timedelta(seconds=60):
+            return jsonify({"success": False, "message": "Please wait before requesting another OTP"}), 429
+    
+    if send_password_reset_otp(user):
+        return jsonify({"success": True, "message": "If the email exists, an OTP has been sent"})
+    
+    # Internal logging for failure tracking
+    logger.error(f"Failed to dispatch password reset OTP for user: {user.email}")
+    return jsonify({
+        "success": False,
+        "message": "We're experiencing temporary issues with our notification service. Please try again in a few minutes or contact support if the issue persists."
+    }), 503
+
+@api_bp.route("/verify-otp", methods=["POST"])
+def api_verify_otp():
+    data = request.get_json()
+    
+    # Validate required fields
+    if not data.get("email") or not data.get("otp") or not data.get("password"):
+        return jsonify({"success": False, "message": "Email, OTP, and new password are required"}), 400
+    
+    email = data["email"]
+    otp = data["otp"]
+    new_password = data["password"]
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"success": False, "message": "Invalid email or OTP"}), 400
+    
+    # Verify OTP
+    if user.email_otp != otp:
+        return jsonify({"success": False, "message": "Invalid email or OTP"}), 400
+    
+    # Check OTP expiration (10 minutes)
+    if user.otp_created_at:
+        if datetime.now(timezone.utc) - user.otp_created_at.replace(tzinfo=timezone.utc) > timedelta(minutes=10):
+            return jsonify({"success": False, "message": "OTP expired"}), 400
+    
+    # Update password
+    user.password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+    user.email_otp = None  # Clear OTP after use
+    db.session.commit()
+    
+    return jsonify({
+        "success": True,
+        "message": "Password reset successful"
+    })

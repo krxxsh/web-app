@@ -1,5 +1,5 @@
 from datetime import datetime
-import random
+import secrets
 import string
 import logging
 from backend.extensions import db
@@ -35,8 +35,8 @@ def check_conflict(user_id, start_time, end_time, staff_id=None):
     return False
 
 def generate_secure_pin():
-    """Generates a random 6-digit numeric PIN."""
-    return ''.join(random.choices(string.digits, k=6))
+    """Generates a cryptographically secure 6-digit numeric PIN."""
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 def handle_cancellation(appointment):
     """

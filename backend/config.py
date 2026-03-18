@@ -55,6 +55,16 @@ class Config:
     TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
     TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
     TWILIO_WHATSAPP_NUMBER = os.environ.get('TWILIO_WHATSAPP_NUMBER', 'whatsapp:+14155238886')
+    
+    # Google OAuth
+    GOOGLE_OAUTH_REDIRECT_URI = os.environ.get("GOOGLE_OAUTH_REDIRECT_URI")
+    
+    # JWT
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 86400))  # 24 hours in seconds
+    
+    # Frontend
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://management-one-gilt.vercel.app")
 
     # AI (Gemini)
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')

@@ -38,7 +38,7 @@ def get_businesses():
         biz_data = b.to_dict()
 
         # Simple Euclidean distance for 'Nearby' search (basic MVP approach)
-        if lat and lng and b.latitude and b.longitude:
+        if lat is not None and lng is not None and b.latitude is not None and b.longitude is not None:
             dist = ((b.latitude - lat)**2 + (b.longitude - lng)**2)**0.5 * 111 # Approx km
             if dist > radius:
                 continue

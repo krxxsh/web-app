@@ -21,8 +21,8 @@ def svc_join_waitlist(user_id, business_id, service_id):
         )
         db.session.add(entry)
         db.session.commit()
-        return True
-    return False
+        return True, "Joined waitlist successfully."
+    return False, "Already on waitlist for this service."
 
 def handle_cancellation(business_id, service_id, start_time, end_time):
     """
@@ -59,5 +59,5 @@ def handle_cancellation(business_id, service_id, start_time, end_time):
 
         # Notify the lucky user
         notify_waitlist_open(entry)
-        return True
-    return False
+        return True, "Waitlist entry converted to appointment."
+    return False, "No active waitlist entries found."
