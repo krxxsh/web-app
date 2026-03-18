@@ -51,71 +51,88 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        
-        // Show loading state
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
 
-        try {
-            const response = await fetch('https://web-app-55z4.onrender.com/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Login with Email';
-            
-            if (response.ok) {
+        // Use Firebase when active, otherwise fall back to local dev login
+        if (window.isFirebaseActive) {
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
                 showToast('Login successful!', 'success');
-                // Store token in localStorage
-                localStorage.setItem('token', data.data.token);
-                // Redirect after brief delay to show toast
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1500);
-            } else {
-                showToast(data.message || 'Login failed', 'error');
+                // onAuthStateChanged in base.html will sync the session and reload
+            } catch (error) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Login with Email';
+                showToast('Login failed: ' + error.message, 'error');
             }
-        } catch (err) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Login with Email';
-            showToast('Server error: ' + err.message, 'error');
+        } else {
+            // Local dev fallback (no Firebase)
+            try {
+                const response = await fetch('/dev-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Login with Email';
+
+                if (response.ok && data.success) {
+                    showToast('Login successful!', 'success');
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/';
+                    }, 1000);
+                } else {
+                    showToast(data.message || 'Invalid credentials', 'error');
+                }
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Login with Email';
+                showToast('Server error: ' + err.message, 'error');
+            }
         }
     });
 
+    // Google Sign-In via Firebase popup
     async function signInWithGoogle() {
-        // Redirect to backend's Google login endpoint
-        window.location.href = 'https://web-app-55z4.onrender.com/auth/google/login';
+        if (window.isFirebaseActive) {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await firebase.auth().signInWithPopup(provider);
+                showToast('Google login successful!', 'success');
+                // onAuthStateChanged in base.html will sync the session and reload
+            } catch (error) {
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    showToast('Google login failed: ' + error.message, 'error');
+                }
+            }
+        } else {
+            showToast('Google Sign-In requires Firebase configuration.', 'warning');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('googleAuthBtn')?.addEventListener('click', signInWithGoogle);
     });
-    
+
     // Toast utility function
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
+        if (!container) return;
         const toast = document.createElement('div');
         toast.className = \`toast align-items-center text-bg-${type} border-0\`;
         toast.role = 'alert';
         toast.innerHTML = \`
             <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
+                <div class="toast-body">${message}</div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         \`;
         container.appendChild(toast);
         const bootstrapToast = new bootstrap.Toast(toast, { delay: 5000 });
         bootstrapToast.show();
-        
-        // Remove toast from DOM when hidden
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
     }
 </script>
 {% endblock scripts %}

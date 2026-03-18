@@ -164,6 +164,7 @@ def create_app(config_class=Config):
                 '/reset-password',
                 '/dev-login',
                 '/dev-register',
+                '/google-auth',
             }
             path = request.path
 

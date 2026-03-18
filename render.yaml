@@ -16,6 +16,26 @@ services:
         value: production
       - key: SECRET_KEY
         generateValue: true
+      - key: TALISMAN_FORCE_HTTPS
+        value: "True"
+      - key: FRONTEND_URL
+        sync: false  # Set in Render dashboard
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: FIREBASE_APP_ID
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false
 
 databases:
   - name: ai-db
