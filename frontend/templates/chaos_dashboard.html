@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Chaos Testing Dashboard</h1>
+    <p>This page is intentionally designed with UI glitches to test the <strong>Autonomous Ghost Repair</strong> system.</p>
+
+    <div class="row mt-4">
+        <!-- Glitch 1: Overlapping Card -->
+        <div class="col-md-6">
+            <div class="card p-4" style="position: relative; z-index: 10;">
+                <h5 class="card-title">Normal Card</h5>
+                <p>This card should be visible and properly spaced.</p>
+            </div>
+            <div class="card p-4 shadow-sm" style="position: absolute; top: 80px; left: 50px; background: rgba(255, 0, 0, 0.2); z-index: 5;">
+                <h5 class="card-title text-danger">Glitch: Overlapping Card</h5>
+                <p>This card is positioned poorly and overlaps the one above it.</p>
+            </div>
+        </div>
+
+        <!-- Glitch 2: Invisible Button -->
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h5>Glitch: Hidden Interactive Element</h5>
+                <p>Try to find the "Submit" button below. It exists but is invisible.</p>
+                <button class="btn btn-primary" style="opacity: 0; pointer-events: auto;">Invisible Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <!-- Glitch 3: Low Contrast Text -->
+        <div class="col-md-12">
+            <div class="p-3" style="background-color: #ffffff; border: 1px solid #ddd;">
+                <p style="color: #ffffff;">This text is invisible because its color matches the background perfectly. If you can't see this, the system should detect it as a contrast issue or hidden crucial info.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Glitch 4: Script Error -->
+    <script>
+        // Intentional console error for Detection
+        window.addEventListener('load', function() {
+            console.error("Critical System Glitch: Failed to load resource 'neural_interface.js'");
+            undefinedVariable.execute(); // This will throw a ReferenceError
+        });
+    </script>
+</div>
+{% endblock %}

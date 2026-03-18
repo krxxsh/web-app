@@ -138,3 +138,7 @@ def services():
 @main_bp.route("/support")
 def support():
     return render_template('support.html')
+
+@main_bp.route("/chaos")
+def chaos():
+    return render_template('chaos_dashboard.html')
