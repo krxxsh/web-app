@@ -69,7 +69,9 @@ def dev_login():
             return jsonify({"success": True, "redirect": url_for('main.select_role')})
         else:
             return jsonify({"success": True, "redirect": url_for('main.home')})
-    return jsonify({"success": False, "message": "Invalid local credentials"}), 401@auth_bp.route("/register", methods=['GET'])
+    return jsonify({"success": False, "message": "Invalid local credentials"}), 401
+
+@auth_bp.route("/register", methods=['GET'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
