@@ -32,10 +32,6 @@ services:
         sync: false
       - key: FIREBASE_APP_ID
         sync: false
-      - key: SENDGRID_API_KEY
-        sync: false
-      - key: MAIL_DEFAULT_SENDER
-        sync: false
 
 databases:
   - name: ai-db

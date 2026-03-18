@@ -1,103 +1,38 @@
 import os
 import random
 import json
-import smtplib
 import secrets
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import logging
 from flask import current_app
 from twilio.rest import Client
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
+from firebase_admin import messaging
 
 logger = logging.getLogger(__name__)
 
 from datetime import datetime, timezone
 import sentry_sdk
 
-def generate_secure_otp():
-    """Generates a cryptographically secure 6-digit OTP."""
-    return "".join([str(secrets.randbelow(10)) for _ in range(6)])
-
-def send_verification_otp(user):
-    """Generate and send one unified OTP via Email and SMS."""
-    # Generate 6-digit OTP
-    otp = generate_secure_otp()
-    
-    user.email_otp = otp
-    user.phone_otp = otp  # Unified
-    user.otp_created_at = datetime.now(timezone.utc)
-
-    # Contextual Message
-    subject = "Verify your AI Sched Account"
-    body = f"Hello {user.username},\n\nYour verification code is: {otp}\n\nThis code expires in 10 minutes."
-
-    # Send Email
-    send_email(user.email, subject, body)
-
-    # Send SMS/WhatsApp if phone exists
-    if user.phone_number:
-        logger.debug(f"Sending OTP {otp} to {user.phone_number}")
-        send_whatsapp(user.phone_number, f"Your AI Sched verification code is: {otp}")
-
-    from backend.extensions import db
-    db.session.commit()
-
-def send_password_reset_otp(user):
-    """Generate and send OTP for password recovery. Returns success status."""
-    otp = generate_secure_otp()
-    
-    user.email_otp = otp
-    user.otp_created_at = datetime.now(timezone.utc)
-
-    # SECURE LOGGING: Never log the actual OTP in production
-    logger.info(f"Password reset OTP generated for user ID: {user.id}")
-
-    subject = "Password Reset Request - AI Sched"
-    body = f"Hello {user.username},\n\nWe received a request to reset your password. Use the following code: {otp}\n\nIf you didn't request this, please ignore this email."
-
-    success = send_email(user.email, subject, body)
-    
-    if success:
-        from backend.extensions import db
-        db.session.commit()
-    
-    return success
-
-def send_email(to_email, subject, body):
-    """Sends an email using SMTP. Simulates if credentials missing in non-prod."""
-    is_prod = current_app.config.get('ENV') == 'production' or os.environ.get('VERCEL') == '1'
-    mail_password = current_app.config.get('MAIL_PASSWORD')
-
-    if not mail_password:
-        if is_prod:
-            logger.error("Email failed: MAIL_PASSWORD missing in production environment.")
-            return False
-        
-        print("\n" + "="*50)
-        print(f"📧 [SIMULATED EMAIL] To: {to_email}")
-        print(f"Subject: {subject}")
-        print(f"Body: {body}")
-        print("="*50 + "\n")
-        logger.debug(f"[SIMULATED EMAIL] To: {to_email} | Subject: {subject}")
-        return True
+def send_push_notification(user, title, body, data=None):
+    """Sends a push notification via Firebase Cloud Messaging."""
+    if not user or not user.fcm_token:
+        logger.warning(f"Push skipped: No FCM token for user {user.id if user else 'Unknown'}")
+        return False
 
     try:
-        msg = MIMEMultipart()
-        msg['From'] = current_app.config.get('MAIL_DEFAULT_SENDER')
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-
-        server = smtplib.SMTP(current_app.config.get('MAIL_SERVER'), current_app.config.get('MAIL_PORT'))
-        server.starttls()
-        server.login(current_app.config.get('MAIL_USERNAME'), mail_password)
-        server.send_message(msg)
-        server.quit()
-        logger.info(f"Email sent successfully to {to_email}")
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            data=data or {},
+            token=user.fcm_token,
+        )
+        response = messaging.send(message)
+        logger.info(f"Successfully sent push message: {response}")
         return True
     except Exception as e:
-        log_and_notify_critical_failure("Email Dispatch", e, {"to": to_email, "subject": subject})
+        log_and_notify_critical_failure("FCM Push Dispatch", e, {"user_id": user.id})
         return False
 
 def send_whatsapp(to_number, message):
@@ -127,22 +62,22 @@ def send_whatsapp(to_number, message):
 # Localization Mapping
 MESSAGES = {
     'en': {
-        'confirmed_subject': 'Booking Confirmed: {service}',
-        'confirmed_body': 'Hello {user},\n\nYour appointment with {business} for {service} is confirmed for {time}.\n\nThank you for choosing AI Sched!',
-        'reminder_subject': 'Appointment Reminder - AI Sched',
-        'reminder_body': 'Hi {user},\n\nThis is a reminder for your appointment at {business} tomorrow at {time}. See you soon!',
+        'confirmed_subject': 'Booking Confirmed!',
+        'confirmed_body': 'Your appointment with {business} for {service} is confirmed for {time}.',
+        'reminder_subject': 'Appointment Reminder',
+        'reminder_body': 'Hi {user}, reminder for your appointment at {business} tomorrow at {time}.',
         'whatsapp_confirmed': '✅ Booking Confirmed! Your appointment for {service} on {time} is set. See you soon!'
     },
     'hi': {
-        'confirmed_subject': 'बुकिंग की पुष्टि: {service}',
-        'confirmed_body': 'नमस्ते {user},\n\n{business} के साथ {service} के लिए आपका अपॉइंटमेंट {time} पर कंफर्म हो गया है।\n\nAI Sched चुनने के लिए धन्यवाद!',
-        'reminder_subject': 'अपॉइंटमेंट रिमाइंडर - AI Sched',
-        'reminder_body': 'नमस्ते {user},\n\nयह कल {time} पर {business} में आपके अपॉइंटमेंट के लिए एक रिमाइंडर है। जल्द ही मिलते हैं!',
+        'confirmed_subject': 'बुकिंग की पुष्टि!',
+        'confirmed_body': '{business} के साथ {service} के लिए आपका अपॉइंटमेंट {time} पर कंफर्म हो गया है।',
+        'reminder_subject': 'अपॉइंटमेंट रिमाइंडर',
+        'reminder_body': 'नमस्ते {user}, कल {time} पर {business} में आपके अपॉइंटमेंट के लिए एक रिमाइंडर है।',
         'whatsapp_confirmed': '✅ बुकिंग की पुष्टि! {service} के लिए आपका अपॉइंटमेंट {time} पर तय है। जल्द ही मिलते हैं!'
     },
     'traffic_alert': {
-        'en': '🚨 Time to Leave! Traffic is currently {traffic_state}. Travel time to {business} is approx {duration} mins. Your appt is at {time}.',
-        'hi': '🚨 निकलने का समय! ट्रैफिक अभी {traffic_state} है। {business} तक पहुँचने में करीब {duration} मिनट लगेंगे। आपका अपॉइंटमेंट {time} पर है।'
+        'en': '🚨 Time to Leave! Traffic is {traffic_state}. Travel to {business} is ~{duration} mins. Appt at {time}.',
+        'hi': '🚨 निकलने का समय! ट्रैफिक {traffic_state} है। {business} तक ~{duration} मिनट लगेंगे। अपॉइंटमेंट {time} पर है।'
     }
 }
 
@@ -169,26 +104,28 @@ def send_realtime_update(target_type, target_id, data):
         return False
 
 def log_and_notify_critical_failure(operation, error, details=None):
-    """Logs a critical failure to Sentry and local logs for fast incident response."""
+    """Logs a critical failure to Sentry and local logs."""
     msg = f"CRITICAL FAILURE: {operation} | Error: {str(error)}"
     logger.critical(msg)
     
-    # Send to Sentry if configured
     with sentry_sdk.push_scope() as scope:
         if details:
             for k, v in details.items():
                 scope.set_extra(k, v)
         sentry_sdk.capture_message(msg, level="fatal")
     
-    # Potential future: Send to Slack/PagerDuty here
     print(f"🚨 ALERT: {msg}")
 
 def notify_booking_confirmation(appointment, lang='en'):
-    # Email
-    subject = get_message('confirmed_subject', lang, service=appointment.service.name)
+    # Push Notification
+    title = get_message('confirmed_subject', lang, service=appointment.service.name)
     body = get_message('confirmed_body', lang, user=appointment.customer.username, 
                        business=appointment.business.name, time=appointment.start_time.strftime('%b %d at %H:%M'))
-    send_email(appointment.customer.email, subject, body)
+    
+    send_push_notification(appointment.customer, title, body, {
+        "type": "BOOKING_CONFIRMED",
+        "appointment_id": str(appointment.id)
+    })
 
     # Real-time update for Merchant & Customer
     event_data = {
@@ -199,22 +136,30 @@ def notify_booking_confirmation(appointment, lang='en'):
     send_realtime_update("business", appointment.business_id, event_data)
     send_realtime_update("user", appointment.customer_id, event_data)
 
-    # WhatsApp - use customer's phone number if available
+    # WhatsApp
     whatsapp_msg = get_message('whatsapp_confirmed', lang, service=appointment.service.name,
                                 time=appointment.start_time.strftime('%d %b, %H:%M'))
     if appointment.customer and appointment.customer.phone_number:
         send_whatsapp(appointment.customer.phone_number, whatsapp_msg)
 
 def notify_appointment_reminder(appointment, lang='en'):
-    subject = get_message('reminder_subject', lang)
+    title = get_message('reminder_subject', lang)
     body = get_message('reminder_body', lang, user=appointment.customer.username,
                        business=appointment.business.name, time=appointment.start_time.strftime('%H:%M'))
-    send_email(appointment.customer.email, subject, body)
+    
+    send_push_notification(appointment.customer, title, body, {
+        "type": "REMINDER",
+        "appointment_id": str(appointment.id)
+    })
 
 def notify_waitlist_open(waitlist_entry):
-    subject = "Slot Available! - AI Sched"
-    body = f"Hello {waitlist_entry.user.username},\n\nA slot for {waitlist_entry.service.name} at {waitlist_entry.business.name} has just become available. Book now before it's gone!\n\nBest, AI Sched Team"
-    send_email(waitlist_entry.user.email, subject, body)
+    title = "Slot Available! 📢"
+    body = f"A slot for {waitlist_entry.service.name} at {waitlist_entry.business.name} has just become available. Book now!"
+    
+    send_push_notification(waitlist_entry.user, title, body, {
+        "type": "WAITLIST_OPEN",
+        "service_id": str(waitlist_entry.service_id)
+    })
 
 def notify_time_to_leave(appointment, duration_mins, lang='en'):
     """Sends a push/WhatsApp alert based on OSRM travel estimation."""
@@ -228,8 +173,12 @@ def notify_time_to_leave(appointment, duration_mins, lang='en'):
         time=appointment.start_time.strftime('%H:%M')
     )
 
-    # Send WhatsApp to customer's phone if available
+    # Push
+    send_push_notification(appointment.customer, "🚨 Time to Leave", text, {
+        "type": "TIME_TO_LEAVE",
+        "appointment_id": str(appointment.id)
+    })
+
+    # WhatsApp
     if appointment.customer and appointment.customer.phone_number:
         send_whatsapp(appointment.customer.phone_number, text)
-    # Also email
-    send_email(appointment.customer.email, "🚨 Time to Leave - AI Sched", text)

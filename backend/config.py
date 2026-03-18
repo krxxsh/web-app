@@ -69,36 +69,6 @@ class Config:
     # AI (Gemini)
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     
-    # Mail
-    MAIL_SERVER = 'smtp.sendgrid.net'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = 'apikey'
-    MAIL_PASSWORD = os.environ.get('SENDGRID_API_KEY')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'notifications@ai-sched.com')
-    
-    @staticmethod
-    def validate():
-        """Validates critical infrastructure configurations."""
-        if Config.BYPASS_CONFIG_VALIDATION:
-            logger.warning("BYPASS WARNING: Configuration validation skipped via BYPASS_CONFIG_VALIDATION=True")
-            return
-
-        is_prod = os.environ.get('VERCEL') == '1' or os.environ.get('FLASK_ENV') == 'production'
-        if is_prod:
-            missing = []
-            if not os.environ.get('SENDGRID_API_KEY'):
-                missing.append('SENDGRID_API_KEY')
-            
-            if missing:
-                error_msg = f"PROD WARNING: Missing production environment variables: {', '.join(missing)}. " \
-                            f"Email sending may fail."
-                logger.warning(error_msg)
-                # We no longer raise RuntimeError here to prevent Vercel 500 crashes for optional features
-            
-            if not os.environ.get('MAIL_DEFAULT_SENDER'):
-                logger.warning("PROD WARNING: MAIL_DEFAULT_SENDER is missing. Using fallback.")
-    
     # AI Engine Config
     AI_SLOT_THRESHOLD = 5 # Number of recommendations
     AI_CONFLICT_RADIUS_MINS = 5 # Safety margin

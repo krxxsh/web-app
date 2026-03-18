@@ -307,6 +307,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" nonce="{{ csp_nonce() }}"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" nonce="{{ csp_nonce() }}"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js" nonce="{{ csp_nonce() }}"></script>
 
     <script nonce="{{ csp_nonce() }}">
         // Firebase Configuration
@@ -322,11 +323,50 @@
         const isFirebaseEnabled = {{ 'true' if is_firebase_enabled else 'false' }};
         window.isFirebaseActive = false;
 
+        async function syncFcmToken(token) {
+            if (!token) return;
+            try {
+                await fetch('/api/update-fcm-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fcmToken: token })
+                });
+                console.log("FCM Token synced to backend.");
+            } catch (err) {
+                console.error("FCM Token sync failed:", err);
+            }
+        }
+
+        async function initializePushNotifications() {
+            if (!window.isFirebaseActive) return;
+            try {
+                const messaging = firebase.messaging();
+                
+                // Request Permission
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    // Get Registration Token
+                    // Note: In production, you need to provide your VAPID key here
+                    const token = await messaging.getToken();
+                    if (token) {
+                        await syncFcmToken(token);
+                    }
+                }
+            } catch (err) {
+                console.warn("Push Notification Setup Failed (Expected if browser lacks support or VAPID key missing):", err);
+            }
+        }
+
         if (isFirebaseEnabled) {
             try {
                 firebase.initializeApp(firebaseConfig);
                 window.isFirebaseActive = true;
                 console.log("Firebase initialized successfully.");
+
+                // Initialize Push if user is already logged in
+                if ("{{ current_user.is_authenticated }}".toLowerCase() === 'true') {
+                    initializePushNotifications();
+                }
 
                 // Handle Auth State Changes
                 firebase.auth().onAuthStateChanged(async (user) => {
@@ -334,10 +374,20 @@
 
                     if (user && !isAuth) {
                         const idToken = await user.getIdToken();
+                        
+                        // Try to get FCM token to send during login
+                        let fcmToken = null;
+                        try {
+                            const messaging = firebase.messaging();
+                            if (Notification.permission === 'granted') {
+                                fcmToken = await messaging.getToken();
+                            }
+                        } catch (e) {}
+
                         fetch('/api/firebase-login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ idToken: idToken })
+                            body: JSON.stringify({ idToken: idToken, fcmToken: fcmToken })
                         }).then(res => res.json())
                         .then(data => {
                             if (data.success) {

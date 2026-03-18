@@ -87,6 +87,7 @@ class User(db.Model, UserMixin):
     phone_number = db.Column(db.String(20), nullable=True)
     otp_created_at = db.Column(db.DateTime, nullable=True)
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True)
+    fcm_token = db.Column(db.String(255), nullable=True)
 
     # Relationships
     oauth_tokens = db.relationship('OAuthToken', backref='user', lazy=True)

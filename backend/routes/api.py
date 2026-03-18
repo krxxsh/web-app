@@ -583,6 +583,8 @@ def firebase_login():
     reg_role = data.get('role') # If None, it's a login from the login page, so we set 'pending' later
     reg_phone = data.get('phone')
 
+    fcm_token = data.get('fcmToken')
+
     from backend.services.firebase_config import verify_firebase_token
     decoded_token = verify_firebase_token(id_token)
 
@@ -600,71 +602,55 @@ def firebase_login():
         if user:
             user.firebase_uid = uid
         else:
-            # Create a shadow user profile for the marketplace
-            # Shadow user profile for marketplace
-            # reg_role from registration will be 'customer' or 'admin' (which maps to business_owner)
-            # If reg_role is None, it means it's a direct Google Login -> 'pending'
-            role = reg_role
-            if role == 'admin':
-                role = 'business_owner'
-            if not role:
-                role = 'pending'
-
-            import re
-            # Generate unique username — strip spaces and non-alphanumeric chars
-            raw = reg_username or decoded_token.get('name', email.split('@')[0])
-            base_username = re.sub(r'[^a-zA-Z0-9_]', '', raw.replace(' ', '_'))[:15] or 'user'
-
-            username = base_username
-            counter = 1
-            while User.query.filter_by(username=username).first():
-                username = f"{base_username}{counter}"
-                counter += 1
-
+            # Create new user
             user = User(
-                username=username,
-                email=email,
                 firebase_uid=uid,
-                role=role,
+                email=email,
+                username=reg_username or email.split('@')[0],
+                role=reg_role or 'customer',
                 phone_number=reg_phone,
-                is_verified=True, # Firebase users are pre-verified
-                is_platform_owner=False
+                is_verified=True
             )
             db.session.add(user)
-        db.session.commit()
+
+    # Always sync FCM token if provided
+    if fcm_token:
+        user.fcm_token = fcm_token
+
+    db.session.commit()
 
     # Log in the user
     from flask_login import login_user
-    login_user(user)
+    login_user(user, remember=True)
 
-    # Determine redirect URL based on user role and verification status
-    if user.role == 'pending':
-        redirect_url = '/select-role'
-    elif user.role == 'business_owner':
-        if not user.is_verified:
-            redirect_url = '/admin/pending_verification'
-        else:
-            # Check if user has a business setup
-            business = Business.query.filter_by(owner_id=user.id).first()
-            if business:
-                redirect_url = url_for('admin.dashboard')
-            else:
-                redirect_url = '/admin/setup_business'
-    else:  # customer or other roles
-        redirect_url = '/'
+    # Determine redirect URL based on user role
+    redirect_url = '/'
+    if user.role == "business_owner":
+        redirect_url = "/merch/dashboard"
+    elif user.role == "staff":
+        redirect_url = "/staff/dashboard"
+    elif user.role == "platform_owner":
+        redirect_url = "/admin/dashboard"
 
     return jsonify({
         "success": True, 
-        "needs_role": user.role == 'pending',
         "redirect": redirect_url,
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "is_verified": user.is_verified
-        }
+        "message": "Login successful"
     })
+
+@api_bp.route("/update-fcm-token", methods=['POST'])
+@login_required
+def update_fcm_token():
+    """Updates the FCM registration token for push notifications."""
+    data = request.get_json()
+    token = data.get('fcmToken')
+    
+    if not token:
+        return jsonify({"success": False, "message": "No token provided"}), 400
+        
+    current_user.fcm_token = token
+    db.session.commit()
+    return jsonify({"success": True, "message": "Token updated successfully"})
 
 @api_bp.route('/user/select-role', methods=['POST'])
 @login_required

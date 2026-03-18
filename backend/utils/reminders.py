@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from backend.app import create_app
 from backend.models.models import Appointment
-from backend.services.notifications import send_email
+from backend.services.notifications import send_push_notification
 
 def check_and_send_reminders():
     """
@@ -21,9 +21,12 @@ def check_and_send_reminders():
         ).all()
 
         for appt in appts_24h:
-            subject = "Reminder: Appointment in 24 Hours"
-            body = f"Hello {appt.customer.username},\n\nJust a reminder that you have an appointment with {appt.business.name} tomorrow at {appt.start_time.strftime('%H:%M')}.\n\nSee you then!"
-            send_email(appt.customer.email, subject, body)
+            title = "Reminder: Appointment in 24 Hours"
+            body = f"Hello {appt.customer.username}, your appointment with {appt.business.name} is tomorrow at {appt.start_time.strftime('%H:%M')}."
+            send_push_notification(appt.customer, title, body, {
+                "type": "REMINDER_24H",
+                "appointment_id": str(appt.id)
+            })
 
         # 2. 1-hour Reminders
         target_1h = now + timedelta(hours=1)
@@ -34,9 +37,12 @@ def check_and_send_reminders():
         ).all()
 
         for appt in appts_1h:
-            subject = "Reminder: Appointment in 1 Hour"
-            body = f"Hello {appt.customer.username},\n\nYour appointment with {appt.business.name} starts in 1 hour ({appt.start_time.strftime('%H:%M')}).\n\nDon't be late!"
-            send_email(appt.customer.email, subject, body)
+            title = "Reminder: Appointment in 1 Hour"
+            body = f"Hi {appt.customer.username}, your appointment with {appt.business.name} starts in 1 hour."
+            send_push_notification(appt.customer, title, body, {
+                "type": "REMINDER_1H",
+                "appointment_id": str(appt.id)
+            })
 
 if __name__ == "__main__":
     check_and_send_reminders()
