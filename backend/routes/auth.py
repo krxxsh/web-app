@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, render_template, url_for, redirect, request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from backend.extensions import db, bcrypt
-from backend.models.models import User
+from backend.models.models import User, Business
 from backend.services.notifications import send_password_reset_otp
 from backend.services.firebase_config import verify_firebase_token
 from datetime import datetime, timezone, timedelta
@@ -45,7 +45,9 @@ def dev_register():
     if role in ['admin', 'business_owner']:
         return jsonify({"success": True, "redirect": url_for('admin.setup_business')})
     else:
-        return jsonify({"success": True, "redirect": url_for('main.home')})@auth_bp.route("/dev-login", methods=['POST'])
+        return jsonify({"success": True, "redirect": url_for('main.home')})
+
+@auth_bp.route("/dev-login", methods=['POST'])
 def dev_login():
     """Local development fallback for login when Firebase is missing."""
     data = request.get_json()
@@ -183,8 +185,6 @@ def reset_password():
 
     email = request.args.get('email', '')
     return render_template('reset_password.html', title='Reset Password', email=email)
-
-auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/google/login")
 def google_login():
