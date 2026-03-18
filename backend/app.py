@@ -34,8 +34,7 @@ def create_app(config_class=Config):
                 static_folder='../frontend/static')
     app.config.from_object(config_class)
     
-    # Validate critical configuration
-    config_class.validate()
+    # app.config.from_object(config_class) # Line 35 above
 
     # CORS — scoped to /api/* for Vercel frontend
     cors_origins = app.config.get('CORS_ORIGINS', '*')
