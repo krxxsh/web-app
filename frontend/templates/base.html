@@ -334,6 +334,7 @@
         } else {
             console.warn("⚠️ Firebase is DISABLED. Check environment variables (FIREBASE_API_KEY) on Vercel/Render.");
         }
+        async function syncFcmToken(token) {
             if (!token) return;
             try {
                 await fetch('/api/update-fcm-token', {
@@ -381,12 +382,11 @@
                 // Handle Auth State Changes
                 firebase.auth().onAuthStateChanged(async (user) => {
                     const isAuth = "{{ current_user.is_authenticated }}".toLowerCase() === 'true';
-                    const isAuthPage = window.location.pathname.includes('/login') || 
-                                     window.location.pathname.includes('/register') ||
-                                     window.location.pathname.includes('/forgot-password') ||
-                                     window.location.pathname.includes('/reset-password');
+                    // Skip automatic sync only on specific non-login guest pages where 401s often occur
+                    const isResetPage = window.location.pathname.includes('/forgot-password') || 
+                                      window.location.pathname.includes('/reset-password');
 
-                    if (user && !isAuth && !isAuthPage) {
+                    if (user && !isAuth && !isResetPage) {
                         const idToken = await user.getIdToken();
                         
                         // Try to get FCM token to send during login
