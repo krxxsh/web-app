@@ -381,8 +381,12 @@
                 // Handle Auth State Changes
                 firebase.auth().onAuthStateChanged(async (user) => {
                     const isAuth = "{{ current_user.is_authenticated }}".toLowerCase() === 'true';
+                    const isAuthPage = window.location.pathname.includes('/login') || 
+                                     window.location.pathname.includes('/register') ||
+                                     window.location.pathname.includes('/forgot-password') ||
+                                     window.location.pathname.includes('/reset-password');
 
-                    if (user && !isAuth) {
+                    if (user && !isAuth && !isAuthPage) {
                         const idToken = await user.getIdToken();
                         
                         // Try to get FCM token to send during login

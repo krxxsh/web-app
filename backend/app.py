@@ -1,6 +1,7 @@
 import logging
 import traceback
 import sys
+import os
 
 # Configure logging to stdout for Vercel
 logging.basicConfig(
@@ -53,6 +54,8 @@ def create_app(config_class=Config):
             'https://www.gstatic.com',
             'https://apis.google.com',
             'https://accounts.google.com',
+            'https://*.firebaseapp.com',
+            'https://*.googleapis.com',
             'https://checkout.razorpay.com',
             'https://cdnjs.cloudflare.com'
         ],
@@ -74,7 +77,8 @@ def create_app(config_class=Config):
             'data:',
             'https://*.googleapis.com',
             'https://*.gstatic.com',
-            'https://*.googleusercontent.com'
+            'https://*.googleusercontent.com',
+            'https://*.firebaseapp.com'
         ],
         'connect-src': [
             "'self'",
@@ -85,13 +89,15 @@ def create_app(config_class=Config):
             'https://*.googleapis.com',
             'https://*.firebaseio.com',
             'https://*.firebaseapp.com',
-            'https://identitytoolkit.googleapis.com'
+            'https://identitytoolkit.googleapis.com',
+            'https://securetoken.googleapis.com'
         ],
         'frame-src': [
             "'self'",
             'https://api.razorpay.com',
             'https://accounts.google.com',
-            'https://*.firebaseapp.com'
+            'https://*.firebaseapp.com',
+            'https://*.google.com'
         ]
     }
     
