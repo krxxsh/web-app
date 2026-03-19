@@ -14,7 +14,7 @@ class Config:
     
     # Database
     basedir = os.path.abspath(os.path.dirname(__file__))
-    _db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or os.environ.get('STORAGE_URL')
+    _db_url = os.environ.get('POSTGRES_URL_NON_POOLING') or os.environ.get('DATABASE_URL_UNPOOLED') or os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or os.environ.get('STORAGE_URL')
     
     if not _db_url:
         # On Vercel, the root filesystem is read-only. Use /tmp for SQLite fallback.
