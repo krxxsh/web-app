@@ -11,7 +11,9 @@ def create_super_admin(email):
     
     # HARDCODED SECURITY LOCK
     # Prevents anyone who clones the repo from giving themselves super admin rights.
-    ALLOWED_ADMINS = ['krishbindal2005@gmail.com']
+    import os
+    admin_emails_env = os.environ.get('ADMIN_EMAILS', '')
+    ALLOWED_ADMINS = [email.strip() for email in admin_emails_env.split(',')] if admin_emails_env else []
     
     if email not in ALLOWED_ADMINS:
         click.echo(click.style(f"SECURITY BREACH: '{email}' is not authorized to become a Super Admin.", fg="red", bold=True))

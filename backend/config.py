@@ -8,9 +8,11 @@ load_dotenv(os.path.join(basedir, '../.env'))
 
 logger = logging.getLogger(__name__)
 
+import secrets
+
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_12345')
-    DEFAULT_STAFF_PASSWORD = os.environ.get('DEFAULT_STAFF_PASSWORD', 'staffpassword_secure_default')
+    SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(24))
+    DEFAULT_STAFF_PASSWORD = os.environ.get('DEFAULT_STAFF_PASSWORD', secrets.token_hex(12))
     
     # Database
     basedir = os.path.abspath(os.path.dirname(__file__))

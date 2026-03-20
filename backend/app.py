@@ -111,16 +111,6 @@ def create_app(config_class=Config):
     def ping():
         return jsonify({"status": "ok", "message": "Backend is alive"}), 200
 
-    @app.route("/api/debug-env")
-    def debug_env():
-        return jsonify({
-            "database_url_configured": bool(app.config.get('SQLALCHEMY_DATABASE_URI')),
-            "firebase_configured": bool(app.config.get('FIREBASE_API_KEY')),
-            "firebase_project_id": app.config.get('FIREBASE_PROJECT_ID'),
-            "is_vercel": os.environ.get('VERCEL') == '1',
-            "python_version": sys.version
-        }), 200
-
     try:
         from backend.services.firebase_config import init_firebase
         init_firebase()

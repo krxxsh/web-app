@@ -18,8 +18,9 @@ def verify_account():
         # In a real app, we'd verify each individually or together
         if email_code == current_user.email_otp and phone_code == current_user.phone_otp:
             current_user.is_verified = True
-            current_user.email_verified_at = datetime.utcnow()
-            current_user.phone_verified_at = datetime.utcnow()
+            from datetime import timezone
+            current_user.email_verified_at = datetime.now(timezone.utc)
+            current_user.phone_verified_at = datetime.now(timezone.utc)
             db.session.commit()
             flash('Your account has been verified! Welcome to AI Sched.', 'success')
             return redirect(url_for('main.home'))

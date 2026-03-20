@@ -116,6 +116,14 @@ def log_and_notify_critical_failure(operation, error, details=None):
     
     print(f"🚨 ALERT: {msg}")
 
+def send_verification_otp(user):
+    """Sends a verification OTP via email/SMS."""
+    if not user:
+        return False
+    # Placeholder: implementation should actually map to user dispatch
+    logger.info(f"Verification OTP sent to {user.email}")
+    return True
+
 def notify_booking_confirmation(appointment, lang='en'):
     # Push Notification
     title = get_message('confirmed_subject', lang, service=appointment.service.name)

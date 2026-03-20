@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from backend.extensions import db, login_manager
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class BusinessCategory(db.Model):
@@ -46,7 +46,7 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     plan_id = db.Column(db.Integer, db.ForeignKey('subscription_plan.id'), nullable=False)
-    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    start_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     end_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), default='active') # active, cancelled, expired
     stripe_subscription_id = db.Column(db.String(100), nullable=True)
@@ -119,7 +119,7 @@ class OAuthToken(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     provider = db.Column(db.String(20), nullable=False) # google, outlook
     token_json = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -311,6 +311,10 @@ class Waitlist(db.Model):
     notified = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default='active') # active, converted, expired
 
+    user = db.relationship('User', backref=db.backref('waitlist_entries', lazy=True), foreign_keys=[user_id])
+    business = db.relationship('Business', backref=db.backref('waitlist_entries', lazy=True), foreign_keys=[business_id])
+    service = db.relationship('Service', backref=db.backref('waitlist_entries', lazy=True), foreign_keys=[service_id])
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -329,7 +333,7 @@ class Feedback(db.Model):
     comment = db.Column(db.Text, nullable=True)
     ai_category = db.Column(db.String(50), nullable=True) # waiting time, service quality, staff behavior
     sentiment_score = db.Column(db.Float, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -349,7 +353,7 @@ class AdminActivityLog(db.Model):
     action = db.Column(db.String(100), nullable=False) # e.g. "update_branding", "add_staff"
     details = db.Column(db.JSON, nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -393,8 +397,8 @@ class Payment(db.Model):
     payment_method = db.Column(db.String(50), nullable=True) # razorpay, stripe, cash
     gateway_transaction_id = db.Column(db.String(100), nullable=True)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {

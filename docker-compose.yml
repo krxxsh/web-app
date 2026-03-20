@@ -6,17 +6,17 @@ services:
       volumes:
         - postgres_data:/var/lib/postgresql/data
       environment:
-        - POSTGRES_USER=admin
-        - POSTGRES_PASSWORD=password
-        - POSTGRES_DB=appointment_db
+        - POSTGRES_USER=${POSTGRES_USER:-admin}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+        - POSTGRES_DB=${POSTGRES_DB:-appointment_db}
 
   web:
     build: .
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://admin:password@db:5432/appointment_db
-      - SECRET_KEY=prod_secret_key_change_me
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-appointment_db}
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - db
 

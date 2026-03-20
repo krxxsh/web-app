@@ -38,12 +38,13 @@ def firebase_token_required(f):
             else:
                 # In a "Stateless" world, we might want to auto-create the user shell here
                 # or require a separate registration step. For now, let's auto-create.
+                from backend.extensions import bcrypt
                 user = User(
                     firebase_uid=uid,
                     email=email,
                     username=email.split('@')[0],
-                    password="firebase_managed", # Dummy to satisfy NOT NULL constraint
-                    role='customer',
+                    password=bcrypt.generate_password_hash("firebase_managed").decode('utf-8'), # Dummy to satisfy NOT NULL constraint
+                    role='pending',
                     is_verified=True
                 )
                 db.session.add(user)

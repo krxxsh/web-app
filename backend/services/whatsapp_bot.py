@@ -1,6 +1,6 @@
 from twilio.twiml.messaging_response import MessagingResponse
 from backend.models.models import Business, Service
-from ai_engine.engine import generate_slots
+from backend.ai_engine.engine import generate_slots
 from backend.services.payments import create_razorpay_order
 from datetime import datetime
 
@@ -80,7 +80,7 @@ def handle_whatsapp_message(incoming_msg, sender_number):
 
             # Fetch slots
             service = Service.query.get(session["service_id"])
-            slots = generate_slots(session["business_id"], service.duration, text)
+            slots = generate_slots(session["business_id"], service.id, text)
             if not slots:
                 msg.body("Sorry, no slots available on that date. Try another date (YYYY-MM-DD):")
                 session["state"] = "SELECT_DATE"

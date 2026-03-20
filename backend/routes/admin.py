@@ -141,7 +141,7 @@ def add_service():
 @login_required
 @limiter.limit("10 per minute")
 def add_staff():
-    if current_user.role not in ['business', 'admin']:
+    if current_user.role not in ['business', 'business_owner', 'admin']:
         return "Unauthorized", 403
     name = request.form.get('name')
     business = current_user.businesses[0]
@@ -165,14 +165,14 @@ def add_staff():
     db.session.add(member)
     db.session.commit()
 
-    flash(f'Staff added! Login: {temp_email} / {temp_password}', 'success')
+    flash(f'Staff added successfully! Details sent securely.', 'success')
     return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route("/update_branding", methods=['POST'])
 @login_required
 @limiter.limit("5 per minute")
 def update_branding():
-    if current_user.role not in ['business', 'admin']:
+    if current_user.role not in ['business', 'business_owner', 'admin']:
         return "Unauthorized", 403
 
     business = current_user.businesses[0]

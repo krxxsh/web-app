@@ -1,12 +1,12 @@
 import logging
 from flask import Blueprint, jsonify, request, redirect, url_for, session
 from flask_login import current_user, login_required
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from backend.extensions import db, limiter
 
 logger = logging.getLogger(__name__)
-from backend.models.models import Business, Service, Appointment, Feedback, Promotion, User, BusinessCategory
+from backend.models.models import Business, Service, Appointment, Feedback, Promotion
 from backend.utils.auth_helper import firebase_token_required
 from backend.ai_engine.engine import generate_slots, get_ai_recommendations, predict_delay
 from backend.services.notifications import notify_booking_confirmation, send_realtime_update
@@ -353,13 +353,13 @@ def get_recommendations():
 @api_bp.route("/forecast/<int:business_id>")
 def get_business_forecast(business_id):
     days, hours = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], ['09:00', '12:00', '15:00', '18:00']
-    import random
-    forecast = [{"day": d, "hour": h, "occupancy": random.uniform(0.1, 0.9)} for d in days for h in hours]
+    # Replacing random mock data with a basic zero-state
+    forecast = [{"day": d, "hour": h, "occupancy": 0.0} for d in days for h in hours]
     return jsonify(forecast)
 
 @api_bp.route("/promotions/active/<int:business_id>")
 def get_active_promotions(business_id):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     promos = Promotion.query.filter(Promotion.business_id == business_id, Promotion.is_active, Promotion.start_date <= now, Promotion.end_date >= now).all()
     return jsonify([{"id": p.id, "title": p.title, "description": p.description, "discount": p.discount_pct} for p in promos])
 
@@ -432,7 +432,7 @@ def get_plans():
 def subscription_checkout():
     from backend.models.models import SubscriptionPlan, Subscription
     plan = SubscriptionPlan.query.get_or_404(request.get_json().get('plan_id'))
-    end_date = datetime.utcnow() + timedelta(days=plan.duration_days)
+    end_date = datetime.now(timezone.utc) + timedelta(days=plan.duration_days)
     new_sub = Subscription(user_id=current_user.id, plan_id=plan.id, end_date=end_date, status='active')
     db.session.add(new_sub)
     current_user.membership_level = plan.name.lower()
