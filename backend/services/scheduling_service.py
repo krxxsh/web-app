@@ -110,11 +110,19 @@ def check_in_with_pin(pin):
     # Find appointments starting within 15 mins before/after now
     from datetime import timedelta
     now = datetime.utcnow()
-    window_start = now - timedelta(minutes=15)
-    window_end = now + timedelta(minutes=60) # Broad window for check-in
+    # Check-in is only valid FOR TODAY
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    # Window: 15 mins before to 60 mins after START time
+    window_start = now - timedelta(minutes=60) # Allowed to check in 60 mins late
+    window_end = now + timedelta(minutes=15)   # Allowed to check in 15 mins early
 
     appt = Appointment.query.filter(
         Appointment.checkin_pin == pin,
+        Appointment.status == 'booked', # Must be in 'booked' status
+        Appointment.start_time >= today_start,
+        Appointment.start_time <= today_end,
         Appointment.start_time >= window_start,
         Appointment.start_time <= window_end
     ).first()

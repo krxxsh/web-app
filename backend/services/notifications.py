@@ -120,8 +120,28 @@ def send_verification_otp(user):
     """Sends a verification OTP via email/SMS."""
     if not user:
         return False
-    # Placeholder: implementation should actually map to user dispatch
-    logger.info(f"Verification OTP sent to {user.email}")
+    
+    # Generate 6-digit OTPs
+    email_otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+    phone_otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+    
+    user.email_otp = email_otp
+    user.phone_otp = phone_otp
+    user.otp_created_at = datetime.now(timezone.utc)
+    
+    from backend.extensions import db
+    db.session.commit()
+    
+    # In a real production app, we would call an email/SMS provider here.
+    # For now, we log it (and it will show in simulated logs for the user to see).
+    logger.info(f"Verification OTPs generated for {user.email}: Email={email_otp}, Phone={phone_otp}")
+    
+    print("\n" + "!"*50)
+    print(f"🔐 [SECURITY] OTPs for {user.email}")
+    print(f"Email OTP: {email_otp}")
+    print(f"Phone OTP: {phone_otp}")
+    print("!"*50 + "\n")
+    
     return True
 
 def notify_booking_confirmation(appointment, lang='en'):

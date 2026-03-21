@@ -1,12 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_required
-from backend.extensions import db
+from backend.extensions import db, limiter
 from datetime import datetime
 
 verify_bp = Blueprint('verify', __name__)
 
 @verify_bp.route("/verify", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5 per minute")
 def verify_account():
     if current_user.is_verified:
         return redirect(url_for('main.home'))
@@ -31,6 +32,7 @@ def verify_account():
 
 @verify_bp.route("/resend_otp")
 @login_required
+@limiter.limit("3 per minute")
 def resend_otp():
     from backend.services.notifications import send_verification_otp
     send_verification_otp(current_user)

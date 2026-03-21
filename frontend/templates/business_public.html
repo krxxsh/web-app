@@ -200,7 +200,7 @@
             </div>
             <div class="modal-body">
                 <label class="small fw-bold text-muted mb-2 text-uppercase letter-spacing-1">Choose Date</label>
-                <input type="date" id="bookingDate" class="form-control mb-4 border-0 bg-light">
+                <input type="date" id="bookingDate" class="form-control mb-4 border-0 bg-light" min="{{ today_str }}">
 
                 <div id="surgeAlert" class="alert alert-warning py-2 small d-none fw-bold">
                     <i class="fas fa-bolt me-1"></i> High Demand! Surge Pricing Active (<span id="surgeMulti"></span>x)
@@ -336,7 +336,7 @@
         const order = await orderRes.json();
 
         const options = {
-            key: 'rzp_test_placeholder',
+            key: '{{ razorpay_key_id }}',
             amount: order.amount,
             currency: order.currency,
             name: '{{ business.name }}',
@@ -416,7 +416,15 @@
         const msgs = document.getElementById('chat-messages');
         const div = document.createElement('div');
         div.className = `message ${sender}-message mb-3`;
-        div.innerHTML = `<div class="${sender === 'bot' ? 'bg-white text-dark shadow-sm' : 'bg-primary text-white shadow'} p-2 rounded small" style="display:inline-block; max-width:85%; border: 1px solid #eee;">${text}</div>`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = (sender === 'bot' ? 'bg-white text-dark shadow-sm' : 'bg-primary text-white shadow') + ' p-2 rounded small';
+        bubble.style.display = 'inline-block';
+        bubble.style.maxWidth = '85%';
+        bubble.style.border = '1px solid #eee';
+        bubble.textContent = text; // SECURITY: Use textContent to prevent XSS
+        
+        div.appendChild(bubble);
         msgs.appendChild(div);
         msgs.scrollTop = msgs.scrollHeight;
     }

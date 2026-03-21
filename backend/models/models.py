@@ -266,7 +266,7 @@ class Appointment(db.Model):
 
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='booked') # booked, pending, cancelled, completed
+    status = db.Column(db.String(20), nullable=False, default='booked') # booked, pending, arrived, cancelled, completed
     payment_status = db.Column(db.String(20), nullable=False, default='pending') # pending, paid, refunded
 
     # Advanced Features Support

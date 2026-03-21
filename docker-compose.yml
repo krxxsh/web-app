@@ -9,6 +9,11 @@ services:
         - POSTGRES_USER=${POSTGRES_USER:-admin}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
         - POSTGRES_DB=${POSTGRES_DB:-appointment_db}
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-appointment_db}"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
   web:
     build: .
@@ -18,7 +23,8 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-appointment_db}
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

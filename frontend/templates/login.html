@@ -64,7 +64,17 @@
         }
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    function validateRedirect(url) {
+        if (!url) return '/';
+        // SECURITY: Only allow relative paths (starting with /) to prevent Open Redirects
+        if (url.startsWith('//') || url.match(/^[a-zA-Z0-9+.-]+:\/\//)) {
+            console.warn("External redirect blocked:", url);
+            return '/';
+        }
+        return url;
+    }
+
+    async function handleLogin(e) {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -74,27 +84,33 @@
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
 
         try {
-            await firebase.auth().signInWithEmailAndPassword(email, password);
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const idToken = await userCredential.user.getIdToken();
+            const syncResult = await syncSession(idToken);
             
-            const syncData = await syncSession();
-            if (syncData.success) {
+            if (syncResult.success) {
                 showToast('Login successful!', 'success');
                 setTimeout(() => {
                     const urlParams = new URLSearchParams(window.location.search);
-                    const nextUrl = urlParams.get('next') || syncData.redirect || '/';
+                    const nextUrl = validateRedirect(urlParams.get('next') || syncResult.redirect);
                     window.location.href = nextUrl;
                 }, 1000);
             } else {
-                throw new Error(syncData.message || 'Session sync failed');
+                throw new Error(syncResult.message || 'Session sync failed');
             }
         } catch (error) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Login with Email';
             showToast('Login failed: ' + error.message, 'error');
         }
-    });
+    }
 
-    async function signInWithGoogle() {
+    async function loginWithGoogle() {
+        const googleAuthBtn = document.getElementById('googleAuthBtn');
+        const originalHtml = googleAuthBtn.innerHTML;
+        googleAuthBtn.disabled = true;
+        googleAuthBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
             await firebase.auth().signInWithPopup(provider);
@@ -104,13 +120,15 @@
                 showToast('Google login successful!', 'success');
                 setTimeout(() => {
                     const urlParams = new URLSearchParams(window.location.search);
-                    const nextUrl = urlParams.get('next') || syncData.redirect || '/';
+                    const nextUrl = validateRedirect(urlParams.get('next') || syncData.redirect);
                     window.location.href = nextUrl;
                 }, 1000);
             } else {
                 throw new Error(syncData.message || 'Session sync failed');
             }
         } catch (error) {
+            googleAuthBtn.disabled = false;
+            googleAuthBtn.innerHTML = originalHtml;
             if (error.code !== 'auth/popup-closed-by-user') {
                 showToast('Google login failed: ' + error.message, 'error');
             }
@@ -118,7 +136,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('googleAuthBtn')?.addEventListener('click', signInWithGoogle);
+        document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
+        document.getElementById('googleAuthBtn')?.addEventListener('click', loginWithGoogle);
     });
 </script>
 {% endblock scripts %}

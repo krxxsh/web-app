@@ -233,6 +233,15 @@ def cancel_appointment(appt_id):
 @firebase_token_required
 def get_appointment_status(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
+    
+    # SECURITY: Ensure only associated customer or business/admin can view status
+    is_owner = current_user.role in ['admin', 'platform_owner']
+    is_business = current_user.role == 'business_owner' and any(b.id == appt.business_id for b in current_user.businesses)
+    is_customer = appt.customer_id == current_user.id
+    
+    if not (is_owner or is_business or is_customer):
+        return jsonify({"error": "Unauthorized"}), 403
+
     delay_mins = predict_delay(appt.id)
 
     return jsonify({
@@ -260,9 +269,11 @@ def get_fastest_near_me():
     limit_time = now + timedelta(minutes=60)
 
     for b in businesses:
-        if not (b.latitude and b.longitude): continue
+        if not (b.latitude and b.longitude):
+            continue
         dist = haversine_distance(user_lat, user_lng, b.latitude, b.longitude)
-        if dist > 25: continue
+        if dist > 25:
+            continue
         for svc in b.services:
             slots = generate_slots(b.id, svc.id, today_str)
             for s in slots:
@@ -299,9 +310,11 @@ def check_in(appt_id):
 def kiosk_check_in():
     data = request.get_json()
     pin = data.get('pin')
-    if not pin: return jsonify({'error': 'PIN required'}), 400
+    if not pin:
+        return jsonify({'error': 'PIN required'}), 400
     success, message = check_in_with_pin(pin)
-    if success: return jsonify({'success': True, 'message': message})
+    if success:
+        return jsonify({'success': True, 'message': message})
     return jsonify({'error': message}), 400
 
 @api_bp.route("/feedback/submit", methods=['POST'])
@@ -314,7 +327,8 @@ def submit_feedback():
     appt = Appointment.query.get_or_404(appt_id)
  
     is_fraud, reason = detect_review_fraud(current_user.id, appt.id, rating, comment)
-    if is_fraud: return jsonify({"error": f"Review submission failed: {reason}"}), 400
+    if is_fraud:
+        return jsonify({"error": f"Review submission failed: {reason}"}), 400
 
     if appt.customer_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
@@ -328,7 +342,8 @@ def submit_feedback():
         sentiment_score=ai_result.get('score', 0.5),
         ai_category=", ".join(ai_result.get('key_issues', []))
     )
-    if appt.status == 'arrived': appt.status = 'completed'
+    if appt.status == 'arrived':
+        appt.status = 'completed'
     db.session.add(feedback)
     db.session.commit()
     return jsonify({"success": True, "message": "Feedback submitted!", "reflection": ai_result.get('user_reflection', 'Thank you!')})
@@ -339,7 +354,8 @@ def get_business_stats(business_id):
     feedback = Feedback.query.join(Appointment).filter(Appointment.business_id == business_id).limit(10).all()
     categories = []
     for f in feedback:
-        if f.ai_category: categories.extend([c.strip() for c in f.ai_category.split(',')])
+        if f.ai_category:
+            categories.extend([c.strip() for c in f.ai_category.split(',')])
     return jsonify({"live_wait_time": wait_time, "recent_ai_insights": list(set(categories))[:3]})
 
 @api_bp.route("/recommendations")
@@ -352,9 +368,33 @@ def get_recommendations():
 
 @api_bp.route("/forecast/<int:business_id>")
 def get_business_forecast(business_id):
-    days, hours = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], ['09:00', '12:00', '15:00', '18:00']
-    # Replacing random mock data with a basic zero-state
-    forecast = [{"day": d, "hour": h, "occupancy": 0.0} for d in days for h in hours]
+    business = Business.query.get_or_404(business_id)
+    working_hours = business.working_hours or {}
+    
+    days_short = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    days_full = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    
+    forecast = []
+    for i, d_full in enumerate(days_full):
+        day_hours = working_hours.get(d_full[:3]) or working_hours.get(d_full)
+        if not day_hours or len(day_hours) < 2:
+            continue
+            
+        start_h = int(day_hours[0].split(':')[0])
+        end_h = int(day_hours[1].split(':')[0])
+        
+        for h in range(start_h, end_h + 1, 3): # 3-hour blocks
+            hour_str = f"{h:02d}:00"
+            forecast.append({
+                "day": days_short[i],
+                "hour": hour_str,
+                "occupancy": 0.2 if 10 <= h <= 14 else 0.1 # Slight midday bump mock
+            })
+            
+    if not forecast:
+        # Fallback to defaults if no hours found
+        forecast = [{"day": d, "hour": h, "occupancy": 0.0} for d in days_short for h in ['09:00', '12:00', '15:00', '18:00']]
+        
     return jsonify(forecast)
 
 @api_bp.route("/promotions/active/<int:business_id>")
@@ -369,7 +409,8 @@ def request_priority():
     data = request.get_json()
     appt_id = data.get('appointment_id')
     appt = Appointment.query.get_or_404(appt_id)
-    if appt.customer_id != current_user.id: return jsonify({"error": "Unauthorized"}), 403
+    if appt.customer_id != current_user.id:
+        return jsonify({"error": "Unauthorized"}), 403
     appt.is_priority = True
     appt.status = 'pending'
     db.session.commit()
@@ -378,11 +419,15 @@ def request_priority():
 @api_bp.route("/admin/triage/process", methods=['POST'])
 @firebase_token_required
 def admin_process_triage():
-    if current_user.role != 'admin': return jsonify({"error": "Admin only"}), 403
+    if current_user.role != 'admin':
+        return jsonify({"error": "Admin only"}), 403
     data = request.get_json()
     appt = Appointment.query.get_or_404(data.get('appointment_id'))
-    if data.get('action') == 'approve': appt.status = 'booked'
-    else: appt.status = 'cancelled'; appt.cancellation_reason = "Priority request denied by admin."
+    if data.get('action') == 'approve':
+        appt.status = 'booked'
+    else:
+        appt.status = 'cancelled'
+        appt.cancellation_reason = "Priority request denied by admin."
     db.session.commit()
     return jsonify({"success": True})
 
@@ -415,11 +460,14 @@ def api_kiosk_status():
 @api_bp.route("/calendar/events", methods=['GET'])
 @firebase_token_required
 def get_calendar_events():
-    if current_user.role not in ['business', 'admin']: return jsonify([])
+    if current_user.role not in ['business_owner', 'admin']:
+        return jsonify([])
     query = Appointment.query.filter_by(business_id=current_user.businesses[0].id)
     start_param, end_param = request.args.get('start'), request.args.get('end')
-    if start_param: query = query.filter(Appointment.start_time >= start_param)
-    if end_param: query = query.filter(Appointment.end_time <= end_param)
+    if start_param:
+        query = query.filter(Appointment.start_time >= start_param)
+    if end_param:
+        query = query.filter(Appointment.end_time <= end_param)
     return jsonify([{"id": str(a.id), "title": f"{a.customer.username} - {a.service.name}", "start": a.start_time.isoformat(), "end": a.end_time.isoformat(), "backgroundColor": '#198754' if a.status == 'arrived' else '#0d6efd'} for a in query.all()])
 
 @api_bp.route("/subscription/plans", methods=['GET'])
@@ -444,7 +492,8 @@ def subscription_checkout():
 def get_subscription_status():
     from backend.models.models import Subscription
     sub = Subscription.query.filter_by(user_id=current_user.id, status='active').order_by(Subscription.end_date.desc()).first()
-    if not sub: return jsonify({"has_active_sub": False, "level": "free"})
+    if not sub:
+        return jsonify({"has_active_sub": False, "level": "free"})
     return jsonify({"has_active_sub": True, "plan_name": sub.plan.name, "expires_at": sub.end_date.isoformat(), "features": sub.plan.features})
 
 @api_bp.route("/dashboard/stats/<int:business_id>")
@@ -471,7 +520,8 @@ def get_dashboard_stats(business_id):
         day = (now - timedelta(days=i)).date()
         day_start = datetime.combine(day, datetime.min.time())
         count = Appointment.query.filter(Appointment.business_id == business_id, Appointment.start_time >= day_start, Appointment.start_time < day_start + timedelta(days=1)).count()
-        trend_labels.append(day.strftime('%a')); trend_data.append(count)
+        trend_labels.append(day.strftime('%a'))
+        trend_data.append(count)
     return jsonify({"total_bookings": total_bookings, "today_bookings": today_bookings, "completed_bookings": completed, "pending_bookings": pending, "cancelled_bookings": cancelled, "total_revenue": float(revenue_result or 0), "active_staff": active_staff, "avg_rating": round(float(avg_rating_result), 1) if avg_rating_result else 0.0, "booking_trend": {"labels": trend_labels, "data": trend_data}})
 
 @api_bp.route('/user/select-role', methods=['POST'])
@@ -526,3 +576,15 @@ def auth_sync():
         "role": current_user.role,
         "redirect": "/admin/dashboard" if current_user.role == "business_owner" else "/"
     })
+
+@api_bp.route('/update-fcm-token', methods=['POST'])
+@firebase_token_required
+def update_fcm_token():
+    data = request.get_json()
+    token = data.get('fcmToken')
+    if not token:
+        return jsonify({"success": False, "message": "Token required"}), 400
+    
+    current_user.fcm_token = token
+    db.session.commit()
+    return jsonify({"success": True})

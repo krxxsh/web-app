@@ -113,7 +113,18 @@ def manage_categories():
 @admin_bp.route("/service/add", methods=['GET', 'POST'])
 @login_required
 def add_service():
-    business = Business.query.filter_by(owner_id=current_user.id).first()
+    business_id = request.args.get('business_id', type=int)
+    if business_id:
+        business = Business.query.get_or_404(business_id)
+        if business.owner_id != current_user.id and current_user.role != 'admin':
+            return "Unauthorized", 403
+    else:
+        business = Business.query.filter_by(owner_id=current_user.id).first()
+    
+    if not business:
+        flash('Please setup a business first.', 'warning')
+        return redirect(url_for('admin.setup_business'))
+
     if request.method == 'POST':
         name = request.form.get('name')
         try:
@@ -141,7 +152,7 @@ def add_service():
 @login_required
 @limiter.limit("10 per minute")
 def add_staff():
-    if current_user.role not in ['business', 'business_owner', 'admin']:
+    if current_user.role not in ['business_owner', 'admin']:
         return "Unauthorized", 403
     name = request.form.get('name')
     business = current_user.businesses[0]
@@ -172,7 +183,7 @@ def add_staff():
 @login_required
 @limiter.limit("5 per minute")
 def update_branding():
-    if current_user.role not in ['business', 'business_owner', 'admin']:
+    if current_user.role not in ['business_owner', 'admin']:
         return "Unauthorized", 403
 
     business = current_user.businesses[0]
@@ -225,7 +236,7 @@ def check_verification():
     if request.endpoint in allowed_endpoints:
         return None
 
-    if current_user.role in ['business', 'business_owner'] and not current_user.is_verified:
+    if current_user.role == 'business_owner' and not current_user.is_verified:
         return redirect(url_for('admin.pending_verification'))
 
 @admin_bp.route("/pending_verification")
@@ -243,8 +254,6 @@ def platform_dashboard():
         return redirect(url_for('main.home'))
 
     pending_users = User.query.filter_by(role='business_owner', is_verified=False).all()
-    # also support older 'business' role
-    pending_users += User.query.filter_by(role='business', is_verified=False).all()
 
     active_businesses = Business.query.all()
     return render_template('admin/platform_owner.html', pending_users=pending_users, businesses=active_businesses)

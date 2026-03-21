@@ -67,6 +67,35 @@ const initHero3D = () => {
 
     const clock = new THREE.Clock();
 
+    // CRAZY VFX: Floating 3D Shards
+    const shards = [];
+    const shardGeometry = new THREE.IcosahedronGeometry(0.1, 0);
+    const shardMaterial = new THREE.MeshPhongMaterial({
+        color: 0x1d76f2,
+        transparent: true,
+        opacity: 0.6,
+        shininess: 100,
+        emissive: 0x1d76f2,
+        emissiveIntensity: 0.2
+    });
+
+    for (let i = 0; i < 15; i++) {
+        const shard = new THREE.Mesh(shardGeometry, shardMaterial);
+        shard.position.set(
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 2
+        );
+        shard.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        shard.userData = {
+            speedX: (Math.random() - 0.5) * 0.01,
+            speedY: (Math.random() - 0.5) * 0.01,
+            rotationSpeed: Math.random() * 0.02
+        };
+        scene.add(shard);
+        shards.push(shard);
+    }
+
     const animate = () => {
         const elapsedTime = clock.getElapsedTime();
 
@@ -75,10 +104,26 @@ const initHero3D = () => {
         sphere.rotation.x = elapsedTime * 0.05;
 
         // Mouse Parallax
-        sphere.position.x = mouseX * 0.5;
-        sphere.position.y = -mouseY * 0.5;
+        sphere.position.x += (mouseX * 0.5 - sphere.position.x) * 0.05;
+        sphere.position.y += (-mouseY * 0.5 - sphere.position.y) * 0.05;
 
         particlesMesh.rotation.y = -elapsedTime * 0.02;
+
+        // Animate Shards
+        shards.forEach(shard => {
+            shard.position.x += shard.userData.speedX;
+            shard.position.y += shard.userData.speedY;
+            shard.rotation.x += shard.userData.rotationSpeed;
+            shard.rotation.y += shard.userData.rotationSpeed;
+
+            // Subtle Mouse Interaction for Shards
+            shard.position.x += (mouseX * 2 - shard.position.x) * 0.005;
+            shard.position.y += (-mouseY * 2 - shard.position.y) * 0.005;
+
+            // Wrap around edges
+            if (Math.abs(shard.position.x) > 4) shard.position.x *= -0.9;
+            if (Math.abs(shard.position.y) > 3) shard.position.y *= -0.9;
+        });
 
         renderer.render(scene, camera);
         window.requestAnimationFrame(animate);

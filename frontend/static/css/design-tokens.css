@@ -44,6 +44,12 @@
     --glass-blur: blur(12px);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 
+    /* 3D Dimension Overhaul Tokens */
+    --perspective: 1200px;
+    --depth-z: 40px;
+    --3d-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    --neon-glow: 0 0 20px -5px var(--primary-soft);
+
     /* Layout & Utilities */
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -60,6 +66,7 @@
     --text-muted: var(--text-secondary-dark);
     --glass-bg: rgba(0, 0, 0, 0.4);
     --glass-border: rgba(255, 255, 255, 0.08);
+    --3d-glow: 0 0 40px -10px var(--primary-soft);
 }
 
 [data-bs-theme="light"] {
@@ -70,4 +77,25 @@
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(0, 0, 0, 0.05);
     --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+/* 3D Depth Utilities */
+.depth-layer {
+    transform: translateZ(var(--depth-z));
+}
+
+.text-3d {
+    text-shadow: 
+        0 4px 10px rgba(0,0,0,0.3),
+        0 1px 0 #ccc,
+        0 2px 0 #c9c9c9,
+        0 3px 0 #bbb,
+        0 4px 0 #b9b9b9;
+}
+
+[data-bs-theme="dark"] .text-3d {
+    text-shadow: 
+        0 4px 20px rgba(0,0,0,0.5),
+        0 1px 0 #444,
+        0 2px 0 #333,
+        0 3px 0 #222;
 }

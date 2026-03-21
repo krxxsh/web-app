@@ -53,6 +53,16 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ csp_nonce() }}">
+    function validateRedirect(url) {
+        if (!url) return '/';
+        // SECURITY: Only allow relative paths (starting with /) to prevent Open Redirects
+        if (url.startsWith('//') || url.match(/^[a-zA-Z0-9+.-]+:\/\//)) {
+            console.warn("External redirect blocked:", url);
+            return '/';
+        }
+        return url;
+    }
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -91,7 +101,7 @@
             if (data.success) {
                 showToast('Account created successfully!', 'success');
                 setTimeout(() => {
-                    window.location.href = data.redirect || '/';
+                    window.location.href = validateRedirect(data.redirect);
                 }, 1000);
             } else {
                 showToast(data.message || 'Metadata sync failed', 'error');

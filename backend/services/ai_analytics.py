@@ -1,3 +1,4 @@
+from flask import current_app
 import google.generativeai as genai
 import os
 import logging
@@ -6,9 +7,10 @@ from backend.models.models import Appointment, Business
 
 logger = logging.getLogger(__name__)
 
-# Configure Gemini
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", "MOCK_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+def get_genai_model():
+    api_key = current_app.config.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "MOCK_KEY")
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 def analyze_sentiment(text):
     """
@@ -32,7 +34,7 @@ def analyze_sentiment(text):
         if os.environ.get("GEMINI_API_KEY") == "MOCK_KEY":
              return {"sentiment": "positive", "score": 0.9, "key_issues": [], "user_reflection": "Thanks for your kind words!"}
 
-        response = model.generate_content(prompt)
+        response = get_genai_model().generate_content(prompt)
         # Placeholder for real parsing logic (assuming strong JSON output from Flash)
         import json
         return json.loads(response.text.replace('```json', '').replace('```', ''))

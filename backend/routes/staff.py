@@ -36,7 +36,16 @@ def complete_appt(appt_id):
     if current_user.role != 'staff':
         return jsonify({"success": False}), 403
 
+    staff_profile = Staff.query.filter_by(user_id=current_user.id).first()
+    if not staff_profile:
+        return jsonify({"success": False, "message": "Staff profile not found"}), 403
+
     appt = Appointment.query.get_or_404(appt_id)
+    
+    # SECURITY: Ensure staff belongs to the same business as the appointment
+    if appt.business_id != staff_profile.business_id:
+        return jsonify({"success": False, "message": "Unauthorized: Appointment belongs to another business"}), 403
+
     appt.status = 'completed'
     db.session.commit()
     return jsonify({"success": True})

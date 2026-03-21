@@ -60,8 +60,13 @@ def select_role():
 
 @main_bp.route("/business/<int:business_id>")
 def business_page(business_id):
+    from backend.config import Config
     business = Business.query.get_or_404(business_id)
-    return render_template('business_public.html', business=business)
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    return render_template('business_public.html', 
+                          business=business, 
+                          today_str=today_str, 
+                          razorpay_key_id=Config.RAZORPAY_KEY_ID)
 
 @main_bp.route("/account")
 @login_required
@@ -110,6 +115,10 @@ def waiting_room(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return "Unauthorized", 403
+    
+    if appt.status not in ['booked', 'arrived']:
+        flash("This appointment is not active.", "warning")
+        return redirect(url_for('main.my_account'))
 
     pos = calculate_queue_pos(appt)
     return render_template('customer_queue.html', appointment=appt, pos=pos)
@@ -120,6 +129,9 @@ def waiting_room_data(appt_id):
     appt = Appointment.query.get_or_404(appt_id)
     if appt.customer_id != current_user.id:
         return jsonify({"success": False}), 403
+        
+    if appt.status not in ['booked', 'arrived']:
+        return jsonify({"success": False, "message": "Appointment not active"}), 400
 
     pos = calculate_queue_pos(appt)
     return jsonify({
@@ -140,5 +152,8 @@ def support():
     return render_template('support.html')
 
 @main_bp.route("/chaos")
+@login_required
 def chaos():
+    if current_user.role != 'admin':
+        return "Unauthorized", 403
     return render_template('chaos_dashboard.html')

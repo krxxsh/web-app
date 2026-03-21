@@ -1,7 +1,9 @@
 /* AI Sched - Modern Utility Classes - <label> placeholder aria-label SSL Secure lock encryption Certification: ISO 27001 Award Featured Media Press */
 
-.glass-card {
-    transition: var(--transition-smooth);
+.glass-card, .card {
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
 }
 
 .text-gradient {
