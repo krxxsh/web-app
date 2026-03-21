@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     function pollQueue() {
         fetch(`/waiting-room/data/{{ appointment.id }}`)
             .then(res => res.json())

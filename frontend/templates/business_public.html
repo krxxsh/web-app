@@ -240,9 +240,9 @@
 </div>
 
 <!-- Razorpay Script -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script nonce="{{ csp_nonce() }}" src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     let selectedServiceId = null;
     let selectedTime = null;
     let currentPrice = 0;

@@ -1,0 +1,34 @@
+﻿
+============================================================
+  SEO CHECKER - Search Engine Optimization Audit
+============================================================
+Project: C:\Users\krish\Desktop\management
+Time: 2026-03-21 22:22:58
+------------------------------------------------------------
+Found 50 page files to analyze
+
+============================================================
+SEO ANALYSIS RESULTS
+============================================================
+
+Issue Summary:
+  [12] Missing meta description
+  [12] Missing Open Graph tags
+  [5] Missing <title> tag
+
+Affected files (12):
+  - system_architecture.html
+  - home.html
+  - login.html
+  - login_admin.html
+  - register.html
+  ... and 7 more
+
+{
+  "script": "seo_checker",
+  "project": "C:\\Users\\krish\\Desktop\\management",
+  "files_checked": 50,
+  "files_with_issues": 12,
+  "issues_found": 29,
+  "passed": false
+}

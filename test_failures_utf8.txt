@@ -1,0 +1,306 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.3, pytest-8.1.1, pluggy-1.6.0 -- C:\Users\krish\AppData\Local\Programs\Python\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\krish\Desktop\management
+plugins: anyio-4.12.1, langsmith-0.7.14
+collecting ... collected 12 items
+
+tests/test_ai_services.py::test_extract_intent_no_api_key PASSED         [  8%]
+tests/test_ai_services.py::test_extract_intent_mocked_success PASSED     [ 16%]
+tests/test_basic.py::test_dummy_passing PASSED                           [ 25%]
+tests/test_dashboard_stats.py::test_dashboard_stats_success FAILED       [ 33%]
+tests/test_dashboard_stats.py::test_dashboard_stats_unauthorized FAILED  [ 41%]
+tests/test_dashboard_stats.py::test_dashboard_stats_business_not_found FAILED [ 50%]
+tests/test_kiosk_checkin.py::test_check_in_with_pin_success FAILED       [ 58%]
+tests/test_kiosk_checkin.py::test_check_in_with_pin_invalid PASSED       [ 66%]
+tests/test_kiosk_checkin.py::test_check_in_with_pin_wrong_day PASSED     [ 75%]
+tests/test_security_hardening.py::test_password_reset_rate_limiting FAILED [ 83%]
+tests/test_security_hardening.py::test_password_reset_otp_expiration FAILED [ 91%]
+tests/test_security_hardening.py::test_password_reset_success FAILED     [100%]
+
+================================== FAILURES ===================================
+________________________ test_dashboard_stats_success _________________________
+
+app = <Flask 'backend.app'>, client = <FlaskClient <Flask 'backend.app'>>
+
+    def test_dashboard_stats_success(app, client):
+        """Stats endpoint returns correct aggregated data for the business owner."""
+        ids = _seed_data(app)
+    
+        with patch('backend.routes.api.login_required', lambda x: x):
+            with patch('backend.routes.api.current_user') as mock_user:
+                mock_user.id = ids["owner_id"]
+                mock_user.role = 'business_owner'
+    
+                response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
+>               assert response.status_code == 200
+E               assert 401 == 200
+E                +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+
+tests\test_dashboard_stats.py:134: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,053 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,060 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+______________________ test_dashboard_stats_unauthorized ______________________
+
+app = <Flask 'backend.app'>, client = <FlaskClient <Flask 'backend.app'>>
+
+    def test_dashboard_stats_unauthorized(app, client):
+        """Fails if user is not the owner of the business."""
+        ids = _seed_data(app)
+    
+        with patch('backend.routes.api.login_required', lambda x: x):
+            with patch('backend.routes.api.current_user') as mock_user:
+                mock_user.id = 999
+                mock_user.role = 'business_owner'
+    
+                response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
+>               assert response.status_code == 403
+E               assert 401 == 403
+E                +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+
+tests\test_dashboard_stats.py:158: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,515 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,523 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+___________________ test_dashboard_stats_business_not_found ___________________
+
+app = <Flask 'backend.app'>, client = <FlaskClient <Flask 'backend.app'>>
+
+    def test_dashboard_stats_business_not_found(app, client):
+        """Returns 404 if business_id does not exist."""
+        ids = _seed_data(app)
+    
+        with patch('backend.routes.api.login_required', lambda x: x):
+            with patch('backend.routes.api.current_user') as mock_user:
+                mock_user.id = ids["owner_id"]
+                mock_user.role = 'business_owner'
+    
+                response = client.get('/api/dashboard/stats/9999')
+>               assert response.status_code == 404
+E               assert 401 == 404
+E                +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+
+tests\test_dashboard_stats.py:170: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,576 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,583 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+_______________________ test_check_in_with_pin_success ________________________
+
+app = <Flask 'backend.app'>
+
+    def test_check_in_with_pin_success(app):
+        """Test successful check-in with a valid PIN."""
+        with app.app_context():
+            # Create a test customer
+            customer = User(username="testuser", email="test@example.com", password="hash", role="customer")
+            db.session.add(customer)
+            db.session.commit()
+    
+            # Create a business
+            business = Business(name="Test Spa", category="Salon", address="123 Street", owner_id=customer.id)
+            db.session.add(business)
+            db.session.commit()
+    
+            # Create a service
+            service = Service(name="Massage", duration=30, price=50.0, business_id=business.id)
+            db.session.add(service)
+            db.session.commit()
+    
+            # Create a scheduled appointment for today
+            now = datetime.utcnow()
+            pin = "123456"
+            appt = Appointment(
+                customer_id=customer.id,
+                business_id=business.id,
+                service_id=service.id,
+                start_time=now + timedelta(minutes=10),
+                end_time=now + timedelta(minutes=40),
+                status="scheduled",
+                checkin_pin=pin
+            )
+            db.session.add(appt)
+            db.session.commit()
+    
+            # Perform check-in
+            success, message = check_in_with_pin(pin)
+    
+>           assert success is True
+E           assert False is True
+
+tests\test_kiosk_checkin.py:43: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,627 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,634 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+______________________ test_password_reset_rate_limiting ______________________
+
+client = <FlaskClient <Flask 'backend.app'>>, app = <Flask 'backend.app'>
+
+    def test_password_reset_rate_limiting(client, app):
+        """Test that OTP requests are rate limited to 60 seconds."""
+        with app.app_context():
+            user = User(
+                username="testuser",
+                email="test@example.com",
+                password="hashed_password",
+                otp_created_at=datetime.now(timezone.utc) - timedelta(seconds=30)
+            )
+            db.session.add(user)
+            db.session.commit()
+    
+            response = client.post('/forgot-password', json={'email': 'test@example.com'})
+>           assert response.status_code == 429
+E           assert 400 == 429
+E            +  where 400 = <WrapperTestResponse streamed [400 BAD REQUEST]>.status_code
+
+tests\test_security_hardening.py:19: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,803 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,810 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+_____________________ test_password_reset_otp_expiration ______________________
+
+client = <FlaskClient <Flask 'backend.app'>>, app = <Flask 'backend.app'>
+
+    def test_password_reset_otp_expiration(client, app):
+        """Test that expired OTPs (10m) are rejected during reset."""
+        with app.app_context():
+            user = User(
+                username="expireuser",
+                email="expire@example.com",
+                password="old_password_hash",
+                email_otp="123456",
+                otp_created_at=datetime.now(timezone.utc) - timedelta(minutes=11)
+            )
+            db.session.add(user)
+            db.session.commit()
+    
+            response = client.post('/reset-password', json={
+                'email': 'expire@example.com',
+                'otp': '123456',
+                'password': 'NewSecurePassword123!'
+            })
+            assert response.status_code == 400
+>           assert b"OTP expired" in response.data
+E           assert b'OTP expired' in b'{\n  "message": "Please use the Firebase reset flow.",\n  "success": false\n}\n'
+E            +  where b'{\n  "message": "Please use the Firebase reset flow.",\n  "success": false\n}\n' = <WrapperTestResponse 75 bytes [400 BAD REQUEST]>.data
+
+tests\test_security_hardening.py:41: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,845 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,853 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+_________________________ test_password_reset_success _________________________
+
+client = <FlaskClient <Flask 'backend.app'>>, app = <Flask 'backend.app'>
+
+    def test_password_reset_success(client, app):
+        """Test successful password reset with valid OTP."""
+        # Use patch instead of mocker to avoid extra dependencies
+        from unittest.mock import patch
+>       with patch('backend.routes.auth.send_password_reset_otp', return_value=True):
+
+tests\test_security_hardening.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x00000234023DA510>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+>           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: <module 'backend.routes.auth' from 'C:\\Users\\krish\\Desktop\\management\\backend\\routes\\auth.py'> does not have the attribute 'send_password_reset_otp'
+
+..\..\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py:1473: AttributeError
+---------------------------- Captured stdout setup ----------------------------
+2026-03-21 22:16:02,888 - backend.app - INFO - Running database initialization...
+2026-03-21 22:16:02,895 - backend.app - INFO - Default categories seeded.
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:app.py:189 Running database initialization...
+INFO     backend.app:app.py:204 Default categories seeded.
+============================== warnings summary ===============================
+..\..\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask_limiter\_extension.py:364: 1 warning
+tests/test_ai_services.py: 2 warnings
+tests/test_dashboard_stats.py: 3 warnings
+tests/test_kiosk_checkin.py: 3 warnings
+tests/test_security_hardening.py: 3 warnings
+  C:\Users\krish\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask_limiter\_extension.py:364: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+    warnings.warn(
+
+backend\services\chatbot.py:1
+  C:\Users\krish\Desktop\management\backend\services\chatbot.py:1: FutureWarning: 
+  
+  All support for the `google.generativeai` package has ended. It will no longer be receiving 
+  updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+  See README for more details:
+  
+  https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+  
+    import google.generativeai as genai
+
+tests/test_dashboard_stats.py::test_dashboard_stats_success
+tests/test_dashboard_stats.py::test_dashboard_stats_unauthorized
+tests/test_dashboard_stats.py::test_dashboard_stats_business_not_found
+  C:\Users\krish\Desktop\management\tests\test_dashboard_stats.py:73: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_kiosk_checkin.py::test_check_in_with_pin_success
+  C:\Users\krish\Desktop\management\tests\test_kiosk_checkin.py:26: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_kiosk_checkin.py::test_check_in_with_pin_success
+tests/test_kiosk_checkin.py::test_check_in_with_pin_invalid
+tests/test_kiosk_checkin.py::test_check_in_with_pin_wrong_day
+  C:\Users\krish\Desktop\management\backend\services\scheduling_service.py:112: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_kiosk_checkin.py::test_check_in_with_pin_wrong_day
+  C:\Users\krish\Desktop\management\tests\test_kiosk_checkin.py:76: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    tomorrow = datetime.utcnow() + timedelta(days=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_dashboard_stats.py::test_dashboard_stats_success - assert 4...
+FAILED tests/test_dashboard_stats.py::test_dashboard_stats_unauthorized - ass...
+FAILED tests/test_dashboard_stats.py::test_dashboard_stats_business_not_found
+FAILED tests/test_kiosk_checkin.py::test_check_in_with_pin_success - assert F...
+FAILED tests/test_security_hardening.py::test_password_reset_rate_limiting - ...
+FAILED tests/test_security_hardening.py::test_password_reset_otp_expiration
+FAILED tests/test_security_hardening.py::test_password_reset_success - Attrib...
+================== 7 failed, 5 passed, 21 warnings in 1.03s ===================

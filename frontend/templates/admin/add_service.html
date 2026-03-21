@@ -82,7 +82,7 @@
 {% endblock content %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     function toggleGroupSize() {
         const checked = document.getElementById('isGroupAllowed').checked;
         const container = document.getElementById('groupSizeContainer');

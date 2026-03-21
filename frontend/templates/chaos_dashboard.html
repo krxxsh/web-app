@@ -38,7 +38,7 @@
     </div>
 
     <!-- Glitch 4: Script Error -->
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         // Intentional console error for Detection
         window.addEventListener('load', function() {
             console.error("Critical System Glitch: Failed to load resource 'neural_interface.js'");

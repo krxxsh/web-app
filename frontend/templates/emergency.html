@@ -78,8 +78,8 @@
     </div>
 </template>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}" src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script nonce="{{ csp_nonce() }}">
     let map = null;
     let markers = [];
 
