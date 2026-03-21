@@ -49,6 +49,7 @@ def create_app(config_class=Config):
             "'unsafe-inline'",
             "'unsafe-eval'",
             'https://cdn.jsdelivr.net',
+            'https://cdn.tailwindcss.com',
             'https://www.gstatic.com',
             'https://apis.google.com',
             'https://accounts.google.com',
