@@ -93,7 +93,7 @@
 }
 </style>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', () => {
     const customerCard = document.getElementById('customer-role');
     const businessCard = document.getElementById('business-role');
@@ -141,9 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmBtn.disabled = true;
 
         try {
+            const token = localStorage.getItem('firebaseToken');
             const response = await fetch('/api/user/select-role', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     role: selectedRole,
                     phone: phoneVal || null,
