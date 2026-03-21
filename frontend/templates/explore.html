@@ -2,7 +2,7 @@
 {% block content %}
 <!-- UX Metadata Anchor: line-height: 1.6, max-width: 65ch, aria-label: active -->
 <!-- Spatial Discovery Scripts handled in base.html -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <style>
     #map {
         height: 440px;
@@ -100,7 +100,7 @@
     {% endfor %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
     // --- V2.0 Spatial Discovery (Three.js) ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
