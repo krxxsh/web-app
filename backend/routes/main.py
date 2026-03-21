@@ -11,7 +11,10 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route("/")
 @main_bp.route("/home")
 def home():
-    businesses = Business.query.filter_by(status='active').all()
+    if current_user.is_authenticated:
+        businesses = Business.query.filter((Business.status == 'active') | (Business.owner_id == current_user.id)).all()
+    else:
+        businesses = Business.query.filter_by(status='active').all()
     return render_template('home.html', businesses=businesses)
 
 @main_bp.route("/select-role", methods=['GET', 'POST'])

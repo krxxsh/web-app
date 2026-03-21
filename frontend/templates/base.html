@@ -403,7 +403,7 @@
                 window.handleLogout = async function() {
                     try {
                         await firebase.auth().signOut();
-                        window.location.href = '/';
+                        window.location.href = '/logout';
                     } catch (error) {
                         console.error("Logout Error:", error);
                     }
