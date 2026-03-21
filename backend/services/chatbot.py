@@ -1,4 +1,14 @@
-import google.generativeai as genai
+import warnings
+# Suppress FutureWarning from deprecated google.generativeai if google.genai is not available
+try:
+    from google import genai
+    _USE_NEW_SDK = True
+except ImportError:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        import google.generativeai as genai_legacy
+    _USE_NEW_SDK = False
+
 from flask import current_app
 import json
 from datetime import datetime
@@ -11,9 +21,6 @@ def extract_booking_intent(user_text):
     api_key = current_app.config.get('GEMINI_API_KEY')
     if not api_key:
         return {"error": "AI API Key not configured"}
-
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro')
 
     prompt = f"""
     Extract booking details from this text and return ONLY a JSON object.
@@ -28,9 +35,20 @@ def extract_booking_intent(user_text):
     """
 
     try:
-        response = model.generate_content(prompt)
+        if _USE_NEW_SDK:
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
+            response_text = response.text
+        else:
+            genai_legacy.configure(api_key=api_key)
+            model = genai_legacy.GenerativeModel('gemini-pro')
+            response = model.generate_content(prompt)
+            response_text = response.text
+
         # Attempt to find JSON in response
-        response_text = response.text
         start = response_text.find('{')
         end = response_text.rfind('}') + 1
         if start != -1 and end != -1:
@@ -49,3 +67,4 @@ def generate_chatbot_response(intent, context):
         return "I can check that for you. What service are you interested in?"
 
     return "I'm here to help with your bookings. You can say things like 'Book a massage for Friday at 4pm'."
+

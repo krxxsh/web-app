@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.app import create_app
 from backend.extensions import db
 from backend.models.models import User, Business, Appointment, Staff, Service
@@ -70,7 +70,7 @@ def _seed_data(app):
         staff_id = staff.id
 
         # Create Appointments
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # 1. Completed
         apt1 = Appointment(
@@ -125,46 +125,43 @@ def test_dashboard_stats_success(app, client):
     """Stats endpoint returns correct aggregated data for the business owner."""
     ids = _seed_data(app)
     
-    with patch('backend.routes.api.login_required', lambda x: x):
-        with patch('backend.routes.api.current_user') as mock_user:
-            mock_user.id = ids["owner_id"]
-            mock_user.role = 'business_owner'
-            
-            response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
-            assert response.status_code == 200
-            data = response.get_json()
-            
-            # total_bookings = completed(1) + booked(2) + cancelled(1) = 4
-            assert data['total_bookings'] == 4
-            assert data['completed_bookings'] == 1
-            assert data['pending_bookings'] == 2
-            assert data['cancelled_bookings'] == 1
-            # total_revenue = Service.price for completed only = 50.0
-            assert data['total_revenue'] == 50.0
-            assert data["active_staff"] == 1
-            assert "booking_trend" in data
-            assert len(data["booking_trend"]["data"]) == 7
+    with patch('backend.routes.api.current_user') as mock_user:
+        mock_user.id = ids["owner_id"]
+        mock_user.role = 'business_owner'
+        
+        response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
+        assert response.status_code == 200
+        data = response.get_json()
+        
+        # total_bookings = completed(1) + booked(2) + cancelled(1) = 4
+        assert data['total_bookings'] == 4
+        assert data['completed_bookings'] == 1
+        assert data['pending_bookings'] == 2
+        assert data['cancelled_bookings'] == 1
+        # total_revenue = Service.price for completed only = 50.0
+        assert data['total_revenue'] == 50.0
+        assert data["active_staff"] == 1
+        assert "booking_trend" in data
+        assert len(data["booking_trend"]["data"]) == 7
 
 def test_dashboard_stats_unauthorized(app, client):
     """Fails if user is not the owner of the business."""
     ids = _seed_data(app)
     
-    with patch('backend.routes.api.login_required', lambda x: x):
-        with patch('backend.routes.api.current_user') as mock_user:
-            mock_user.id = 999 
-            mock_user.role = 'business_owner'
-            
-            response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
-            assert response.status_code == 403
+    with patch('backend.routes.api.current_user') as mock_user:
+        mock_user.id = 999 
+        mock_user.role = 'business_owner'
+        
+        response = client.get(f'/api/dashboard/stats/{ids["business_id"]}')
+        assert response.status_code == 403
 
 def test_dashboard_stats_business_not_found(app, client):
     """Returns 404 if business_id does not exist."""
     ids = _seed_data(app)
     
-    with patch('backend.routes.api.login_required', lambda x: x):
-        with patch('backend.routes.api.current_user') as mock_user:
-            mock_user.id = ids["owner_id"]
-            mock_user.role = 'business_owner'
-            
-            response = client.get('/api/dashboard/stats/9999')
-            assert response.status_code == 404
+    with patch('backend.routes.api.current_user') as mock_user:
+        mock_user.id = ids["owner_id"]
+        mock_user.role = 'business_owner'
+        
+        response = client.get('/api/dashboard/stats/9999')
+        assert response.status_code == 404

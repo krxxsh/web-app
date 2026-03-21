@@ -1,7 +1,7 @@
 from flask import request
 from backend.models.models import AdminActivityLog
 from backend.extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 def log_admin_action(user_id, action, business_id=None, details=None):
     """
@@ -13,7 +13,7 @@ def log_admin_action(user_id, action, business_id=None, details=None):
         action=action,
         details=details or {},
         ip_address=request.remote_addr,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     db.session.add(log)
     db.session.commit()

@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import wraps
 from flask import request, jsonify, g
 from backend.services.firebase_config import verify_firebase_token
@@ -7,6 +8,14 @@ from backend.extensions import db
 
 logger = logging.getLogger(__name__)
 
+# SECURITY GUARD: Prevent LOGIN_DISABLED from leaking to production
+_PRODUCTION_ENVIRONMENTS = ('production', 'prod')
+if os.environ.get('FLASK_ENV', '').lower() in _PRODUCTION_ENVIRONMENTS or os.environ.get('VERCEL'):
+    assert not os.environ.get('LOGIN_DISABLED'), (
+        "FATAL: LOGIN_DISABLED must NEVER be set in production! "
+        "Remove this environment variable immediately."
+    )
+
 def firebase_token_required(f):
     """
     Decorator to verify Firebase ID Token in the Authorization header.
@@ -14,6 +23,10 @@ def firebase_token_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from flask import current_app
+        if current_app.config.get('LOGIN_DISABLED'):
+            return f(*args, **kwargs)
+            
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
             return jsonify({"success": False, "message": "Missing or invalid Authorization header"}), 401

@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.models.models import Feedback, Appointment
 
 def detect_review_fraud(user_id, appointment_id, rating, comment):
@@ -25,7 +25,7 @@ def detect_review_fraud(user_id, appointment_id, rating, comment):
     # 2. Velocity Check (Spam protection)
     recent_reviews = Feedback.query.filter(
         Feedback.user_id == user_id,
-        Feedback.created_at > datetime.utcnow() - timedelta(hours=1)
+        Feedback.created_at > datetime.now(timezone.utc) - timedelta(hours=1)
     ).count()
     if recent_reviews > 3:
         return True, "Too many reviews submitted recently"

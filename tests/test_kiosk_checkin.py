@@ -2,7 +2,7 @@ import pytest
 from backend.services.scheduling_service import check_in_with_pin
 from backend.models.models import Appointment, User, Business, Service
 from backend.extensions import db
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 def test_check_in_with_pin_success(app):
     """Test successful check-in with a valid PIN."""
@@ -23,7 +23,7 @@ def test_check_in_with_pin_success(app):
         db.session.commit()
 
         # Create a scheduled appointment for today
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         pin = "123456"
         appt = Appointment(
             customer_id=customer.id,
@@ -31,7 +31,7 @@ def test_check_in_with_pin_success(app):
             service_id=service.id,
             start_time=now + timedelta(minutes=10),
             end_time=now + timedelta(minutes=40),
-            status="scheduled",
+            status="booked",
             checkin_pin=pin
         )
         db.session.add(appt)
@@ -73,7 +73,7 @@ def test_check_in_with_pin_wrong_day(app):
         db.session.commit()
 
         # Create a scheduled appointment for tomorrow
-        tomorrow = datetime.utcnow() + timedelta(days=1)
+        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
         pin = "654321"
         appt = Appointment(
             customer_id=customer.id,
@@ -81,7 +81,7 @@ def test_check_in_with_pin_wrong_day(app):
             service_id=service.id,
             start_time=tomorrow,
             end_time=tomorrow + timedelta(minutes=30),
-            status="scheduled",
+            status="booked",
             checkin_pin=pin
         )
         db.session.add(appt)

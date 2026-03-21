@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.models.models import Appointment, Business, Service, Resource, Staff
 
 def generate_slots(business_id, service_id, date_str):
@@ -105,7 +105,7 @@ def predict_delay(appointment_id):
         return 0
     
     # Check if a live appointment for the same staff is currently running late
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     live_appt = Appointment.query.filter(
         Appointment.staff_id == appt.staff_id,
         Appointment.status == 'booked',

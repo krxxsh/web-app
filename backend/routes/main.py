@@ -142,6 +142,15 @@ def waiting_room_data(appt_id):
         "pos": pos,
         "status": appt.status
     })
+
+@main_bp.route('/favicon.ico')
+def favicon():
+    return '', 204
+
+@main_bp.route("/features")
+def features():
+    return render_template('features.html')
+
 @main_bp.route("/about")
 def about():
     return render_template('about.html')

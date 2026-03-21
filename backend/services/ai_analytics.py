@@ -1,5 +1,8 @@
 from flask import current_app
-import google.generativeai as genai
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", FutureWarning)
+    import google.generativeai as genai
 import os
 import logging
 from datetime import datetime, timedelta
@@ -35,7 +38,7 @@ def analyze_sentiment(text):
              return {"sentiment": "positive", "score": 0.9, "key_issues": [], "user_reflection": "Thanks for your kind words!"}
 
         response = get_genai_model().generate_content(prompt)
-        # Placeholder for real parsing logic (assuming strong JSON output from Flash)
+        # Parse JSON response from Gemini model
         import json
         return json.loads(response.text.replace('```json', '').replace('```', ''))
     except Exception as e:

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import secrets
 import string
 import logging
@@ -96,7 +96,7 @@ def join_waitlist(user_id, business_id, service_id):
         user_id=user_id,
         business_id=business_id,
         service_id=service_id,
-        request_date=datetime.utcnow()
+        request_date=datetime.now(timezone.utc)
     )
     db.session.add(new_entry)
     db.session.commit()
@@ -109,7 +109,7 @@ def check_in_with_pin(pin):
     """
     # Find appointments starting within 15 mins before/after now
     from datetime import timedelta
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     # Check-in is only valid FOR TODAY
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)

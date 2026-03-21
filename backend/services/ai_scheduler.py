@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.models.models import Appointment, Business, Staff, Service
 from sqlalchemy import and_
 
@@ -99,7 +99,7 @@ def predict_delay_v1(appointment_id):
 
     # Simple drift logic: if current time is > predicted start time and appt is not started
     # Or if previous appt for same staff is still 'booked'/'pending' past its end_time
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     previous_appt = Appointment.query.filter(
         and_(
