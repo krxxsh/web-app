@@ -324,8 +324,13 @@
             appId: "{{ config.FIREBASE_APP_ID }}"
         };
 
-        const isFirebaseEnabled = {{ 'true' if is_firebase_enabled else 'false' }};
+        const isFirebaseEnabled = {{ 'true' if config.FIREBASE_API_KEY else 'false' }};
         window.isFirebaseActive = false;
+
+        // Fallback Logout Handler (Simple Redirect)
+        window.handleLogout = function() {
+            window.location.href = '/logout';
+        };
         async function syncFcmToken(token) {
             if (!token) return;
             try {
@@ -399,14 +404,16 @@
                     }
                 });
 
-                // Global Logout Handler
+                // Elite Firebase Logout Handler
                 window.handleLogout = async function() {
                     try {
-                        await firebase.auth().signOut();
-                        window.location.href = '/logout';
-                    } catch (error) {
-                        console.error("Logout Error:", error);
+                        if (firebase.auth()) {
+                            await firebase.auth().signOut();
+                        }
+                    } catch (e) {
+                        console.error("Firebase SignOut Error:", e);
                     }
+                    window.location.href = '/logout';
                 };
 
                 // Global Toast Utility
