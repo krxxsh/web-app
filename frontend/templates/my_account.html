@@ -109,14 +109,14 @@
                         {% endif %}
 
                         {% if appt.status == 'booked' %}
-                        <button onclick="checkIn('{{ appt.id }}')" class="btn btn-sm btn-success rounded-pill px-3">
+                        <button data-action="check-in" data-id="{{ appt.id }}" class="btn btn-sm btn-success rounded-pill px-3">
                             <i class="fas fa-map-marker-alt me-1"></i> Check-In
                         </button>
                         {% endif %}
 
                         {% if appt.status == 'arrived' or appt.status == 'completed' %}
                         {% if not appt.feedback %}
-                        <button onclick="openFeedbackModal('{{ appt.id }}')"
+                        <button data-action="review" data-id="{{ appt.id }}"
                             class="btn btn-sm btn-warning rounded-pill px-3">
                             <i class="far fa-star me-1"></i> Review
                         </button>
@@ -128,7 +128,7 @@
                             class="btn btn-sm btn-outline-primary rounded-pill px-3">
                             <i class="fas fa-clock me-1"></i> Live Queue
                         </a>
-                        <button onclick="cancelAppt('{{ appt.id }}')"
+                        <button data-action="cancel" data-id="{{ appt.id }}"
                             class="btn btn-sm btn-link text-danger text-decoration-none">
                             Cancel
                         </button>
@@ -154,7 +154,7 @@
                 <div class="input-group mb-2" style="max-width: 280px;">
                     <input type="text" class="form-control form-control-sm border-0 bg-white"
                         value="{{ current_user.referral_code or 'REF-AIPRO-99' }}" readonly id="refCode">
-                    <button class="btn btn-dark btn-sm" onclick="copyRef()"
+                    <button class="btn btn-dark btn-sm" id="copyRefBtn"
                         aria-label="Copy referral code to clipboard"><i class="far fa-copy"></i></button>
                 </div>
             </div>
@@ -198,15 +198,30 @@
 </div>
 
 <script nonce="{{ csp_nonce() }}">
+    // --- CSP Event Listeners ---
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        
+        if (action === 'check-in') checkIn(id);
+        if (action === 'review') openFeedbackModal(id);
+        if (action === 'cancel') cancelAppt(id);
+    });
+
+    document.getElementById('copyRefBtn')?.addEventListener('click', copyRef);
+
     let selectedRating = 0;
     const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
 
     // Handle Stars
     document.querySelectorAll('.rating-stars i').forEach(star => {
-        star.onclick = () => {
+        star.addEventListener('click', () => {
             selectedRating = parseInt(star.getAttribute('data-val'));
             updateStars();
-        };
+        });
     });
 
     function updateStars() {

@@ -176,7 +176,7 @@
                 
                 <div class="flex items-center gap-3">
                     {% if appt.status != 'completed' %}
-                        <button class="w-12 h-12 rounded-full bg-green-500 hover:bg-green-400 text-background flex items-center justify-center font-bold text-xl shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all scale-100 hover:scale-105 checkoff-btn" onclick="checkoff({{ appt.id }})" aria-label="Mark completed">
+                        <button class="w-12 h-12 rounded-full bg-green-500 hover:bg-green-400 text-background flex items-center justify-center font-bold text-xl shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all scale-100 hover:scale-105 checkoff-btn" data-appt-id="{{ appt.id }}" aria-label="Mark completed">
                             <span class="material-symbols-outlined">done</span>
                         </button>
                     {% endif %}
@@ -198,6 +198,19 @@
 </main>
 
 <script nonce="{{ csp_nonce() }}">
+    // --- CSP Event Listeners ---
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.checkoff-btn');
+        if (btn) {
+            const id = btn.getAttribute('data-appt-id');
+            checkoff(id);
+        }
+        
+        if (e.target.closest('.logout-trigger')) {
+            handleLogout();
+        }
+    });
+
     async function checkoff(id) {
         if (!confirm("Mark this appointment as Completed?")) return;
 

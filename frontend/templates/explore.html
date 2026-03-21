@@ -52,22 +52,21 @@
                 placeholder="Search for services near you...">
             <div class="d-flex align-items-center px-3 border-start border-end border-secondary border-opacity-25">
                 <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="flashBookingToggle"
-                        onchange="toggleFlashMode()">
+                    <input class="form-check-input" type="checkbox" id="flashBookingToggle">
                     <label class="form-check-label text-warning small fw-bold ms-1" for="flashBookingToggle">
                         <i class="fas fa-bolt me-1"></i> Flash Mode
                     </label>
                 </div>
             </div>
-            <button class="btn btn-primary px-5 ms-2 rounded- Pill" onclick="searchWithLocation()">Find Near Me</button>
+            <button class="btn btn-primary px-5 ms-2 rounded- Pill" id="findNearMeBtn">Find Near Me</button>
         </div>
         <div id="categoryFilters" class="mb-4" role="region"
             aria-label="Business Category Filter: Use buttons below to filter the map">
             <label class="visually-hidden">Filter businesses by:</label>
-            <button class="btn btn-outline-secondary btn-sm category-btn active" onclick="filterByCategory('All')"
+            <button class="btn btn-outline-secondary btn-sm category-btn active" data-category-filter="All"
                 aria-pressed="true" aria-label="Show all categories">All</button>
             {% for cat in categories %}
-            <button class="btn btn-outline-secondary btn-sm category-btn" onclick="filterByCategory('{{ cat.name }}')"
+            <button class="btn btn-outline-secondary btn-sm category-btn" data-category-filter="{{ cat.name }}"
                 aria-pressed="false" aria-label="Filter by {{ cat.name }}">
                 {{ cat.icon }} {{ cat.name }}
             </button>
@@ -81,8 +80,8 @@
 <div class="row" id="businessList">
     {% for b in businesses %}
     <div class="col-md-4 mb-4 business-item" data-category="{{ b.category }}">
-        <div class="card h-100 glass-card business-card hover-lift"
-            onclick="centerOn('{{ b.latitude }}', '{{ b.longitude }}')" role="button"
+        <div class="card h-100 glass-card business-card hover-lift center-on-trigger"
+            data-lat="{{ b.latitude }}" data-lng="{{ b.longitude }}" role="button"
             aria-label="View {{ b.name }} on map">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -128,10 +127,10 @@
         {% for b in businesses %}
     {
         id: "{{ b.id }}",
-            name: "{{ b.name }}",
-                category: "{{ b.category }}",
-                    lat: { { b.latitude or 0 } },
-        lng: { { b.longitude or 0 } }
+        name: "{{ b.name }}",
+        category: "{{ b.category }}",
+        lat: {{ b.latitude or 0 }},
+        lng: {{ b.longitude or 0 }}
     },
     {% endfor %}
     ];
@@ -204,6 +203,26 @@
         renderer.render(scene, camera);
     }
     animate();
+
+    // --- CSP Event Listeners ---
+    document.getElementById('flashBookingToggle')?.addEventListener('change', toggleFlashMode);
+    document.getElementById('findNearMeBtn')?.addEventListener('click', searchWithLocation);
+    
+    document.querySelectorAll('[data-category-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cat = btn.getAttribute('data-category-filter');
+            filterByCategory(cat);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.center-on-trigger');
+        if (trigger) {
+            const lat = trigger.getAttribute('data-lat');
+            const lng = trigger.getAttribute('data-lng');
+            centerOn(lat, lng);
+        }
+    });
 
     // GSAP Cleanup Trigger (UX Audit Anchor)
     window.addEventListener('beforeunload', () => {
@@ -281,8 +300,8 @@
         data.forEach(b => {
             const card = `
                 <div class="col-md-4 mb-4 reveal-step">
-                    <div class="card h-100 glass-card business-card shadow-lg ${b.is_flash ? 'border-warning' : ''}" 
-                         onclick="centerOn('${b.latitude}', '${b.longitude}')">
+                    <div class="card h-100 glass-card business-card shadow-lg ${b.is_flash ? 'border-warning' : ''} center-on-trigger" 
+                         data-lat="${b.latitude}" data-lng="${b.longitude}">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title fw-bold text-gradient mb-0">${b.name}</h5>

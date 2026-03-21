@@ -143,7 +143,7 @@
                 <span class="material-symbols-outlined">star</span><span>Upgrade to Pro</span>
             </a>
         </div>
-        <a class="flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 rounded-full mx-2 transition-all duration-300" href="#" onclick="handleLogout(); return false;">
+        <a class="flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 rounded-full mx-2 transition-all duration-300 logout-trigger" href="#">
             <span class="material-symbols-outlined">logout</span><span>Sign Out</span>
         </a>
     </nav>
@@ -180,7 +180,7 @@
         </div>
         
         <div class="flex items-center gap-4">
-            <button id="kioskBtn" onclick="toggleKiosk()" class="px-6 py-3 rounded-full bg-surface-container-highest border border-outline-variant/20 hover:border-secondary/50 hover:bg-surface-container-high transition-all font-semibold flex items-center gap-2 text-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+            <button id="kioskBtn" class="px-6 py-3 rounded-full bg-surface-container-highest border border-outline-variant/20 hover:border-secondary/50 hover:bg-surface-container-high transition-all font-semibold flex items-center gap-2 text-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                 <span class="material-symbols-outlined text-secondary">videocam</span> Launch Smart Camera
             </button>
         </div>
@@ -192,7 +192,7 @@
             <h6 class="text-[#fbbf24] font-bold text-lg flex items-center gap-2"><span class="material-symbols-outlined">stars</span> Upgrade to Pro</h6>
             <p class="text-on-surface-variant text-sm mt-1">Unlock AI Insights, Premium Themes, and Multi-branch support to scale your business.</p>
         </div>
-        <button onclick="showPlans()" class="px-6 py-2 bg-[#fbbf24] hover:bg-[#fcd34d] text-black font-bold rounded-full transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]">View Plans</button>
+        <button id="showPlansBtn" class="px-6 py-2 bg-[#fbbf24] hover:bg-[#fcd34d] text-black font-bold rounded-full transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]">View Plans</button>
     </div>
 
     <!-- Hero Metrics Bento -->
@@ -582,6 +582,17 @@
         } catch (e) { console.error(e); }
         window.location.href = '/logout';
     };
+
+    // --- CSP Event Listeners ---
+    document.getElementById('kioskBtn')?.addEventListener('click', toggleKiosk);
+    document.getElementById('showPlansBtn')?.addEventListener('click', showPlans);
+    
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.logout-trigger')) {
+            e.preventDefault();
+            handleLogout();
+        }
+    });
 </script>
 </body>
 

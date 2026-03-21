@@ -445,6 +445,15 @@
                 console.error("Firebase Initialization Failed:", err);
             }
         }
+
+        // --- CSP Event Listeners ---
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('.logout-trigger');
+            if (trigger) {
+                e.preventDefault();
+                handleLogout();
+            }
+        });
     </script>
     
     <!-- Custom Scripts -->
