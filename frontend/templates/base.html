@@ -308,6 +308,33 @@
             });
         });
     </script>
+    <!-- CORE UTILITIES (Fail-Safe) -->
+    <script nonce="{{ csp_nonce() }}">
+        window.handleLogout = function() {
+            window.location.href = '/logout';
+        };
+
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0 show`;
+            const flex = document.createElement('div');
+            flex.className = 'd-flex';
+            const body = document.createElement('div');
+            body.className = 'toast-body';
+            body.textContent = message;
+            const btn = document.createElement('button');
+            btn.className = 'btn-close btn-close-white me-2 m-auto';
+            btn.setAttribute('data-bs-dismiss', 'toast');
+            flex.appendChild(body);
+            flex.appendChild(btn);
+            toast.appendChild(flex);
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 5000);
+        };
+    </script>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" nonce="{{ csp_nonce() }}"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" nonce="{{ csp_nonce() }}"></script>
@@ -324,7 +351,7 @@
             appId: "{{ config.FIREBASE_APP_ID }}"
         };
 
-        const isFirebaseEnabled = {{ 'true' if config.FIREBASE_API_KEY else 'false' }};
+        const isFirebaseEnabled = {{ (config.FIREBASE_API_KEY is defined and config.FIREBASE_API_KEY != '') | tojson }};
         window.isFirebaseActive = false;
 
         // Fallback Logout Handler (Simple Redirect)
@@ -404,10 +431,10 @@
                     }
                 });
 
-                // Elite Firebase Logout Handler
+                // Elite Firebase Logout Override
                 window.handleLogout = async function() {
                     try {
-                        if (firebase.auth()) {
+                        if (typeof firebase !== 'undefined' && firebase.auth) {
                             await firebase.auth().signOut();
                         }
                     } catch (e) {
@@ -415,44 +442,9 @@
                     }
                     window.location.href = '/logout';
                 };
-
-                // Global Toast Utility
-                window.showToast = function(message, type = 'info') {
-                    const container = document.getElementById('toastContainer');
-                    if (!container) return;
-                    
-                    const toast = document.createElement('div');
-                    toast.className = `toast align-items-center text-white bg-${type} border-0 show`;
-                    toast.setAttribute('role', 'alert');
-                    toast.setAttribute('aria-live', 'assertive');
-                    toast.setAttribute('aria-atomic', 'true');
-                    
-                    const flex = document.createElement('div');
-                    flex.className = 'd-flex';
-                    
-                    const body = document.createElement('div');
-                    body.className = 'toast-body';
-                    body.textContent = message; // SECURITY: Use textContent to prevent XSS
-                    
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-close btn-close-white me-2 m-auto';
-                    btn.setAttribute('data-bs-dismiss', 'toast');
-                    btn.setAttribute('aria-label', 'Close');
-                    
-                    flex.appendChild(body);
-                    flex.appendChild(btn);
-                    toast.appendChild(flex);
-                    
-                    container.appendChild(toast);
-                    setTimeout(() => {
-                        if (toast.parentElement) toast.remove();
-                    }, 5000);
-                };
             } catch (err) {
                 console.error("Firebase Initialization Failed:", err);
             }
-        } else {
-            console.warn("Firebase is disabled. Ensure FIREBASE_API_KEY is set in environment.");
         }
     </script>
     
