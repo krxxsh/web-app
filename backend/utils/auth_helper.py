@@ -16,13 +16,13 @@ def firebase_token_required(f):
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({"error": "Missing or invalid Authorization header"}), 401
+            return jsonify({"success": False, "message": "Missing or invalid Authorization header"}), 401
         
         id_token = auth_header.split('Bearer ')[1]
         decoded_token = verify_firebase_token(id_token)
         
         if not decoded_token:
-            return jsonify({"error": "Invalid or expired Firebase token"}), 401
+            return jsonify({"success": False, "message": "Invalid or expired Firebase token (or Firebase SDK not initialized)"}), 401
         
         uid = decoded_token.get('uid')
         email = decoded_token.get('email')
