@@ -20,7 +20,7 @@
             </ul>
             <ul class="navbar-nav ms-auto align-items-center">
                 <!-- AUTHENTICATED LINKS (Hidden by default) -->
-                <li class="nav-item dropdown ms-lg-3" id="navbar-auth" style="display: none;">
+                <li class="nav-item dropdown ms-lg-3" id="navbar-auth" style="display: {{ 'block' if current_user.is_authenticated else 'none' }};">
                     <a class="nav-link dropdown-toggle fw-bold" href="#" id="accountDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="far fa-user-circle me-1 text-primary"></i> Account
@@ -41,10 +41,10 @@
                 </li>
 
                 <!-- GUEST LINKS (Hidden by default) -->
-                <li class="nav-item" id="navbar-guest-login" style="display: none;">
+                <li class="nav-item" id="navbar-guest-login" style="display: {{ 'none' if current_user.is_authenticated else 'block' }};">
                     <a href="{{ url_for('auth.login') }}" class="nav-link">Customer Login</a>
                 </li>
-                <li class="nav-item ms-2" id="navbar-guest-admin" style="display: none;">
+                <li class="nav-item ms-2" id="navbar-guest-admin" style="display: {{ 'none' if current_user.is_authenticated else 'block' }};">
                     <a href="{{ url_for('auth.admin_login') }}" class="btn btn-primary btn-sm px-3">Business Login</a>
                 </li>
 
