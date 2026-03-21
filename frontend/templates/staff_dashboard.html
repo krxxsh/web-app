@@ -134,9 +134,9 @@
         </div>
         
         <div class="absolute top-8 right-8">
-            <a href="{{ url_for('auth.logout') }}" class="px-4 py-2 rounded-full border border-error/30 text-error text-xs font-bold hover:bg-error/10 transition-colors flex items-center gap-2">
+            <button onclick="handleLogout()" class="px-4 py-2 rounded-full border border-error/30 text-error text-xs font-bold hover:bg-error/10 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">logout</span> Logout
-            </a>
+            </button>
         </div>
     </div>
 
@@ -227,5 +227,28 @@
         }
     }
 </script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" nonce="{{ csp_nonce() }}"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" nonce="{{ csp_nonce() }}"></script>
+
+<script nonce="{{ csp_nonce() }}">
+    const firebaseConfig = {
+        apiKey: "{{ config.FIREBASE_API_KEY }}",
+        authDomain: "{{ config.FIREBASE_AUTH_DOMAIN }}",
+        projectId: "{{ config.FIREBASE_PROJECT_ID }}",
+        storageBucket: "{{ config.FIREBASE_STORAGE_BUCKET }}",
+        messagingSenderId: "{{ config.FIREBASE_MESSAGING_SENDER_ID }}",
+        appId: "{{ config.FIREBASE_APP_ID }}"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    window.handleLogout = async function() {
+        try {
+            await firebase.auth().signOut();
+        } catch (e) { console.error(e); }
+        window.location.href = '/logout';
+    };
+</script>
+
 </body>
 </html>

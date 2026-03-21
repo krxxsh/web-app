@@ -310,7 +310,21 @@
     </script>
     <!-- CORE UTILITIES (Fail-Safe) -->
     <script nonce="{{ csp_nonce() }}">
-        window.handleLogout = function() {
+        // Elite Global Logout Handler (Flask + Firebase)
+        window.handleLogout = async function() {
+            console.log("Global Logout Triggered...");
+            try {
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    await firebase.auth().signOut();
+                    console.log("Firebase Sign-out successful.");
+                }
+            } catch (e) {
+                console.error("Firebase SignOut Error:", e);
+            }
+            // Clear local tokens
+            localStorage.removeItem('firebaseToken');
+            
+            // Redirect to backend logout
             window.location.href = '/logout';
         };
 
@@ -354,10 +368,6 @@
         const isFirebaseEnabled = {{ (config.FIREBASE_API_KEY is defined and config.FIREBASE_API_KEY != '') | tojson }};
         window.isFirebaseActive = false;
 
-        // Fallback Logout Handler (Simple Redirect)
-        window.handleLogout = function() {
-            window.location.href = '/logout';
-        };
         async function syncFcmToken(token) {
             if (!token) return;
             try {
@@ -431,17 +441,6 @@
                     }
                 });
 
-                // Elite Firebase Logout Override
-                window.handleLogout = async function() {
-                    try {
-                        if (typeof firebase !== 'undefined' && firebase.auth) {
-                            await firebase.auth().signOut();
-                        }
-                    } catch (e) {
-                        console.error("Firebase SignOut Error:", e);
-                    }
-                    window.location.href = '/logout';
-                };
             } catch (err) {
                 console.error("Firebase Initialization Failed:", err);
             }

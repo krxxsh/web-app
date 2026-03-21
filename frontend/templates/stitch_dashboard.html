@@ -132,6 +132,10 @@
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
 <span>Settings</span>
 </a>
+<a class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-full mx-2 transition-all duration-300" href="#" onclick="handleLogout(); return false;">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Sign Out</span>
+</a>
 </nav>
 <div class="mt-auto px-4 pt-6 border-t border-outline-variant/10">
 <button class="w-full py-3 mb-6 bg-gradient-to-br from-primary to-secondary text-on-primary-container font-bold rounded-full scale-95 active:scale-90 transition-transform shadow-[0_0_20px_rgba(208,149,255,0.3)]">
@@ -332,4 +336,27 @@
 </aside>
 </div>
 </main>
-</body></html>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" nonce="{{ csp_nonce() }}"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" nonce="{{ csp_nonce() }}"></script>
+
+<script nonce="{{ csp_nonce() }}">
+    const firebaseConfig = {
+        apiKey: "{{ config.FIREBASE_API_KEY }}",
+        authDomain: "{{ config.FIREBASE_AUTH_DOMAIN }}",
+        projectId: "{{ config.FIREBASE_PROJECT_ID }}",
+        storageBucket: "{{ config.FIREBASE_STORAGE_BUCKET }}",
+        messagingSenderId: "{{ config.FIREBASE_MESSAGING_SENDER_ID }}",
+        appId: "{{ config.FIREBASE_APP_ID }}"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    window.handleLogout = async function() {
+        try {
+            await firebase.auth().signOut();
+        } catch (e) { console.error(e); }
+        window.location.href = '/logout';
+    };
+</script>
+</body>
+</html>
