@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#000000",
+              "surface-container-high": "#171f36",
+              "background": "#070d1f",
+              "tertiary-fixed": "#cf9aff",
+              "on-primary-fixed": "#000000",
+              "surface-container-highest": "#1c253e",
+              "on-surface-variant": "#a5aac2",
+              "secondary-dim": "#00e5ee",
+              "on-tertiary-fixed": "#270048",
+              "secondary-fixed": "#00f4fe",
+              "on-tertiary-fixed-variant": "#570093",
+              "on-secondary-container": "#dffdff",
+              "primary-container": "#c782ff",
+              "secondary": "#00f4fe",
+              "on-background": "#dfe4fe",
+              "on-primary": "#490078",
+              "primary-fixed": "#c782ff",
+              "on-secondary-fixed": "#004346",
+              "secondary-container": "#00696e",
+              "on-secondary": "#00575b",
+              "tertiary": "#c280ff",
+              "primary-dim": "#c57eff",
+              "surface-bright": "#222b47",
+              "tertiary-dim": "#c280ff",
+              "on-primary-fixed-variant": "#450073",
+              "error-container": "#a70138",
+              "tertiary-fixed-dim": "#c687ff",
+              "secondary-fixed-dim": "#00e5ee",
+              "outline": "#6f758b",
+              "on-error-container": "#ffb2b9",
+              "surface-variant": "#1c253e",
+              "on-surface": "#dfe4fe",
+              "primary": "#d095ff",
+              "inverse-primary": "#8534c4",
+              "surface-container": "#11192e",
+              "surface": "#070d1f",
+              "on-tertiary-container": "#130028",
+              "surface-container-low": "#0c1326",
+              "surface-dim": "#070d1f",
+              "tertiary-container": "#b56afb",
+              "on-primary-container": "#38005e",
+              "surface-tint": "#d095ff",
+              "error": "#ff6e84",
+              "error-dim": "#d73357",
+              "primary-fixed-dim": "#bd6efe",
+              "on-tertiary": "#33005a",
+              "inverse-surface": "#faf8ff",
+              "outline-variant": "#41475b",
+              "on-error": "#490013",
+              "inverse-on-surface": "#4f5469",
+              "on-secondary-fixed-variant": "#006266"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-glass-gradient {
+            background: radial-gradient(circle at center, rgba(208, 149, 255, 0.15) 0%, rgba(7, 13, 31, 1) 70%);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(208, 149, 255, 0.4);
+        }
+        .ambient-lume {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(208, 149, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen overflow-hidden">
+<!-- Main Split-Screen Container -->
+<main class="flex min-h-screen w-full">
+<!-- Left Side: Visual Experience -->
+<section class="hidden lg:flex w-1/2 relative overflow-hidden bg-surface-container-lowest">
+<!-- Background Elements -->
+<div class="absolute inset-0 bg-glass-gradient"></div>
+<!-- Abstract Floating Elements -->
+<div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 blur-[100px] rounded-full animate-pulse"></div>
+<div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/10 blur-[120px] rounded-full"></div>
+<!-- Hero Image: Abstract Glass Shapes -->
+<div class="relative z-10 w-full h-full flex items-center justify-center p-20">
+<img alt="Abstract 3D glass shapes with neon glows" class="w-full h-full object-contain opacity-80 mix-blend-screen" data-alt="Abstract 3D glass shapes floating in midnight void with neon cyan and purple glows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrHf-lpKxd_YINIEUO-0Ym1cmubMhChAZtBqB3t6Mt1BOZrx4fs4VEdEo8yXwVS0_l71ICUUFZfg4ENh1wCLoasG0t9iPaLaKtxXhZnIbuKZs5GR1pXfM5tt0bNv6gxGARrWeuC2ojdUoINDFijVO767AnoxiA1hwCWURe7pMA8p9BDaPYuiOna4XPIy-4yDDrO61_tGxg5GdISWznRflhSYV5YLUaCDdePijDIl4d2u0YPKj2NTSMuUAC7ESp_SUYXPISERHA3Nfe"/>
+</div>
+<!-- Brand Overlay (Bottom Left) -->
+<div class="absolute bottom-12 left-12 z-20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="auto_awesome">auto_awesome</span>
+<h1 class="text-3xl font-headline font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                        AI Sched
+                    </h1>
+</div>
+<p class="mt-4 text-on-surface-variant max-w-md font-body text-lg leading-relaxed">
+                    Orchestrating your time with hyper-intelligent precision and nocturnal elegance.
+                </p>
+</div>
+</section>
+<!-- Right Side: Authentication Area -->
+<section class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-surface">
+<!-- Login Modal -->
+<div class="w-full max-w-[480px] bg-surface-container-low backdrop-blur-xl rounded-lg p-10 ambient-lume relative z-10 border border-outline-variant/15">
+<!-- Modal Header -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-container-high mb-6 ambient-lume">
+<span class="material-symbols-outlined text-3xl text-secondary" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+</div>
+<h2 class="text-4xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary mb-2">
+                        Welcome Back
+                    </h2>
+<p class="text-on-surface-variant font-body">Please enter your credentials to access your schedule.</p>
+</div>
+<!-- Auth Form -->
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-widest text-on-surface-variant ml-1">Email Address</label>
+<div class="relative group">
+<input class="w-full px-5 py-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="name@company.com" type="email"/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="block text-xs font-label uppercase tracking-widest text-on-surface-variant">Password</label>
+<a class="text-xs text-primary hover:text-secondary transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<input class="w-full px-5 py-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="••••••••" type="password"/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Sign In Action -->
+<button class="w-full py-4 rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary-fixed font-headline font-bold text-lg glow-hover transition-all transform active:scale-95" type="submit">
+                        Sign In
+                    </button>
+</form>
+<!-- Divider -->
+<div class="relative my-8 flex items-center justify-center">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/10"></div>
+</div>
+<span class="relative px-4 bg-surface-container-low text-xs font-label uppercase tracking-widest text-outline">Or continue with</span>
+</div>
+<!-- Google Auth -->
+<button class="w-full flex items-center justify-center gap-3 py-4 rounded-full bg-surface-bright/40 border border-outline-variant/20 backdrop-blur-md text-on-surface font-headline font-semibold hover:bg-surface-bright/60 transition-all group">
+<img alt="Google Logo" class="w-5 h-5 group-hover:scale-110 transition-transform" data-alt="Google colorful logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSBhlfPZfvXGDDelvUeavSQwTI5KmZ6waKVG492iQ2NBrOqF4qITKYD_UcwtcjfWRFlf7qvKMX0EKmnu2v480waW_iAPxXAcjjE-0GUW2a8ZTL7qqhKMwikPVIYEepOLXRcIX1NZUVon6lHxy1Pd-GdyfVHXabGgDC9e_lS3lQG6YHlANtVsywHrC4hBJefaQd3gNLA_owjkaYnXTLKQ2pqHU3UsTGQBKW6KvtSm005V6G5_kh-waHWLWGKGzA4UxkFaEvJGcPdHvt"/>
+<span>Sign in with Google</span>
+</button>
+<!-- Footer Action -->
+<div class="mt-10 text-center">
+<p class="text-on-surface-variant text-sm">
+                        Don't have an account? 
+                        <a class="text-primary font-bold hover:text-secondary transition-colors underline-offset-4 hover:underline" href="#">Sign up</a>
+</p>
+</div>
+</div>
+<!-- Background Aesthetic (Mobile) -->
+<div class="absolute inset-0 lg:hidden -z-10 opacity-30">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[100px] rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full"></div>
+</div>
+</section>
+</main>
+<!-- Global Footer Fragment -->
+<footer class="fixed bottom-0 w-full flex justify-between items-center px-10 py-4 bg-surface-container-low/80 backdrop-blur-xl border-t border-outline-variant/15 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-50">
+<div class="text-xs font-headline uppercase tracking-widest text-on-surface-variant">
+            © 2024 AI Sched. Orchestrating Time.
+        </div>
+<div class="flex gap-6">
+<a class="text-xs font-headline uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-all" href="#">Privacy</a>
+<a class="text-xs font-headline uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-all" href="#">Terms</a>
+<a class="text-xs font-headline uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-all" href="#">Support</a>
+</div>
+</footer>
+</body></html>

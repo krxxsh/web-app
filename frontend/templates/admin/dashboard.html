@@ -1,344 +1,371 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="row">
-    <!-- ===== SIDEBAR (col-md-3) ===== -->
-    <div class="col-md-3">
-        <div class="list-group glass-card border-0 shadow-sm overflow-hidden reveal-step">
-            <a href="#" class="list-group-item list-group-item-action active border-0 py-3 bg-primary bg-opacity-25"><i
-                    class="fas fa-home me-2"></i>Overview</a>
-            <a href="#" class="list-group-item list-group-item-action border-0 py-3 bg-transparent text-white-50"><i
-                    class="fas fa-calendar-alt me-2"></i>Appointments</a>
-            <a href="{{ url_for('admin.add_service') }}"
-                class="list-group-item list-group-item-action border-0 py-3 bg-transparent text-white-50"><i
-                    class="fas fa-concierge-bell me-2"></i>Add Service</a>
-            <a href="#" class="list-group-item list-group-item-action border-0 py-3 bg-transparent text-white-50"><i
-                    class="fas fa-code-branch me-2"></i>Manage Branches</a>
-            <a href="{{ url_for('admin.manage_resources') }}"
-                class="list-group-item list-group-item-action border-0 py-3 bg-transparent text-white-50"><i
-                    class="fas fa-tools me-2"></i>Manage Resources</a>
-            <div class="px-3">
-                <hr class="my-1 border-white border-opacity-10">
-            </div>
-            <a href="#subscriptionSection"
-                class="list-group-item list-group-item-action border-0 py-3 text-warning fw-bold bg-transparent">
-                <i class="fas fa-crown me-2"></i>My Subscription
-            </a>
-            <a href="#" class="list-group-item list-group-item-action border-0 py-3 text-danger bg-transparent"><i
-                    class="fas fa-cog me-2"></i>Settings</a>
-        </div>
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{{ business.name }} - AI Sched Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-        <!-- AI Insights Sidebar Panel -->
-        <div class="card glass-card mt-4 p-4 border-0 shadow-sm reveal-step"
-            style="background: var(--primary-soft); color: white; animation-delay: 0.1s;">
-            <h6 class="fw-bold mb-3 d-flex align-items-center uppercase small text-white-50">
-                <i class="fas fa-brain me-2 text-primary"></i> AI Insights
-            </h6>
-            <div id="aiAdminInsights" class="small">
-                <div class="text-center opacity-75 py-2">
-                    <span class="spinner-border spinner-border-sm"></span> Analyzing feedback...
+<!-- Third Party Libraries for Dashboard -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "background": "#070d1f",
+                    "on-surface": "#dfe4fe",
+                    "secondary-fixed-dim": "#00e5ee",
+                    "primary-fixed": "#c782ff",
+                    "error-container": "#a70138",
+                    "surface-bright": "#222b47",
+                    "on-secondary-fixed": "#004346",
+                    "primary-container": "#c782ff",
+                    "primary": "#d095ff",
+                    "surface-container": "#11192e",
+                    "outline": "#6f758b",
+                    "surface-container-lowest": "#000000",
+                    "secondary-fixed": "#00f4fe",
+                    "inverse-surface": "#faf8ff",
+                    "on-tertiary-fixed": "#270048",
+                    "on-primary": "#490078",
+                    "on-primary-fixed": "#000000",
+                    "secondary-container": "#00696e",
+                    "surface-variant": "#1c253e",
+                    "outline-variant": "#41475b",
+                    "on-error": "#490013",
+                    "on-primary-container": "#38005e",
+                    "on-secondary": "#00575b",
+                    "on-surface-variant": "#a5aac2",
+                    "secondary-dim": "#00e5ee",
+                    "on-error-container": "#ffb2b9",
+                    "primary-dim": "#c57eff",
+                    "on-tertiary-container": "#130028",
+                    "surface-container-low": "#0c1326",
+                    "tertiary-dim": "#c280ff",
+                    "on-tertiary-fixed-variant": "#570093",
+                    "surface-dim": "#070d1f",
+                    "primary-fixed-dim": "#bd6efe",
+                    "tertiary-fixed-dim": "#c687ff",
+                    "inverse-on-surface": "#4f5469",
+                    "surface-tint": "#d095ff",
+                    "on-background": "#dfe4fe",
+                    "inverse-primary": "#8534c4",
+                    "tertiary-container": "#b56afb",
+                    "tertiary": "#c280ff",
+                    "surface-container-high": "#171f36",
+                    "surface": "#070d1f",
+                    "on-secondary-fixed-variant": "#006266",
+                    "on-primary-fixed-variant": "#450073",
+                    "error-dim": "#d73357",
+                    "tertiary-fixed": "#cf9aff",
+                    "error": "#ff6e84",
+                    "on-secondary-container": "#dffdff",
+                    "on-tertiary": "#33005a",
+                    "surface-container-highest": "#1c253e",
+                    "secondary": "#00f4fe"
+                },
+                fontFamily: {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+                },
+                borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        background-color: #070d1f;
+        color: #dfe4fe;
+        font-family: 'Inter', sans-serif;
+    }
+    .glass-panel {
+        background: rgba(12, 19, 38, 0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+    }
+    .ambient-lume {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .inner-glow {
+        box-shadow: inset 0 1px 1px rgba(208, 149, 255, 0.15);
+    }
+    .text-gradient {
+        background: linear-gradient(135deg, #d095ff 0%, #00f4fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    /* FullCalendar Dark Theme Overrides */
+    .fc-theme-bootstrap5 .fc-scrollgrid { border-color: rgba(255,255,255,0.05); }
+    .fc-theme-bootstrap5 td, .fc-theme-bootstrap5 th { border-color: rgba(255,255,255,0.05) !important; color: #a5aac2; }
+    .fc-event { border: none !important; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .fc .fc-button-primary { background-color: #171f36; border-color: #171f36; color: #dfe4fe; background-image: none; padding: 0.5rem 1rem; border-radius: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; font-weight: 700; transition: all 0.2s;}
+    .fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:not(:disabled).fc-button-active { background-color: #1c253e; border-color: #primary; color: #d095ff; }
+</style>
+</head>
+<body class="overflow-x-hidden">
+
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low/70 backdrop-blur-xl flex flex-col py-8 px-4 z-50 ambient-lume border-r border-outline-variant/10">
+    <div class="mb-10 px-4">
+        <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#d095ff] to-[#00f4fe]">AI Sched</h1>
+        <p class="text-[10px] uppercase tracking-widest text-on-surface-variant mt-1">Business Portal</p>
+    </div>
+    
+    <nav class="flex-1 space-y-2">
+        <a class="flex items-center gap-3 px-4 py-3 text-secondary bg-surface-container-high rounded-full mx-2 transition-all duration-300" href="#">
+            <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-full mx-2 transition-all duration-300" href="#">
+            <span class="material-symbols-outlined">calendar_today</span><span>Appointments</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-full mx-2 transition-all duration-300" href="{{ url_for('admin.add_service') }}">
+            <span class="material-symbols-outlined">room_service</span><span>Add Service</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-full mx-2 transition-all duration-300" href="{{ url_for('admin.manage_resources') }}">
+            <span class="material-symbols-outlined">inventory</span><span>Resources</span>
+        </a>
+
+        <div class="my-4 border-t border-outline-variant/10 mx-4"></div>
+
+        <div id="subscriptionLink" class="hidden">
+            <a class="flex items-center gap-3 px-4 py-3 text-[#fbbf24] hover:bg-[#fbbf24]/10 rounded-full mx-2 transition-all duration-300" href="#subscriptionSection">
+                <span class="material-symbols-outlined">star</span><span>Upgrade to Pro</span>
+            </a>
+        </div>
+        <a class="flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 rounded-full mx-2 transition-all duration-300" href="#">
+            <span class="material-symbols-outlined">settings</span><span>Settings</span>
+        </a>
+    </nav>
+</aside>
+
+<main class="ml-64 min-h-screen p-10 bg-surface">
+    <!-- Header -->
+    <header class="flex justify-between items-start lg:items-center flex-col lg:flex-row mb-12 gap-6">
+        <div class="flex items-center gap-6">
+            <h2 class="text-4xl font-bold text-gradient tracking-tight">{{ business.name }}</h2>
+            <div id="kioskBadge" class="flex items-center gap-2 px-4 py-1.5 bg-surface-container-highest rounded-full border border-outline-variant/20">
+                <span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-on-surface-variant"></span></span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Kiosk Offline</span>
+            </div>
+            
+            {% if branches|length > 1 %}
+            <div class="relative group">
+                <button class="px-4 py-2 rounded-full border border-outline-variant/30 text-xs font-bold bg-surface-container-low hover:bg-surface-container-high transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-secondary">alt_route</span> Switch Branch
+                </button>
+                <div class="absolute left-0 mt-2 w-48 rounded-xl bg-surface-container-high border border-outline-variant/20 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                    {% for b in branches %}
+                        <a href="{{ url_for('admin.dashboard', business_id=b.id) }}" class="block px-4 py-3 text-sm text-on-surface hover:bg-surface-container-highest transition-colors flex justify-between items-center">
+                            {{ b.name }} {% if b.id == business.id %}<span class="material-symbols-outlined text-sm text-secondary">check_circle</span>{% endif %}
+                        </a>
+                    {% endfor %}
+                    <div class="border-t border-outline-variant/10"></div>
+                    <a href="{{ url_for('admin.setup_business') }}" class="block px-4 py-3 text-sm text-primary hover:bg-surface-container-highest transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">add_circle</span> Add Branch
+                    </a>
                 </div>
             </div>
-            <div class="mt-3 pt-3 border-top border-white border-opacity-25">
-                <div class="d-flex justify-content-between small">
-                    <span class="opacity-75 uppercase small">Avg Wait</span>
-                    <span class="fw-bold text-gradient" id="adminAvgWait">-- mins</span>
+            {% endif %}
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button id="kioskBtn" onclick="toggleKiosk()" class="px-6 py-3 rounded-full bg-surface-container-highest border border-outline-variant/20 hover:border-secondary/50 hover:bg-surface-container-high transition-all font-semibold flex items-center gap-2 text-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                <span class="material-symbols-outlined text-secondary">videocam</span> Launch Smart Camera
+            </button>
+        </div>
+    </header>
+
+    <!-- Subscription Banner -->
+    <div id="subscriptionSection" class="hidden glass-panel ambient-lume inner-glow p-6 rounded-lg mb-10 border border-[#fbbf24]/30 items-center justify-between">
+        <div>
+            <h6 class="text-[#fbbf24] font-bold text-lg flex items-center gap-2"><span class="material-symbols-outlined">stars</span> Upgrade to Pro</h6>
+            <p class="text-on-surface-variant text-sm mt-1">Unlock AI Insights, Premium Themes, and Multi-branch support to scale your business.</p>
+        </div>
+        <button onclick="showPlans()" class="px-6 py-2 bg-[#fbbf24] hover:bg-[#fcd34d] text-black font-bold rounded-full transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]">View Plans</button>
+    </div>
+
+    <!-- Hero Metrics Bento -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="glass-panel ambient-lume inner-glow p-6 rounded-lg relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
+            <p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-2">Total Bookings</p>
+            <h3 class="text-4xl font-bold text-on-surface" id="kpiTotalBookings">--</h3>
+        </div>
+        <div class="glass-panel ambient-lume inner-glow p-6 rounded-lg relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary/5 rounded-full blur-3xl group-hover:bg-secondary/20 transition-all"></div>
+            <p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-2">Today's Bookings</p>
+            <h3 class="text-4xl font-bold text-on-surface" id="kpiTodayBookings">--</h3>
+        </div>
+        <div class="glass-panel ambient-lume inner-glow p-6 rounded-lg relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/5 rounded-full blur-3xl group-hover:bg-tertiary/20 transition-all"></div>
+            <p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-2">Expected Revenue</p>
+            <h3 class="text-4xl font-bold text-gradient" id="kpiRevenue">--</h3>
+        </div>
+        <div class="glass-panel ambient-lume inner-glow p-6 rounded-lg relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-[#fbbf24]/5 rounded-full blur-3xl group-hover:bg-[#fbbf24]/20 transition-all"></div>
+            <p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-2">Avg Rating</p>
+            <h3 class="text-4xl font-bold text-[#fbbf24]" id="kpiAvgRating">--</h3>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Layout -->
+    <div class="flex flex-col xl:flex-row gap-8">
+        
+        <section class="flex-1 space-y-8">
+            <!-- FullCalendar -->
+            <div class="glass-panel p-6 rounded-lg ambient-lume border border-outline-variant/5">
+                <div class="flex items-center justify-between mb-6">
+                    <h4 class="text-xl font-bold text-on-surface">Interactive Schedule</h4>
+                    <div class="flex gap-4">
+                        <span class="flex items-center gap-2 text-xs text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-primary"></div> Booked</span>
+                        <span class="flex items-center gap-2 text-xs text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-green-500"></div> Arrived</span>
+                    </div>
+                </div>
+                <div id='calendar' style="min-height: 500px;" class="font-body text-sm"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Booking Trends -->
+                <div class="glass-panel p-6 rounded-lg ambient-lume">
+                    <h4 class="text-lg font-bold text-on-surface mb-6">Booking Trends (7 Days)</h4>
+                    <div style="height: 250px;"><canvas id="bookingChart"></canvas></div>
+                </div>
+
+                <!-- Leaderboard -->
+                <div class="glass-panel p-6 rounded-lg ambient-lume overflow-hidden">
+                    <h4 class="text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#fbbf24]">trophy</span> Staff Leaderboard
+                    </h4>
+                    <div class="space-y-4">
+                        {% set sorted_staff = business.staff | sort(attribute='id') %}
+                        {% for member in sorted_staff %}
+                        <div class="flex items-center justify-between p-4 bg-surface-container-high rounded-xl border border-outline-variant/10">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs {% if loop.index == 1 %}bg-[#fbbf24]/20 text-[#fbbf24] border border-[#fbbf24]/50{% else %}bg-surface-container-highest text-on-surface-variant{% endif %}">
+                                    #{{ loop.index }}
+                                </div>
+                                <span class="font-semibold text-on-surface">{{ member.name }}</span>
+                            </div>
+                            <div class="text-right">
+                                {% set completed = appointments | selectattr('staff_id', 'equalto', member.id) | selectattr('status', 'equalto', 'completed') | list | length %}
+                                {% set revenue = (appointments | selectattr('staff_id', 'equalto', member.id) | selectattr('status', 'equalto', 'completed') | map(attribute='service.price') | sum) %}
+                                <div class="text-sm font-bold text-primary">{{ completed }} Appts</div>
+                                <div class="text-xs text-secondary font-semibold">₹{{ revenue }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            <!-- AI Availability Forecast Heatmap -->
-            <div class="card glass-card mt-4 p-3 border-0 bg-transparent">
-                <h6 class="fw-bold mb-3 text-white-50 d-flex align-items-center uppercase small">
-                    <i class="fas fa-fire text-danger me-2"></i> Demand Forecast
+
+            <!-- Forms / Management -->
+            <div class="glass-panel p-6 rounded-lg ambient-lume">
+                <h4 class="text-lg font-bold text-on-surface mb-6">Staff & Branding Configuration</h4>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Add Staff -->
+                    <div>
+                        <h6 class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-4">Add Staff Member</h6>
+                        <form action="{{ url_for('admin.add_staff') }}" method="POST" class="flex gap-2">
+                            <input type="text" name="name" class="flex-1 px-4 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Enter name" required>
+                            <button type="submit" class="px-5 py-2.5 bg-surface-container-high hover:bg-surface-bright text-secondary border border-secondary/30 rounded-lg text-sm font-bold transition-colors">Add</button>
+                        </form>
+                    </div>
+                    <!-- Branding -->
+                    <div>
+                        <h6 class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-4">Update Branding Color</h6>
+                        <form action="{{ url_for('admin.update_branding') }}" method="POST" class="flex flex-col gap-3">
+                            <div class="flex items-center gap-4">
+                                <input type="color" name="primary_color" class="w-12 h-12 bg-transparent border-0 rounded cursor-pointer" value="{{ business.primary_color or '#d095ff' }}" title="Choose your color">
+                                <input type="url" name="logo_url" class="flex-1 px-4 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm" value="{{ business.logo_url or '' }}" placeholder="Logo URL (optional)">
+                            </div>
+                            <button type="submit" class="self-end px-5 py-2 bg-surface-container-high hover:bg-surface-bright text-primary border border-primary/30 rounded-lg text-sm font-bold transition-colors">Save Branding</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="w-full xl:w-96 space-y-6">
+            <!-- AI Insights Panel -->
+            <div class="glass-panel p-8 rounded-lg ambient-lume border border-primary/20 inner-glow">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="material-symbols-outlined text-primary">auto_awesome</span>
+                    <h4 class="text-lg font-bold text-on-surface">AI Insights</h4>
+                </div>
+                
+                <div id="aiAdminInsights" class="mb-4">
+                    <div class="flex items-center justify-center p-6 text-on-surface-variant">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Analyzing operational data...
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-outline-variant/20 flex justify-between items-center">
+                    <span class="text-xs uppercase font-bold tracking-widest text-on-surface-variant">Average Wait</span>
+                    <span class="font-bold text-secondary text-lg" id="adminAvgWait">-- mins</span>
+                </div>
+                
+                <!-- Growth Advisor Tip -->
+                <div class="mt-6 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-teal-500/10 border border-green-500/20">
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-green-400 text-xl">trending_up</span>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-green-400 mb-1">Growth Advisor</p>
+                            <p class="text-sm text-on-surface leading-relaxed" id="aiSuggestion">Optimize staff shifts on weekends to increase walk-in capture rate by ~15%.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap -->
+            <div class="glass-panel p-6 rounded-lg ambient-lume border border-outline-variant/10">
+                <h6 class="text-sm font-bold text-on-surface mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary text-sm">local_fire_department</span> Demand Forecast
                 </h6>
-                <div id="heatmapGrid" class="d-grid gap-1" style="grid-template-columns: repeat(7, 1fr);">
-                    <!-- Heatmap cells -->
+                <div id="heatmapGrid" class="grid grid-cols-7 gap-1.5 h-32">
+                    <!-- Heatmap cells injected here -->
                 </div>
-                <div class="d-flex justify-content-between mt-2 small text-white-50">
+                <div class="flex justify-between mt-3 text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">
                     <span>Mon</span>
                     <span>Sun</span>
                 </div>
             </div>
-        </div>
+
+        </aside>
     </div>
-    <!-- ===== END SIDEBAR ===== -->
+</main>
 
-    <!-- ===== MAIN CONTENT (col-md-9) ===== -->
-    <div class="col-md-9">
-
-        <!-- Facial Recognition Kiosk Toggle -->
-        <div class="card glass-card shadow-sm border-0 mb-4 reveal-step"
-            style="background: linear-gradient(135deg, rgba(30, 30, 47, 0.5) 0%, rgba(42, 42, 74, 0.5) 100%); animation-delay: 0.2s;">
-            <div class="card-body d-flex justify-content-between align-items-center text-white rounded p-4">
-                <div>
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-camera text-info me-2"></i> Kiosk Mode</h4>
-                    <p class="mb-0 text-white-50 small mt-1 uppercase letter-spacing-1">Autonomous computer-vision
-                        check-in.</p>
-                    <span class="badge bg-secondary mt-2 px-3 py-2 border-0" id="kioskBadge">Offline</span>
-                </div>
-                <div>
-                    <button class="btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all"
-                        id="kioskBtn" onclick="toggleKiosk()" style="border-width: 2px;">
-                        <i class="fas fa-play me-2"></i> Launch Smart Camera
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Business Header + Branch Switcher -->
-        <div class="card glass-card p-4 mb-4 border-0 shadow-sm reveal-step">
-            <div class="d-flex align-items-center gap-3">
-                <h2 class="fw-bold mb-0 text-gradient">{{ business.name }}</h2>
-                {% if branches|length > 1 %}
-                <div class="dropdown reveal-step">
-                    <button
-                        class="btn btn-glass-dark dropdown-toggle btn-sm rounded-pill px-3 border border-white border-opacity-10"
-                        type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-code-branch me-1 text-info"></i> Switch Branch
-                    </button>
-                    <ul
-                        class="dropdown-menu dropdown-menu-dark glass-card border-white border-opacity-10 shadow-lg">
-                        {% for b in branches %}
-                        <li>
-                            <a class="dropdown-item d-flex justify-content-between align-items-center py-2"
-                                href="{{ url_for('admin.dashboard', business_id=b.id) }}">
-                                <span>{{ b.name }}</span>
-                                {% if b.id == business.id %}<i class="fas fa-check-circle text-success ms-2"></i>{%
-                                endif %}
-                            </a>
-                        </li>
-                        {% endfor %}
-                        <li>
-                            <hr class="dropdown-divider border-white border-opacity-10">
-                        </li>
-                        <li><a class="dropdown-item small text-info" href="{{ url_for('admin.setup_business') }}"><i
-                                    class="fas fa-plus-circle me-1"></i> Add New Branch</a></li>
-                    </ul>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Subscription Upgrade Banner -->
-            <div id="subscriptionSection" class="card glass-card p-3 mb-4 mt-3 border-warning border-opacity-25"
-                style="display: none;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold mb-1"><i class="fas fa-star text-warning me-2"></i>Upgrade to Pro</h6>
-                        <p class="small text-muted mb-0">Unlock AI Insights, Premium Themes, and Multi-branch
-                            support.</p>
-                    </div>
-                    <button class="btn btn-warning btn-sm px-4 fw-bold" onclick="showPlans()">View Plans</button>
-                </div>
-            </div>
-
-            <!-- KPI Stat Cards — populated dynamically from Stats API -->
-            <div class="row g-3 mb-4" id="kpiRow">
-                <div class="col-md-3">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total
-                            Bookings</small>
-                        <h3 class="fw-bold mb-0" id="kpiTotalBookings">--</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Today's
-                            Bookings</small>
-                        <h3 class="fw-bold mb-0" id="kpiTodayBookings">--</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Expected
-                            Revenue</small>
-                        <h3 class="fw-bold mb-0" id="kpiRevenue">--</h3>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 border-0 rounded bg-light">
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Avg
-                            Rating</small>
-                        <h3 class="fw-bold mb-0" id="kpiAvgRating">--</h3>
-                    </div>
-                </div>
-            </div>
-            <!-- Mini status badges -->
-            <div class="d-flex gap-2 mb-4 flex-wrap">
-                <span class="badge bg-success-subtle text-success px-3 py-2"><i class="fas fa-check-circle me-1"></i> Completed: <strong id="kpiCompleted">0</strong></span>
-                <span class="badge bg-primary-subtle text-primary px-3 py-2"><i class="fas fa-clock me-1"></i> Pending: <strong id="kpiPending">0</strong></span>
-                <span class="badge bg-danger-subtle text-danger px-3 py-2"><i class="fas fa-times-circle me-1"></i> Cancelled: <strong id="kpiCancelled">0</strong></span>
-                <span class="badge bg-info-subtle text-info px-3 py-2"><i class="fas fa-users me-1"></i> Active Staff: <strong id="kpiStaff">0</strong></span>
-            </div>
-
-            <!-- Booking Trend Chart -->
-            <div class="card border-0 bg-light mb-4">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3 text-muted">Booking Trends (Last 7 Days)</h6>
-                    <canvas id="bookingChart" style="max-height: 200px;"></canvas>
-                </div>
-            </div>
-
-            <hr class="mt-5 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Interactive Schedule</h5>
-                <div>
-                    <span class="badge bg-primary me-2"><i class="fas fa-circle text-primary me-1"></i>Booked</span>
-                    <span class="badge bg-success"><i class="fas fa-circle text-success me-1"></i>Arrived</span>
-                </div>
-            </div>
-
-            <div class="card border-0 shadow-sm p-3">
-                <div id='calendar' style="min-height: 600px;"></div>
-            </div>
-
-        </div>
-
-        <!-- Staff Leaderboard -->
-        <div class="card p-4 border-0 shadow-sm mt-4">
-            <h5 class="fw-bold mb-3"><i class="fas fa-trophy me-2 text-warning"></i>Staff Leaderboard</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="border-0">Rank</th>
-                            <th class="border-0">Staff Member</th>
-                            <th class="border-0 text-center">Completed Appts</th>
-                            <th class="border-0 text-end">Revenue Generated</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set sorted_staff = business.staff | sort(attribute='id') %}
-                        {% for member in sorted_staff %}
-                        <tr>
-                            <td
-                                class="border-0 fw-bold {% if loop.index == 1 %}text-warning{% elif loop.index == 2 %}text-secondary{% elif loop.index == 3 %}text-danger{% else %}text-muted{% endif %}">
-                                #{{ loop.index }}
-                            </td>
-                            <td class="border-0 text-dark fw-bold">
-                                {{ member.name }}
-                                {% if loop.index == 1 %}<i class="fas fa-crown ms-1 text-warning"></i>{% endif %}
-                            </td>
-                            <td class="border-0 text-center">
-                                {% set completed = appointments | selectattr('staff_id', 'equalto', member.id) |
-                                selectattr('status', 'equalto', 'completed') | list | length %}
-                                <span class="badge bg-light text-dark border">{{ completed }}</span>
-                            </td>
-                            <td class="border-0 text-end fw-bold text-success">
-                                {% set revenue = (appointments | selectattr('staff_id', 'equalto', member.id) |
-                                selectattr('status', 'equalto', 'completed') | map(attribute='service.price') | sum)
-                                %}
-                                ₹{{ revenue }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <hr class="my-4">
-
-            <h6 class="fw-bold mb-3 text-muted text-uppercase small">Add New Staff Member</h6>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                {% for member in business.staff %}
-                <div class="badge bg-light text-dark border p-2 px-3 fw-normal shadow-sm d-flex align-items-center">
-                    <div class="bg-primary rounded-circle me-2" style="width: 8px; height: 8px;"></div>
-                    {{ member.name }}
-                </div>
-                {% endfor %}
-            </div>
-            <form action="{{ url_for('admin.add_staff') }}" method="POST" class="d-flex gap-2">
-                <input type="text" name="name" class="form-control-premium flex-grow-1"
-                    placeholder="Enter staff name" required>
-                <button type="submit" class="btn-premium px-4">Add Member</button>
-            </form>
-        </div>
-
-        <!-- Custom Branding / White-Labeling -->
-        <div class="card p-4 border-0 shadow-sm mt-4 reveal-step">
-            <h5 class="fw-bold mb-3"><i class="fas fa-paint-brush me-2 text-primary"></i>Custom Branding</h5>
-            <form action="{{ url_for('admin.update_branding') }}" method="POST">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold">Primary Brand Color</label>
-                        <div class="d-flex align-items-center gap-3">
-                            <input type="color" name="primary_color"
-                                class="form-control form-control-color border-0 border"
-                                value="{{ business.primary_color or '#1d76f2' }}" title="Choose your color">
-                            <input type="text" class="form-control form-control-sm bg-light border-0 w-50"
-                                value="{{ business.primary_color or '#1d76f2' }}" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold">Logo URL</label>
-                        <input type="url" name="logo_url" class="form-control form-control-sm bg-light border-0"
-                            value="{{ business.logo_url or '' }}" placeholder="https://example.com/logo.png">
-                    </div>
-                </div>
-                <div class="mt-3 text-end">
-                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-bold shadow-sm">Save
-                        Branding</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- AI Growth Advisor (V3 Exclusive) -->
-        <div class="card glass-card p-4 mt-4 border-0 shadow-lg reveal-step"
-            style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); border-left: 4px solid #10b981 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0 text-success"><i class="fas fa-chart-line me-2"></i>AI Growth Advisor</h5>
-                <span class="badge bg-success-subtle text-success px-3">Live Simulation</span>
-            </div>
-            <div id="aiAdvisorContent" class="row g-3">
-                <div class="col-md-4">
-                    <div class="p-3 bg-white bg-opacity-10 rounded border border-white border-opacity-10">
-                        <p class="tiny uppercase text-white-50 mb-1">Projected Growth</p>
-                        <h4 class="fw-bold text-white mb-0">+12.5%</h4>
-                        <small class="text-success tiny">Based on current trends</small>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="p-3 bg-white bg-opacity-10 rounded border border-white border-opacity-10 h-100">
-                        <p class="tiny uppercase text-white-50 mb-1">Optimization Tip</p>
-                        <p class="small text-white mb-0 mt-1" id="aiSuggestion">
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
-                            Suggestion: Increase staff capacity on Friday afternoons to capture 15% more walk-ins.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <!-- ===== END MAIN CONTENT ===== -->
-</div>
-
-<!-- FullCalendar JS & CSS -->
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const BUSINESS_ID = {{ business.id }};
 
     document.addEventListener('DOMContentLoaded', async function () {
-        // ===== 1. Load Dashboard Stats from API =====
+        // 1. Dashboard Stats API
         let bookingChartInstance = null;
-
         async function loadDashboardStats() {
             try {
                 const res = await fetch(`/api/dashboard/stats/${BUSINESS_ID}`);
-                if (!res.ok) throw new Error('Stats API error');
+                if (!res.ok) throw new Error();
                 const data = await res.json();
-
-                // Populate KPI cards
+                
                 document.getElementById('kpiTotalBookings').textContent = data.total_bookings;
                 document.getElementById('kpiTodayBookings').textContent = data.today_bookings;
                 document.getElementById('kpiRevenue').textContent = `₹${data.total_revenue.toLocaleString()}`;
                 document.getElementById('kpiAvgRating').textContent = data.avg_rating > 0 ? `${data.avg_rating} ⭐` : 'N/A';
 
-                // Status badges
-                document.getElementById('kpiCompleted').textContent = data.completed_bookings;
-                document.getElementById('kpiPending').textContent = data.pending_bookings;
-                document.getElementById('kpiCancelled').textContent = data.cancelled_bookings;
-                document.getElementById('kpiStaff').textContent = data.active_staff;
-
-                // Booking trend chart
                 const ctx = document.getElementById('bookingChart').getContext('2d');
                 if (bookingChartInstance) bookingChartInstance.destroy();
                 bookingChartInstance = new Chart(ctx, {
@@ -348,13 +375,13 @@
                         datasets: [{
                             label: 'Bookings',
                             data: data.booking_trend.data,
-                            borderColor: '#1d76f2',
-                            backgroundColor: 'rgba(29, 118, 242, 0.1)',
+                            borderColor: '#d095ff', // Primary Hex
+                            backgroundColor: 'rgba(208, 149, 255, 0.15)',
                             fill: true,
                             tension: 0.4,
                             pointRadius: 4,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#1d76f2',
+                            pointBackgroundColor: '#070d1f',
+                            pointBorderColor: '#00f4fe', // Secondary Hex
                             pointBorderWidth: 2
                         }]
                     },
@@ -364,41 +391,17 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { display: false, beginAtZero: true },
-                            x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 10 } } }
+                            x: { grid: { display: false, color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a5aac2', font: { size: 10 } } }
                         }
                     }
                 });
             } catch (e) {
-                // Fallback: show static chart if API fails
-                const ctx = document.getElementById('bookingChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Bookings',
-                            data: [0, 0, 0, 0, 0, 0, 0],
-                            borderColor: '#1d76f2',
-                            backgroundColor: 'rgba(29, 118, 242, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { display: false, beginAtZero: true },
-                            x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 10 } } }
-                        }
-                    }
-                });
+                console.warn('Stats API missing or failed, using skeleton');
             }
         }
         loadDashboardStats();
 
-        // ===== 2. Load AI Admin Insights =====
+        // 2. AI Insights Area
         async function loadAIInsights() {
             try {
                 const res = await fetch(`/api/business/stats/${BUSINESS_ID}`);
@@ -406,96 +409,74 @@
                 const container = document.getElementById('aiAdminInsights');
                 document.getElementById('adminAvgWait').innerText = `${data.live_wait_time} mins`;
 
-                if (data.recent_ai_insights.length > 0) {
-                    container.innerHTML = '<p class="mb-2 opacity-75">Common Mentions:</p>';
+                if (data.recent_ai_insights && data.recent_ai_insights.length > 0) {
+                    container.innerHTML = '<p class="mb-3 text-xs text-on-surface-variant font-bold uppercase tracking-widest">Sentiment Highlights:</p><div class="flex flex-wrap gap-2">';
                     data.recent_ai_insights.forEach(issue => {
-                        container.innerHTML += `<div class="badge bg-white bg-opacity-25 mb-1 me-1 text-capitalize">${issue}</div>`;
+                        container.innerHTML += `<span class="px-3 py-1 bg-surface-container-high border border-outline-variant/20 rounded-full text-xs text-on-surface capitalize">${issue}</span>`;
                     });
+                    container.innerHTML += '</div>';
                 } else {
-                    container.innerHTML = '<p class="opacity-75">No feedback trends yet.</p>';
+                    container.innerHTML = '<p class="text-sm text-on-surface-variant">No feedback trends yet. AI is monitoring incoming reviews.</p>';
                 }
             } catch (e) { }
         }
         loadAIInsights();
 
-        // ===== 3. Load Forecast Heatmap =====
+        // 3. Heatmap logic
         async function loadForecast() {
             try {
                 const res = await fetch(`/api/forecast/${BUSINESS_ID}`);
                 const data = await res.json();
                 const grid = document.getElementById('heatmapGrid');
                 grid.innerHTML = '';
-
                 data.forEach((item, idx) => {
                     const cell = document.createElement('div');
-                    cell.style.height = '18px';
-                    cell.style.borderRadius = '4px';
-                    cell.style.cursor = 'pointer';
-
+                    cell.className = 'rounded-sm transition-all duration-200 cursor-pointer border border-white/5';
                     const val = item.occupancy;
-                    const color = val > 0.8 ? '#ef4444' : (val > 0.4 ? '#fbbf24' : '#1d76f2');
+                    const color = val > 0.8 ? '#d095ff' : (val > 0.4 ? '#00f4fe' : '#1c253e');
                     cell.style.backgroundColor = color;
-                    cell.style.opacity = 0.2 + (val * 0.8);
-                    cell.style.border = '1px solid rgba(255,255,255,0.1)';
-
+                    cell.style.opacity = 0.3 + (val * 0.7);
                     cell.title = `${item.day} ${item.hour}: ${(item.occupancy * 100).toFixed(0)}% occupancy`;
-
-                    if (typeof gsap !== 'undefined') {
-                        gsap.from(cell, {
-                            scale: 0,
-                            duration: 0.3,
-                            delay: idx * 0.005,
-                            ease: "back.out(2)"
-                        });
-                        cell.onmouseover = () => gsap.to(cell, { scale: 1.3, zIndex: 10, duration: 0.2 });
-                        cell.onmouseout = () => gsap.to(cell, { scale: 1, zIndex: 1, duration: 0.2 });
-                    }
-
                     grid.appendChild(cell);
                 });
             } catch (e) { }
         }
         loadForecast();
 
-        // ===== 4. FullCalendar Initialization =====
+        // 4. FullCalendar
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                right: 'timeGridWeek,timeGridDay'
             },
             themeSystem: 'bootstrap5',
             events: '/api/calendar/events',
             editable: true,
+            slotMinTime: "06:00:00",
+            slotMaxTime: "22:00:00",
+            allDaySlot: false,
             eventDrop: async function (info) {
-                const payload = {
-                    appointment_id: info.event.id,
-                    new_start: info.event.startStr,
-                    new_end: info.event.endStr
-                };
                 try {
+                    const payload = { appointment_id: info.event.id, new_start: info.event.startStr, new_end: info.event.endStr };
                     const res = await fetch('/api/calendar/reschedule', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     const data = await res.json();
-                    if (!data.success) {
-                        alert("Error rescheduling: " + data.message);
-                        info.revert();
-                    }
+                    if (!data.success) { alert("Error rescheduling: " + data.message); info.revert(); }
                 } catch (e) {
-                    alert("Network error.");
-                    info.revert();
+                    alert("Network error."); info.revert();
                 }
             }
         });
         calendar.render();
     });
 
-    // ===== Kiosk Logic =====
+    // Kiosk System
     let isKioskRunning = false;
     async function checkKioskStatus() {
         try {
@@ -518,30 +499,38 @@
     }
     function updateKioskUI() {
         const btn = document.getElementById('kioskBtn');
-        const badge = document.getElementById('kioskBadge');
+        const badgeOuter = document.getElementById('kioskBadge');
+        const badgeInner = badgeOuter.querySelector('span.relative > span.relative');
+        const badgeText = badgeOuter.querySelector('span.text-\\[11px\\]');
+
         if (isKioskRunning) {
-            btn.innerHTML = '<i class="fas fa-stop me-2"></i> Stop Camera';
-            btn.className = 'btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow-sm';
-            badge.className = 'badge bg-success mt-2 px-3 py-2';
-            badge.innerText = 'Detecting Faces (Online)';
+            btn.innerHTML = '<span class="material-symbols-outlined text-error">stop_circle</span> Stop Camera';
+            badgeOuter.classList.replace('bg-surface-container-highest', 'bg-secondary/10');
+            badgeOuter.classList.replace('border-outline-variant/20', 'border-secondary/30');
+            badgeInner.className = 'relative inline-flex rounded-full h-2 w-2 bg-secondary shadow-[0_0_10px_#00f4fe] animate-pulse';
+            badgeText.className = 'text-[11px] font-bold uppercase tracking-wider text-secondary';
+            badgeText.innerText = 'Online / Detecting';
         } else {
-            btn.innerHTML = '<i class="fas fa-play me-2"></i> Launch Smart Camera';
-            btn.className = 'btn btn-outline-info btn-lg rounded-pill px-4 fw-bold shadow-sm transition-all';
-            badge.className = 'badge bg-secondary mt-2 px-3 py-2';
-            badge.innerText = 'Offline';
+            btn.innerHTML = '<span class="material-symbols-outlined text-secondary">videocam</span> Launch Smart Camera';
+            badgeOuter.classList.replace('bg-secondary/10', 'bg-surface-container-highest');
+            badgeOuter.classList.replace('border-secondary/30', 'border-outline-variant/20');
+            badgeInner.className = 'relative inline-flex rounded-full h-2 w-2 bg-on-surface-variant';
+            badgeText.className = 'text-[11px] font-bold uppercase tracking-wider text-on-surface-variant';
+            badgeText.innerText = 'Kiosk Offline';
         }
     }
     checkKioskStatus();
     setInterval(checkKioskStatus, 5000);
 
-    // ===== Subscription System Logic =====
+    // Subscriptions
     async function checkSubscription() {
         try {
             const res = await fetch('/api/subscription/status');
             const data = await res.json();
             if (data.level === 'free') {
-                document.getElementById('subscriptionSection').style.display = 'block';
-                document.getElementById('aiAdminInsights').innerHTML = '<div class="alert alert-warning tiny py-2"><i class="fas fa-lock me-1"></i> Upgrade to Pro for AI sentiment analysis.</div>';
+                document.getElementById('subscriptionSection').classList.remove('hidden');
+                document.getElementById('subscriptionSection').classList.add('flex');
+                document.getElementById('subscriptionLink').classList.remove('hidden');
             }
         } catch (e) { }
     }
@@ -557,7 +546,6 @@
             }
         } catch (e) { }
     }
-
     async function subscribe(planId) {
         try {
             const res = await fetch('/api/subscription/checkout', {
@@ -573,4 +561,5 @@
         } catch (e) { }
     }
 </script>
-{% endblock content %}
+</body>
+</html>

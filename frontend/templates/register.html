@@ -1,67 +1,272 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="row justify-content-center mt-5 reveal-step">
-    <div class="col-md-5">
-        <div class="card p-4 glass-card border-0 shadow-lg">
-            <h3 class="text-center mb-4">Join AI Sched</h3>
-            <form id="registerForm">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" name="username" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label text-white-50 small uppercase">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control-premium w-100" required>
-                </div>
-                <div class="mb-3">
-                    <label for="phone" class="form-label text-white-50 small uppercase">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" class="form-control-premium w-100"
-                        placeholder="+1234567890" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="role" class="form-label">I want to...</label>
-                    <select id="role" name="role" class="form-select form-control-premium w-100">
-                        <option value="customer">Book Appointments</option>
-                        <option value="business_owner">Manage my Business</option>
-                    </select>
-                </div>
-                <!-- Dynamic Business Name Field -->
-                <div id="businessNameContainer" class="mb-3 d-none">
-                    <label for="businessName" class="form-label text-white-50 small uppercase">Business Name</label>
-                    <input type="text" id="businessName" name="businessName" class="form-control-premium w-100"
-                        placeholder="My Awesome Studio">
-                </div>
-
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Create Account</button>
-                </div>
-            </form>
-
-            <div class="mt-3 text-center">
-                <small class="text-muted">Already have an account? <a
-                        href="{{ url_for('auth.login') }}">Login</a></small>
-            </div>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#000000",
+              "surface-container-high": "#171f36",
+              "background": "#070d1f",
+              "tertiary-fixed": "#cf9aff",
+              "on-primary-fixed": "#000000",
+              "surface-container-highest": "#1c253e",
+              "on-surface-variant": "#a5aac2",
+              "secondary-dim": "#00e5ee",
+              "on-tertiary-fixed": "#270048",
+              "secondary-fixed": "#00f4fe",
+              "on-tertiary-fixed-variant": "#570093",
+              "on-secondary-container": "#dffdff",
+              "primary-container": "#c782ff",
+              "secondary": "#00f4fe",
+              "on-background": "#dfe4fe",
+              "on-primary": "#490078",
+              "primary-fixed": "#c782ff",
+              "on-secondary-fixed": "#004346",
+              "secondary-container": "#00696e",
+              "on-secondary": "#00575b",
+              "tertiary": "#c280ff",
+              "primary-dim": "#c57eff",
+              "surface-bright": "#222b47",
+              "tertiary-dim": "#c280ff",
+              "on-primary-fixed-variant": "#450073",
+              "error-container": "#a70138",
+              "tertiary-fixed-dim": "#c687ff",
+              "secondary-fixed-dim": "#00e5ee",
+              "outline": "#6f758b",
+              "on-error-container": "#ffb2b9",
+              "surface-variant": "#1c253e",
+              "on-surface": "#dfe4fe",
+              "primary": "#d095ff",
+              "inverse-primary": "#8534c4",
+              "surface-container": "#11192e",
+              "surface": "#070d1f",
+              "on-tertiary-container": "#130028",
+              "surface-container-low": "#0c1326",
+              "surface-dim": "#070d1f",
+              "tertiary-container": "#b56afb",
+              "on-primary-container": "#38005e",
+              "surface-tint": "#d095ff",
+              "error": "#ff6e84",
+              "error-dim": "#d73357",
+              "primary-fixed-dim": "#bd6efe",
+              "on-tertiary": "#33005a",
+              "inverse-surface": "#faf8ff",
+              "outline-variant": "#41475b",
+              "on-error": "#490013",
+              "inverse-on-surface": "#4f5469",
+              "on-secondary-fixed-variant": "#006266"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(12, 19, 38, 0.7) 0%, rgba(17, 25, 46, 0.7) 100%);
+            backdrop-filter: blur(24px);
+        }
+        .ai-pulse-bg {
+            background: radial-gradient(circle at center, rgba(208, 149, 255, 0.15) 0%, transparent 70%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #d095ff 0%, #00f4fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .button-glow:hover {
+            box-shadow: 0 0 25px rgba(208, 149, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen overflow-x-hidden">
+<main class="flex min-h-screen w-full">
+<!-- Left Side: Abstract 3D Visuals -->
+<section class="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-surface-container-lowest">
+<div class="absolute inset-0 z-0 overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/15 rounded-full blur-[140px]"></div>
+<div class="relative w-full h-full flex items-center justify-center">
+<div class="relative w-[400px] h-[400px]">
+<div class="absolute inset-0 bg-white/5 backdrop-blur-3xl rounded-xl rotate-12 border border-white/10 shadow-2xl"></div>
+<div class="absolute inset-8 bg-gradient-to-br from-primary/30 to-secondary/30 backdrop-blur-2xl rounded-xl -rotate-6 border border-white/5 shadow-2xl"></div>
+<div class="absolute inset-16 bg-surface-container-highest/40 backdrop-blur-xl rounded-xl rotate-3 border border-white/10 shadow-inner flex items-center justify-center">
+<span class="material-symbols-outlined text-6xl text-gradient" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
 </div>
-{% endblock content %}
+</div>
+</div>
+</div>
+<div class="absolute bottom-12 left-12 z-10 max-w-sm">
+<h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface mb-2">Master Your Time with Intelligence.</h2>
+<p class="text-on-surface-variant text-lg">AI Sched orchestrates your calendar with surgical precision and nocturnal beauty.</p>
+</div>
+</section>
+<!-- Right Side: Authentication Area -->
+<section class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-24 relative bg-surface-dim overflow-y-auto max-h-screen">
+<div class="absolute inset-0 ai-pulse-bg pointer-events-none"></div>
+<div class="w-full max-w-md relative z-10 py-10">
+<!-- Brand Anchor -->
+<div class="mb-12 flex items-center gap-3">
+<a href="/">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-on-primary-fixed text-2xl" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+</a>
+<a href="/"><span class="text-2xl font-bold tracking-tight text-on-surface font-headline">AI Sched</span></a>
+</div>
+<!-- Registration Modal -->
+<div class="glass-panel p-8 md:p-10 rounded-lg shadow-2xl border border-outline-variant/10">
+<header class="mb-8 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<h1 class="text-3xl font-bold font-headline tracking-tight text-gradient">Join AI Sched</h1>
+</header>
+<form id="registerForm" method="POST" class="space-y-4">
+<!-- Username -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="username">Username</label>
+<div class="relative group">
+<input id="username" name="username" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="Enter your username" type="text" required/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Email Address -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="email">Email Address</label>
+<div class="relative group">
+<input id="email" name="email" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="name@company.com" type="email" required/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Phone Number -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="phone">Phone Number</label>
+<div class="relative group">
+<input id="phone" name="phone" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="+1234567890" type="tel" required/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Password -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="password">Password</label>
+<div class="relative group">
+<input id="password" name="password" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="••••••••" type="password" required/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Role Selection -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="role">I want to...</label>
+<div class="relative group">
+<select id="role" name="role" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface border-none focus:ring-1 focus:ring-secondary transition-all outline-none appearance-none cursor-pointer">
+    <option value="customer" class="bg-surface-container-highest text-on-surface">Book Appointments</option>
+    <option value="business_owner" class="bg-surface-container-highest text-on-surface">Manage my Business</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+    <span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+<div class="absolute inset-0 rounded-lg pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Business Name (Hidden by default) -->
+<div class="space-y-2 hidden" id="businessNameContainer">
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="businessName">Business Name</label>
+<div class="relative group">
+<input id="businessName" name="businessName" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="My Awesome Studio" type="text"/>
+<div class="absolute inset-0 rounded-xl pointer-events-none border border-secondary/0 group-focus-within:border-secondary/30 transition-all"></div>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full py-4 rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary-fixed font-bold text-lg button-glow transition-all transform active:scale-95 shadow-lg mt-6" type="submit">
+                            Create Account
+                        </button>
+</form>
 
-{% block scripts %}
-{{ super() }}
-<script nonce="{{ csp_nonce() }}">
+<!-- Divider -->
+<div class="relative my-8 flex items-center">
+<div class="flex-grow border-t border-outline-variant/15"></div>
+<span class="px-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">or</span>
+<div class="flex-grow border-t border-outline-variant/15"></div>
+</div>
+<!-- Social Login -->
+<button id="googleAuthBtn" class="w-full py-4 rounded-full bg-surface-bright/40 backdrop-blur-xl border border-outline-variant/20 flex items-center justify-center gap-3 text-on-surface font-semibold hover:bg-surface-bright/60 transition-all active:scale-95 group">
+<img alt="Google Logo" class="w-5 h-5 group-hover:scale-110 transition-transform" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
+                        Sign up with Google
+                    </button>
+<!-- Footer Action -->
+<div class="mt-8 text-center">
+<p class="text-on-surface-variant text-sm">
+                            Already have an account? 
+                            <a class="text-secondary font-semibold hover:underline decoration-secondary/30 underline-offset-4 ml-1" href="{{ url_for('auth.login') }}">Log in</a>
+</p>
+</div>
+</div>
+</div>
+<!-- Background Aesthetic (Mobile) -->
+<div class="absolute inset-0 lg:hidden -z-10 opacity-30">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[100px] rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full"></div>
+</div>
+</section>
+</main>
+
+<!-- Firebase SDKs & Logic -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "{{ config.FIREBASE_API_KEY }}",
+        authDomain: "{{ config.FIREBASE_AUTH_DOMAIN }}",
+        projectId: "{{ config.FIREBASE_PROJECT_ID }}",
+        storageBucket: "{{ config.FIREBASE_STORAGE_BUCKET }}",
+        messagingSenderId: "{{ config.FIREBASE_MESSAGING_SENDER_ID }}",
+        appId: "{{ config.FIREBASE_APP_ID }}"
+    };
+    
+    if ("{{ config.FIREBASE_API_KEY }}" !== "None" && "{{ config.FIREBASE_API_KEY }}" !== "") {
+        firebase.initializeApp(firebaseConfig);
+    }
+
     function validateRedirect(url) {
         if (!url) return '/';
-        // SECURITY: Only allow relative paths (starting with /) to prevent Open Redirects
         if (url.startsWith('//') || url.match(/^[a-zA-Z0-9+.-]+:\/\//)) {
-            console.warn("External redirect blocked:", url);
             return '/';
         }
         return url;
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const roleSelect = document.getElementById('role');
+        const bizContainer = document.getElementById('businessNameContainer');
+        const bizInput = document.getElementById('businessName');
+
+        roleSelect.addEventListener('change', () => {
+            if (roleSelect.value === 'business_owner') {
+                bizContainer.classList.remove('hidden');
+                bizInput.setAttribute('required', '');
+            } else {
+                bizContainer.classList.add('hidden');
+                bizInput.removeAttribute('required');
+            }
+        });
+    });
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -73,20 +278,15 @@
         const business_name = document.getElementById('businessName')?.value || "";
         const submitBtn = e.target.querySelector('button[type="submit"]');
 
+        const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
+        submitBtn.innerHTML = 'Creating Account...';
 
-        // Use Firebase only
         try {
-            // 1. Create user in Firebase
             const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
-
-            // 2. Update Firebase Display Name
             await user.updateProfile({ displayName: username });
 
-            // 3. Sync role and phone metadata with backend
-            // Note: firebase_token_required in backend will create the user shell
             const idToken = await user.getIdToken();
             const response = await fetch('/api/user/select-role', {
                 method: 'POST',
@@ -99,36 +299,62 @@
             const data = await response.json();
 
             if (data.success) {
-                showToast('Account created successfully!', 'success');
                 setTimeout(() => {
                     window.location.href = validateRedirect(data.redirect);
                 }, 1000);
             } else {
-                showToast(data.message || 'Metadata sync failed', 'error');
+                alert(data.message || 'Metadata sync failed');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Create Account';
+                submitBtn.innerHTML = originalText;
             }
         } catch (error) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Create Account';
-            showToast('Registration failed: ' + error.message, 'error');
+            submitBtn.innerHTML = originalText;
+            alert('Registration failed: ' + error.message);
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const roleSelect = document.getElementById('role');
-        const bizContainer = document.getElementById('businessNameContainer');
-        const bizInput = document.getElementById('businessName');
+    // Google Sign U
+    document.getElementById('googleAuthBtn').addEventListener('click', async () => {
+        const googleAuthBtn = document.getElementById('googleAuthBtn');
+        const originalHtml = googleAuthBtn.innerHTML;
+        googleAuthBtn.disabled = true;
+        googleAuthBtn.innerHTML = '<span>Signing up...</span>';
+        
+        const role = document.getElementById('role').value;
+        const phone = document.getElementById('phone').value;
+        const business_name = document.getElementById('businessName')?.value || "";
 
-        roleSelect.addEventListener('change', () => {
-            if (roleSelect.value === 'business_owner') {
-                bizContainer.classList.remove('d-none');
-                bizInput.setAttribute('required', '');
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const userCredential = await firebase.auth().signInWithPopup(provider);
+            const user = userCredential.user;
+            
+            const idToken = await user.getIdToken();
+            const response = await fetch('/api/user/select-role', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ role, phone, business_name })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = validateRedirect(data.redirect);
             } else {
-                bizContainer.classList.add('d-none');
-                bizInput.removeAttribute('required');
+                alert(data.message || 'Metadata sync failed');
+                googleAuthBtn.disabled = false;
+                googleAuthBtn.innerHTML = originalHtml;
             }
-        });
+        } catch (error) {
+            googleAuthBtn.disabled = false;
+            googleAuthBtn.innerHTML = originalHtml;
+            if (error.code !== 'auth/popup-closed-by-user') {
+                alert('Google Sign Up failed: ' + error.message);
+            }
+        }
     });
 </script>
-{% endblock scripts %}
+</body></html>

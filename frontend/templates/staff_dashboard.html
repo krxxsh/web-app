@@ -1,74 +1,201 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="row justify-content-center pt-3">
-    <div class="col-md-6 col-12">
-        <div class="card bg-primary text-white border-0 shadow-sm p-4 mb-4 rounded-3">
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-white text-primary rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
-                    style="width: 50px; height: 50px;">
-                    <i class="fas fa-briefcase-medical fa-lg"></i>
-                </div>
-                <div>
-                    <h5 class="mb-0 fw-bold">{{ staff.name }}</h5>
-                    <small class="opacity-75">Staff Portal • {{ staff.business.name }}</small>
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{{ staff.name }} - Staff Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "background": "#070d1f",
+                    "on-surface": "#dfe4fe",
+                    "secondary-fixed-dim": "#00e5ee",
+                    "primary-fixed": "#c782ff",
+                    "error-container": "#a70138",
+                    "surface-bright": "#222b47",
+                    "on-secondary-fixed": "#004346",
+                    "primary-container": "#c782ff",
+                    "primary": "#d095ff",
+                    "surface-container": "#11192e",
+                    "outline": "#6f758b",
+                    "surface-container-lowest": "#000000",
+                    "secondary-fixed": "#00f4fe",
+                    "inverse-surface": "#faf8ff",
+                    "on-tertiary-fixed": "#270048",
+                    "on-primary": "#490078",
+                    "on-primary-fixed": "#000000",
+                    "secondary-container": "#00696e",
+                    "surface-variant": "#1c253e",
+                    "outline-variant": "#41475b",
+                    "on-error": "#490013",
+                    "on-primary-container": "#38005e",
+                    "on-secondary": "#00575b",
+                    "on-surface-variant": "#a5aac2",
+                    "secondary-dim": "#00e5ee",
+                    "on-error-container": "#ffb2b9",
+                    "primary-dim": "#c57eff",
+                    "on-tertiary-container": "#130028",
+                    "surface-container-low": "#0c1326",
+                    "tertiary-dim": "#c280ff",
+                    "on-tertiary-fixed-variant": "#570093",
+                    "surface-dim": "#070d1f",
+                    "primary-fixed-dim": "#bd6efe",
+                    "tertiary-fixed-dim": "#c687ff",
+                    "inverse-on-surface": "#4f5469",
+                    "surface-tint": "#d095ff",
+                    "on-background": "#dfe4fe",
+                    "inverse-primary": "#8534c4",
+                    "tertiary-container": "#b56afb",
+                    "tertiary": "#c280ff",
+                    "surface-container-high": "#171f36",
+                    "surface": "#070d1f",
+                    "on-secondary-fixed-variant": "#006266",
+                    "on-primary-fixed-variant": "#450073",
+                    "error-dim": "#d73357",
+                    "tertiary-fixed": "#cf9aff",
+                    "error": "#ff6e84",
+                    "on-secondary-container": "#dffdff",
+                    "on-tertiary": "#33005a",
+                    "surface-container-highest": "#1c253e",
+                    "secondary": "#00f4fe"
+                },
+                fontFamily: {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+                },
+                borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        background-color: #070d1f;
+        color: #dfe4fe;
+        font-family: 'Inter', sans-serif;
+    }
+    .glass-panel {
+        background: rgba(12, 19, 38, 0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+    }
+    .ambient-lume {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .inner-glow {
+        box-shadow: inset 0 1px 1px rgba(208, 149, 255, 0.15);
+    }
+    .text-gradient {
+        background: linear-gradient(135deg, #d095ff 0%, #00f4fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+</style>
+</head>
+<body class="overflow-x-hidden min-h-screen bg-surface flex justify-center items-start pt-10 px-4">
+
+<main class="w-full max-w-3xl space-y-8">
+    
+    <!-- Staff Card -->
+    <div class="glass-panel ambient-lume inner-glow p-8 rounded-2xl relative overflow-hidden group">
+        <div class="absolute -right-4 -top-4 w-48 h-48 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
+        <div class="flex items-center gap-6 mb-8">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary p-1">
+                <div class="w-full h-full bg-surface-container rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-gradient">medical_services</span>
                 </div>
             </div>
-            <div class="d-flex space-between w-100">
-                <div class="flex-grow-1">
-                    <div class="small opacity-75 text-uppercase">Today's Load</div>
-                    <div class="fs-4 fw-bold">{{ appointments | length }}</div>
-                </div>
-                <div class="flex-grow-1 text-end">
-                    <div class="small opacity-75 text-uppercase">Remaining</div>
-                    <div class="fs-4 fw-bold">{{ appointments | selectattr('status', 'equalto', 'booked') | list |
-                        length }}</div>
-                </div>
+            <div>
+                <h2 class="text-3xl font-bold text-on-surface">{{ staff.name }}</h2>
+                <p class="text-sm font-semibold uppercase tracking-widest text-primary mt-1">Staff Portal • {{ staff.business.name }}</p>
             </div>
         </div>
+        
+        <div class="flex gap-8 border-t border-outline-variant/10 pt-6">
+            <div class="flex-1">
+                <p class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-2">Today's Load</p>
+                <h3 class="text-4xl font-bold text-on-surface">{{ appointments | length }}</h3>
+            </div>
+            <div class="flex-1 text-right">
+                <p class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-2">Remaining</p>
+                <h3 class="text-4xl font-bold text-secondary">{{ appointments | selectattr('status', 'equalto', 'booked') | list | length }}</h3>
+            </div>
+        </div>
+        
+        <div class="absolute top-8 right-8">
+            <a href="{{ url_for('auth.logout') }}" class="px-4 py-2 rounded-full border border-error/30 text-error text-xs font-bold hover:bg-error/10 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">logout</span> Logout
+            </a>
+        </div>
+    </div>
 
-        <p class="fw-bold text-muted mb-3 text-uppercase small h6" aria-label="Schedule"><i
-                class="far fa-calendar-check me-2"></i> Your
-            Schedule</p>
-
-        <div class="list-group list-group-flush shadow-sm rounded-3 overflow-hidden">
-            {% for appt in appointments %}
-            <div class="list-group-item d-flex justify-content-between align-items-center p-3 {{ 'bg-light opacity-50' if appt.status == 'completed' else '' }}"
-                id="appt-{{ appt.id }}">
-                <div>
-                    <div
-                        class="fw-bold mb-1 {{ 'text-decoration-line-through' if appt.status == 'completed' else 'text-dark' }}">
-                        {{ appt.customer.username }} - {{ appt.service.name }}
+    <!-- Schedule List -->
+    <h4 class="text-xl font-bold text-on-surface mb-4 flex items-center gap-3">
+        <span class="material-symbols-outlined text-secondary">event_available</span> Your Schedule
+    </h4>
+    
+    <div class="space-y-4">
+        {% for appt in appointments %}
+            <div class="glass-panel p-6 rounded-xl ambient-lume border border-outline-variant/10 flex items-center justify-between group transition-all hover:translate-x-1 {% if appt.status == 'completed' %}opacity-50 grayscale{% endif %}" id="appt-{{ appt.id }}">
+                <div class="flex items-center gap-6">
+                    <div class="text-center px-4 border-r border-outline-variant/10">
+                        <span class="block text-xs uppercase font-bold text-on-surface-variant tracking-tighter">{{ appt.start_time.strftime('%p') }}</span>
+                        <span class="block text-2xl font-bold text-on-surface">{{ appt.start_time.strftime('%I:%M') }}</span>
                     </div>
-                    <div class="small text-muted mb-2">
-                        <i class="far fa-clock me-1 text-primary"></i> {{ appt.start_time.strftime('%I:%M %p') }} - {{
-                        appt.end_time.strftime('%I:%M %p') }}
+                    <div>
+                        <h5 class="font-bold text-lg {{ 'text-on-surface-variant line-through' if appt.status == 'completed' else 'text-on-surface' }}">
+                            {{ appt.customer.username }} - {{ appt.service.name }}
+                        </h5>
+                        <p class="text-on-surface-variant text-sm flex items-center gap-2 mt-1">
+                            <span class="material-symbols-outlined text-sm text-primary">schedule</span>
+                            {{ appt.start_time.strftime('%I:%M %p') }} — {{ appt.end_time.strftime('%I:%M %p') }}
+                        </p>
+                        
+                        <div class="mt-3">
+                            {% if appt.status == 'arrived' %}
+                                <span class="px-3 py-1 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/30 status-badge">Arrived</span>
+                            {% elif appt.status == 'completed' %}
+                                <span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest rounded-full status-badge">Completed</span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary/30 status-badge">Booked</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <span
-                        class="badge {{ 'bg-success' if appt.status == 'arrived' else ('bg-secondary' if appt.status == 'completed' else 'bg-primary') }} status-badge">
-                        {{ appt.status | title }}
-                    </span>
                 </div>
-                <div>
+                
+                <div class="flex items-center gap-3">
                     {% if appt.status != 'completed' %}
-                    <button class="btn btn-outline-success btn-sm rounded-circle shadow-sm checkoff-btn"
-                        style="width: 44px; height: 44px;" onclick="checkoff({{ appt.id }})"
-                        aria-label="Mark appointment as completed">
-                        <i class="fas fa-check"></i>
-                    </button>
+                        <button class="w-12 h-12 rounded-full bg-green-500 hover:bg-green-400 text-background flex items-center justify-center font-bold text-xl shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all scale-100 hover:scale-105 checkoff-btn" onclick="checkoff({{ appt.id }})" aria-label="Mark completed">
+                            <span class="material-symbols-outlined">done</span>
+                        </button>
                     {% endif %}
                 </div>
             </div>
-            {% endfor %}
-            {% if not appointments %}
-            <div class="list-group-item p-5 text-center text-muted">
-                <i class="fas fa-mug-hot fa-3x mb-3 text-light"></i>
-                <p class="mb-0">No appointments scheduled today. Relax!</p>
+        {% endfor %}
+        
+        {% if not appointments %}
+            <div class="glass-panel p-12 rounded-xl border border-outline-variant/10 text-center flex flex-col items-center justify-center">
+                <div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl text-on-surface-variant">coffee</span>
+                </div>
+                <h4 class="text-xl font-bold text-on-surface mb-2">No appointments scheduled today.</h4>
+                <p class="text-on-surface-variant text-sm">Relax and enjoy your free time!</p>
             </div>
-            {% endif %}
-        </div>
-
+        {% endif %}
     </div>
-</div>
+
+</main>
 
 <script>
     async function checkoff(id) {
@@ -79,12 +206,16 @@
             const data = await res.json();
             if (data.success) {
                 const row = document.getElementById(`appt-${id}`);
-                row.classList.add('bg-light', 'opacity-50');
-                const title = row.querySelector('.text-dark');
-                if (title) title.classList.add('text-decoration-line-through');
+                row.classList.add('opacity-50', 'grayscale');
+                
+                const title = row.querySelector('h5');
+                if (title) {
+                    title.classList.remove('text-on-surface');
+                    title.classList.add('text-on-surface-variant', 'line-through');
+                }
 
                 const badge = row.querySelector('.status-badge');
-                badge.className = 'badge bg-secondary status-badge';
+                badge.className = 'px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-widest rounded-full status-badge';
                 badge.innerText = 'Completed';
 
                 row.querySelector('.checkoff-btn').remove();
@@ -96,4 +227,5 @@
         }
     }
 </script>
-{% endblock content %}
+</body>
+</html>
