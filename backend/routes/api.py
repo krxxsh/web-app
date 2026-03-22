@@ -95,8 +95,14 @@ def book_appointment() -> Any:
         if not verified:
             return jsonify({"error": "Payment verification failed"}), 400
 
+    if not all([business_id, service_id, date_str, time_str]):
+        return jsonify({"error": "Missing required fields: business_id, service_id, date, time"}), 400
+
     start_time = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M')
     service = Service.query.get(service_id)
+
+    if not service:
+        return jsonify({"error": "Service not found"}), 404
 
     if service.member_only and current_user.membership_level == 'free':
         return jsonify({"error": "This service requires a premium membership."}), 403
@@ -158,29 +164,45 @@ def book_sequence():
     service_ids = data.get('service_ids')
     start_time_str = data.get('start_time')
 
+    if not all([business_id, service_ids, start_time_str]):
+        return jsonify({"error": "Missing required fields: business_id, service_ids, start_time"}), 400
+
+    if not isinstance(service_ids, list) or len(service_ids) == 0:
+        return jsonify({"error": "service_ids must be a non-empty list"}), 400
+
     current_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M')
     booked_ids = []
 
-    for sid in service_ids:
-        service = Service.query.get(sid)
-        end_time = current_time + timedelta(minutes=service.duration)
+    try:
+        for sid in service_ids:
+            service = Service.query.get(sid)
+            if not service:
+                db.session.rollback()
+                return jsonify({"error": f"Service {sid} not found"}), 404
+            end_time = current_time + timedelta(minutes=service.duration)
 
-        if check_conflict(current_user.id, current_time, end_time):
-            return jsonify({"error": f"Conflict at {current_time}. Partial booking failed."}), 409
+            if check_conflict(current_user.id, current_time, end_time):
+                db.session.rollback()
+                return jsonify({"error": f"Conflict at {current_time}. Partial booking failed."}), 409
 
-        appt = Appointment(
-            customer_id=current_user.id,
-            business_id=business_id,
-            service_id=sid,
-            start_time=current_time,
-            end_time=end_time,
-            status='booked'
-        )
-        db.session.add(appt)
-        current_time = end_time
-        booked_ids.append(appt)
+            appt = Appointment(
+                customer_id=current_user.id,
+                business_id=business_id,
+                service_id=sid,
+                start_time=current_time,
+                end_time=end_time,
+                status='booked'
+            )
+            db.session.add(appt)
+            current_time = end_time
+            booked_ids.append(appt)
 
-    db.session.commit()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error in book_sequence: {e}")
+        return jsonify({"error": "Booking failed due to a server error"}), 500
+
     return jsonify({"success": True, "booked_count": len(booked_ids)})
 
 @api_bp.route("/google/login")
@@ -220,8 +242,8 @@ def cancel_appointment(appt_id):
         return jsonify({"error": "Unauthorized"}), 403
 
     appt.status = 'cancelled'
-    appt.cancellation_reason = request.json.get('reason', 'User cancelled')
- 
+    appt.cancellation_reason = (request.get_json() or {}).get('reason', 'User cancelled')
+
     success, message = handle_cancellation(appt.business_id, appt.service_id, appt.start_time, appt.end_time)
     if not success:
         logger.warning(f"Waitlist auto-fill failed: {message}")
