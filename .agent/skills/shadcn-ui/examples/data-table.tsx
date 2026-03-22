@@ -79,6 +79,12 @@ export const columns: ColumnDef<User>[] = [
       return (
         <Button
           variant="ghost"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault()
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }
+          }}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Name
@@ -94,6 +100,12 @@ export const columns: ColumnDef<User>[] = [
       return (
         <Button
           variant="ghost"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault()
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }
+          }}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
@@ -177,6 +189,7 @@ export function DataTableExample() {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
+          aria-label="Filter names"
           placeholder="Filter names..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>

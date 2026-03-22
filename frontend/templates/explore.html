@@ -81,7 +81,7 @@
     {% for b in businesses %}
     <div class="col-md-4 mb-4 business-item" data-category="{{ b.category }}">
         <div class="card h-100 glass-card business-card hover-lift center-on-trigger"
-            data-lat="{{ b.latitude }}" data-lng="{{ b.longitude }}" role="button"
+            data-lat="{{ b.latitude }}" data-lng="{{ b.longitude }}" role="button" tabindex="0"
             aria-label="View {{ b.name }} on map">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">

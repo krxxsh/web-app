@@ -10,7 +10,9 @@
             <h1 class="display-4 fw-bold text-gradient">How can we help?</h1>
             <p class="lead text-muted">Browse our frequently asked questions or get in touch with our elite support team. We're here to ensure your scheduling runs perfectly.</p>
             <div class="mt-4">
+                <label for="support-search" class="visually-hidden">Search for support answers</label>
                 <input type="text" class="form-control form-control-lg glass-panel text-center border-0 shadow-sm" 
+                       id="support-search"
                        placeholder="Search for answers..." style="max-width: 500px; margin: 0 auto;">
             </div>
         </div>
@@ -97,12 +99,12 @@
                 <form>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small text-muted">Full Name</label>
-                            <input type="text" class="form-control glass-panel border-0" placeholder="John Doe">
+                            <label class="form-label small text-muted" for="support-full-name">Full Name</label>
+                            <input id="support-full-name" type="text" class="form-control glass-panel border-0" placeholder="John Doe">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small text-muted">Email Address</label>
-                            <input type="email" class="form-control glass-panel border-0" placeholder="john@example.com">
+                            <label class="form-label small text-muted" for="support-email">Email Address</label>
+                            <input id="support-email" type="email" class="form-control glass-panel border-0" placeholder="john@example.com">
                         </div>
                         <div class="col-12">
                             <label class="form-label small text-muted">Message Subject</label>

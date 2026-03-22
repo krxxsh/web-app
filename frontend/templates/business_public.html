@@ -466,6 +466,7 @@
     document.getElementById('chat-send').onclick = sendChatMessage;
     document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
     document.getElementById('ai-chat-toggle').onclick = toggleChat;
+    document.getElementById('chat-close').onclick = toggleChat;
 </script>
 
 <!-- AI Chat Floating Button -->
@@ -479,7 +480,7 @@
         style="width: 320px; height: 420px; bottom: 70px; position: absolute; right: 0; border-radius: 15px;">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
             <span class="fw-bold small"><i class="fas fa-robot me-2"></i>AI Booking Assistant</span>
-            <button class="btn-close btn-close-white" onclick="toggleChat()" aria-label="Close Chat"></button>
+            <button class="btn-close btn-close-white" id="chat-close" aria-label="Close Chat"></button>
         </div>
         <div id="chat-messages" class="card-body overflow-auto p-3" style="height: 300px; background-color: #fcfcfc;">
             <div class="message bot-message mb-3">

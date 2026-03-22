@@ -77,7 +77,7 @@ export function UserProfileForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="johndoe" {...field} />
+                <Input aria-label="Username" placeholder="johndoe" {...field} />
               </FormControl>
               <FormDescription>
                 This is your public display name.
@@ -94,7 +94,7 @@ export function UserProfileForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="john@example.com" {...field} />
+                <Input aria-label="Email" type="email" placeholder="john@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -97,8 +97,11 @@
     </style>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen overflow-x-hidden">
+<a href="#main-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-3 focus:py-2 focus:rounded-md focus:bg-secondary focus:text-on-secondary-fixed focus:z-50">Skip
+    to main content</a>
 <!-- TopNavBar Suppression: Page is Transactional (Login/Signup) -->
-<main class="flex min-h-screen w-full">
+<main id="main-content" class="flex min-h-screen w-full">
 <!-- Left Side: Abstract 3D Visuals -->
 <section class="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-surface-container-lowest">
 <div class="absolute inset-0 z-0 overflow-hidden">
@@ -146,23 +149,23 @@
 <form class="space-y-6">
 <!-- Full Name -->
 <div class="space-y-2">
-<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1">Full Name</label>
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="stitch-register-name">Full Name</label>
 <div class="relative group">
-<input class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="Enter your full name" type="text"/>
+<input id="stitch-register-name" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="Enter your full name" type="text"/>
 </div>
 </div>
 <!-- Email Address -->
 <div class="space-y-2">
-<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1">Email Address</label>
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="stitch-register-email">Email Address</label>
 <div class="relative group">
-<input class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="name@company.com" type="email"/>
+<input id="stitch-register-email" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="name@company.com" type="email"/>
 </div>
 </div>
 <!-- Password -->
 <div class="space-y-2">
-<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1">Password</label>
+<label class="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase ml-1" for="stitch-register-password">Password</label>
 <div class="relative group">
-<input class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="••••••••" type="password"/>
+<input id="stitch-register-password" class="w-full px-5 py-4 bg-surface-container-highest rounded-lg text-on-surface placeholder:text-on-surface-variant/50 border-none focus:ring-1 focus:ring-secondary transition-all outline-none" placeholder="••••••••" type="password"/>
 </div>
 </div>
 <!-- Action Button -->
