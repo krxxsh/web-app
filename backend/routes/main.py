@@ -20,6 +20,12 @@ def home():
 @main_bp.route("/select-role", methods=['GET', 'POST'])
 @login_required
 def select_role():
+    # Prevent role changes for users who already have a role
+    if current_user.role != 'pending':
+        if request.method == 'POST':
+            return jsonify({"success": False, "message": "Role already assigned"}), 403
+        return redirect(url_for('main.home'))
+
     if request.method == 'POST':
         data = request.get_json() or {}
         role = data.get('role')
@@ -56,8 +62,6 @@ def select_role():
             "redirect": "/admin/dashboard" if role == 'business_owner' else "/",
         })
 
-    if current_user.role != 'pending':
-        return redirect(url_for('main.home'))
     return render_template('select_role.html')
 
 

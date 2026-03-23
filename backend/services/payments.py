@@ -1,7 +1,9 @@
 import razorpay
 from backend.config import Config
 
-client = razorpay.Client(auth=(Config.RAZORPAY_KEY_ID, Config.RAZORPAY_KEY_SECRET))
+def _get_client():
+    """Lazy-initialize Razorpay client to avoid import-time crashes."""
+    return razorpay.Client(auth=(Config.RAZORPAY_KEY_ID, Config.RAZORPAY_KEY_SECRET))
 
 def create_razorpay_order(amount, currency='INR', business_account_id=None):
     """
@@ -35,7 +37,7 @@ def create_razorpay_order(amount, currency='INR', business_account_id=None):
             }
         ]
 
-    return client.order.create(data=data)
+    return _get_client().order.create(data=data)
 
 def verify_payment_signature(payment_id, order_id, signature):
     """Verifies the webhook signature or frontend callback signature."""
@@ -45,7 +47,7 @@ def verify_payment_signature(payment_id, order_id, signature):
         'razorpay_signature': signature
     }
     try:
-        client.utility.verify_payment_signature(params_dict)
+        _get_client().utility.verify_payment_signature(params_dict)
         return True
     except Exception:
         return False

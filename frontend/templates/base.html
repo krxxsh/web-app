@@ -228,7 +228,6 @@
     <style>
         .offline-mode {
             filter: grayscale(0.5);
-            pointer-events: none;
         }
 
         .offline-mode::after {
@@ -371,9 +370,12 @@
         async function syncFcmToken(token) {
             if (!token) return;
             try {
+                const idToken = localStorage.getItem('firebaseToken');
+                const headers = { 'Content-Type': 'application/json' };
+                if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
                 await fetch('/api/update-fcm-token', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify({ fcmToken: token })
                 });
                 console.log("FCM Token synced to backend.");

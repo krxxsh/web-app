@@ -133,14 +133,13 @@ def send_verification_otp(user):
     db.session.commit()
     
     # In a real production app, we would call an email/SMS provider here.
-    # For now, we log it (and it will show in simulated logs for the user to see).
-    logger.info(f"Verification OTPs generated for {user.email}: Email={email_otp}, Phone={phone_otp}")
-    
-    print("\n" + "!"*50)
-    print(f"🔐 [SECURITY] OTPs for {user.email}")
-    print(f"Email OTP: {email_otp}")
-    print(f"Phone OTP: {phone_otp}")
-    print("!"*50 + "\n")
+    # For development only, log OTPs to console.
+    try:
+        from flask import current_app
+        if current_app.debug:
+            logger.debug(f"Verification OTPs generated for {user.email}: Email={email_otp}, Phone={phone_otp}")
+    except RuntimeError:
+        pass  # Outside app context (e.g. testing)
     
     return True
 

@@ -222,8 +222,7 @@ except Exception as e:
     @app.route("/", defaults={'path': ''})
     @app.route("/<path:path>")
     def error_page(path):
-        error_msg = f"CRITICAL_STARTUP_ERROR: {path}<br><br>Exception: {error_text}<br><pre>{error_tb}</pre>"
-        return error_msg, 500
+        return "<h1>Service Unavailable</h1><p>The application failed to start. Please contact support.</p>", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
