@@ -47,8 +47,7 @@
     <h1 class="display-4 fw-bold mb-3">Emergency Help 🚨</h1>
     <p class="lead mb-4">Quickly find the nearest hospital, clinic, or ambulance station based on your current location.
     </p>
-    <button class="btn btn-light btn-lg px-5 fw-bold text-danger pulse" id="locateBtn" aria-label="Find Nearby Help Now"
-        onclick="getLocation()">
+    <button class="btn btn-light btn-lg px-5 fw-bold text-danger pulse" id="locateBtn" aria-label="Find Nearby Help Now">
         <i class="fas fa-location-arrow me-2"></i> Find Nearby Help Now
     </button>
 </div>
@@ -82,6 +81,7 @@
 <script nonce="{{ csp_nonce() }}">
     let map = null;
     let markers = [];
+    document.getElementById('locateBtn').addEventListener('click', getLocation);
 
     function getLocation() {
         const btn = document.getElementById('locateBtn');

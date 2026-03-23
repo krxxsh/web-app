@@ -104,8 +104,11 @@
 </style>
 </head>
 <body class="overflow-x-hidden min-h-screen bg-surface flex justify-center items-start pt-10 px-4">
+<a href="#main-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-3 focus:py-2 focus:rounded-md focus:bg-secondary focus:text-on-secondary-fixed focus:z-50">Skip
+    to main content</a>
 
-<main class="w-full max-w-3xl space-y-8">
+<main id="main-content" class="w-full max-w-3xl space-y-8">
     
     <!-- Staff Card -->
     <div class="glass-panel ambient-lume inner-glow p-8 rounded-2xl relative overflow-hidden group">
@@ -134,7 +137,7 @@
         </div>
         
         <div class="absolute top-8 right-8">
-            <button onclick="handleLogout()" class="px-4 py-2 rounded-full border border-error/30 text-error text-xs font-bold hover:bg-error/10 transition-colors flex items-center gap-2">
+            <button class="px-4 py-2 rounded-full border border-error/30 text-error text-xs font-bold hover:bg-error/10 transition-colors flex items-center gap-2 logout-trigger">
                 <span class="material-symbols-outlined text-sm">logout</span> Logout
             </button>
         </div>

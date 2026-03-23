@@ -44,10 +44,12 @@
 </head>
 
 <body>
+    <a href="#main-content" style="position:absolute;left:8px;top:8px;padding:8px 12px;background:#1d76f2;color:#fff;border-radius:8px;z-index:1000;">Skip to main content</a>
 
-    <h1>AI Sched: System Architecture & User Journey Flow</h1>
+    <main id="main-content">
+        <h1>AI Sched: System Architecture & User Journey Flow</h1>
 
-    <div class="mermaid">
+        <div class="mermaid">
         graph TD
         %% Styling
         classDef unauth fill:#0a1628,stroke:#1d76f2,stroke-width:2px,color:#fff
@@ -99,10 +101,11 @@
         PAdmin --> PTeam[Manage Moderator Team]:::admin
 
         BPending -.-> |"Approval Action"| PVerify
-    </div>
+        </div>
 
-    <p class="instructions">Right-click anywhere on the diagram and select "Save image as..." to save it, or press
-        Ctrl+P to print to PDF.</p>
+        <p class="instructions">Right-click anywhere on the diagram and select "Save image as..." to save it, or press
+            Ctrl+P to print to PDF.</p>
+    </main>
 
 </body>
 

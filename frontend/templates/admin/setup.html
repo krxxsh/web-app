@@ -7,7 +7,7 @@
             <form method="POST">
                 <div class="mb-3">
                     <label class="form-label">Business Name</label>
-                    <input type="text" name="name" class="form-control-premium w-100" placeholder="e.g. Health Center"
+                    <input aria-label="Business name" type="text" name="name" class="form-control-premium w-100" placeholder="e.g. Health Center"
                         required px-3>
                 </div>
 
@@ -30,12 +30,12 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Phone Number</label>
-                        <input type="text" name="phone" class="form-control" placeholder="+91 XXXX XXX XXX">
+                        <label class="form-label" for="setup-phone">Phone Number</label>
+                        <input id="setup-phone" type="text" name="phone" class="form-control" placeholder="+91 XXXX XXX XXX">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Website</label>
-                        <input type="url" name="website" class="form-control" placeholder="https://...">
+                        <label class="form-label" for="setup-website">Website</label>
+                        <input id="setup-website" type="url" name="website" class="form-control" placeholder="https://...">
                     </div>
                 </div>
 

@@ -115,6 +115,9 @@
 </style>
 </head>
 <body class="overflow-x-hidden">
+<a href="#main-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-3 focus:py-2 focus:rounded-md focus:bg-secondary focus:text-on-secondary-fixed focus:z-50">Skip
+    to main content</a>
 
 <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low/70 backdrop-blur-xl flex flex-col py-8 px-4 z-50 ambient-lume border-r border-outline-variant/10">
     <div class="mb-10 px-4">
@@ -149,7 +152,7 @@
     </nav>
 </aside>
 
-<main class="ml-64 min-h-screen p-10 bg-surface">
+<main id="main-content" class="ml-64 min-h-screen p-10 bg-surface">
     <!-- Header -->
     <header class="flex justify-between items-start lg:items-center flex-col lg:flex-row mb-12 gap-6">
         <div class="flex items-center gap-6">
@@ -277,7 +280,7 @@
                     <div>
                         <h6 class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-4">Add Staff Member</h6>
                         <form action="{{ url_for('admin.add_staff') }}" method="POST" class="flex gap-2">
-                            <input type="text" name="name" class="flex-1 px-4 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Enter name" required>
+                            <input aria-label="Staff member name" type="text" name="name" class="flex-1 px-4 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Enter name" required>
                             <button type="submit" class="px-5 py-2.5 bg-surface-container-high hover:bg-surface-bright text-secondary border border-secondary/30 rounded-lg text-sm font-bold transition-colors">Add</button>
                         </form>
                     </div>
@@ -286,8 +289,8 @@
                         <h6 class="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-4">Update Branding Color</h6>
                         <form action="{{ url_for('admin.update_branding') }}" method="POST" class="flex flex-col gap-3">
                             <div class="flex items-center gap-4">
-                                <input type="color" name="primary_color" class="w-12 h-12 bg-transparent border-0 rounded cursor-pointer" value="{{ business.primary_color or '#d095ff' }}" title="Choose your color">
-                                <input type="url" name="logo_url" class="flex-1 px-4 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm" value="{{ business.logo_url or '' }}" placeholder="Logo URL (optional)">
+                                <input aria-label="Primary branding color" type="color" name="primary_color" class="w-12 h-12 bg-transparent border-0 rounded cursor-pointer" value="{{ business.primary_color or '#d095ff' }}" title="Choose your color">
+                                <input aria-label="Business logo URL" type="url" name="logo_url" class="flex-1 px-4 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-lg text-sm" value="{{ business.logo_url or '' }}" placeholder="Logo URL (optional)">
                             </div>
                             <button type="submit" class="self-end px-5 py-2 bg-surface-container-high hover:bg-surface-bright text-primary border border-primary/30 rounded-lg text-sm font-bold transition-colors">Save Branding</button>
                         </form>
