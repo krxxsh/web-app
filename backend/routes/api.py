@@ -592,11 +592,20 @@ def auth_sync():
     firebase_token_required handles login_user(user).
     """
     from flask_login import current_user
+
+    # Determine correct redirect based on user's role
+    if current_user.role == 'pending':
+        redirect_url = '/select-role'
+    elif current_user.role == 'business_owner':
+        redirect_url = '/admin/dashboard'
+    else:
+        redirect_url = '/'
+
     return jsonify({
         "success": True,
         "message": "Session synchronized",
         "role": current_user.role,
-        "redirect": "/admin/dashboard" if current_user.role == "business_owner" else "/"
+        "redirect": redirect_url
     })
 
 @api_bp.route('/update-fcm-token', methods=['POST'])

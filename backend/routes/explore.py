@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request
+from flask_login import current_user
+from sqlalchemy import or_
 from backend.models.models import Business, BusinessCategory
 
 explore_bp = Blueprint('explore', __name__)
@@ -6,8 +8,13 @@ explore_bp = Blueprint('explore', __name__)
 @explore_bp.route("/explore")
 def explore():
     categories = BusinessCategory.query.all()
-    # Default to all businesses
-    businesses = Business.query.filter_by(status='active').all()
+    # Show active businesses + the current user's own businesses (any status)
+    if current_user.is_authenticated:
+        businesses = Business.query.filter(
+            or_(Business.status == 'active', Business.owner_id == current_user.id)
+        ).all()
+    else:
+        businesses = Business.query.filter_by(status='active').all()
     return render_template('explore.html', categories=categories, businesses=businesses)
 
 @explore_bp.route("/fastest-near-me")
@@ -22,7 +29,13 @@ def get_businesses():
     lng = request.args.get('lng', type=float)
     radius = request.args.get('radius', 50, type=float) # Default 50km
 
-    query = Business.query.filter_by(status='active')
+    # Include user's own businesses alongside active ones
+    if current_user.is_authenticated:
+        query = Business.query.filter(
+            or_(Business.status == 'active', Business.owner_id == current_user.id)
+        )
+    else:
+        query = Business.query.filter_by(status='active')
 
     if category_name and category_name != 'All':
         # Support both category name and ID
