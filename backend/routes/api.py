@@ -553,6 +553,9 @@ def get_dashboard_stats(business_id):
 @api_bp.route('/user/select-role', methods=['POST'])
 @firebase_token_required
 def select_role():
+    if current_user.role != 'pending':
+        return jsonify({"success": False, "message": "Role already assigned"}), 403
+
     data = request.json or {}
     role = data.get('role')
     phone = data.get('phone')
