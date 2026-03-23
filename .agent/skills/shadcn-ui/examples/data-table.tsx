@@ -71,6 +71,15 @@ const data: User[] = [
   },
 ]
 
+const handleSortKeyDown =
+  (column: { toggleSorting: (desc?: boolean) => void; getIsSorted: () => false | "asc" | "desc" }) =>
+  (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      column.toggleSorting(column.getIsSorted() === "asc")
+    }
+  }
+
 // Define columns
 export const columns: ColumnDef<User>[] = [
   {
@@ -79,12 +88,7 @@ export const columns: ColumnDef<User>[] = [
       return (
         <Button
           variant="ghost"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault()
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }
-          }}
+          onKeyDown={handleSortKeyDown(column)}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Name
@@ -100,12 +104,7 @@ export const columns: ColumnDef<User>[] = [
       return (
         <Button
           variant="ghost"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault()
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }
-          }}
+          onKeyDown={handleSortKeyDown(column)}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
