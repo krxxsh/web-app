@@ -58,7 +58,7 @@ def firebase_token_required(f):
                     username=email.split('@')[0],
                     password=bcrypt.generate_password_hash("firebase_managed").decode('utf-8'), # Dummy to satisfy NOT NULL constraint
                     role='pending',
-                    is_verified=True
+                    is_verified=False
                 )
                 db.session.add(user)
                 db.session.commit()

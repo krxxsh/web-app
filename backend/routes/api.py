@@ -441,8 +441,8 @@ def request_priority():
 @api_bp.route("/admin/triage/process", methods=['POST'])
 @firebase_token_required
 def admin_process_triage():
-    if current_user.role != 'admin':
-        return jsonify({"error": "Admin only"}), 403
+    if current_user.role not in ['admin', 'business_owner']:
+        return jsonify({"error": "Admin or business owner only"}), 403
     data = request.get_json()
     appt = Appointment.query.get_or_404(data.get('appointment_id'))
     if data.get('action') == 'approve':
@@ -484,7 +484,10 @@ def api_kiosk_status():
 def get_calendar_events():
     if current_user.role not in ['business_owner', 'admin']:
         return jsonify([])
-    query = Appointment.query.filter_by(business_id=current_user.businesses[0].id)
+    business = Business.query.filter_by(owner_id=current_user.id).first()
+    if not business:
+        return jsonify([])
+    query = Appointment.query.filter_by(business_id=business.id)
     start_param, end_param = request.args.get('start'), request.args.get('end')
     if start_param:
         query = query.filter(Appointment.start_time >= start_param)

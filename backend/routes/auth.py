@@ -16,12 +16,16 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route("/register", methods=['GET'])
 def register():
     if current_user.is_authenticated:
+        if current_user.role == 'pending':
+            return redirect(url_for('main.select_role'))
         return redirect(url_for('main.home'))
     return render_template('register.html', title='Register')
 
 @auth_bp.route("/login", methods=['GET'])
 def login():
     if current_user.is_authenticated:
+        if current_user.role == 'pending':
+            return redirect(url_for('main.select_role'))
         return redirect(url_for('main.home'))
     return render_template('login.html', title='Customer Login')
 

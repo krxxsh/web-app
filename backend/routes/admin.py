@@ -155,7 +155,10 @@ def add_staff():
     if current_user.role not in ['business_owner', 'admin']:
         return "Unauthorized", 403
     name = request.form.get('name')
-    business = current_user.businesses[0]
+    business = Business.query.filter_by(owner_id=current_user.id).first()
+    if not business:
+        flash('Please set up a business first.', 'warning')
+        return redirect(url_for('admin.setup_business'))
 
     # Log Action
     log_admin_action(current_user.id, "add_staff", business_id=business.id, details={"staff_name": name})
@@ -186,7 +189,10 @@ def update_branding():
     if current_user.role not in ['business_owner', 'admin']:
         return "Unauthorized", 403
 
-    business = current_user.businesses[0]
+    business = Business.query.filter_by(owner_id=current_user.id).first()
+    if not business:
+        flash('Please set up a business first.', 'warning')
+        return redirect(url_for('admin.setup_business'))
     primary_color = request.form.get('primary_color')
     logo_url = request.form.get('logo_url')
 
@@ -206,6 +212,9 @@ def update_branding():
 @login_required
 def manage_resources():
     business = Business.query.filter_by(owner_id=current_user.id).first()
+    if not business:
+        flash('Please set up a business first.', 'warning')
+        return redirect(url_for('admin.setup_business'))
     if request.method == 'POST':
         name = request.form.get('name')
         r_type = request.form.get('type')
@@ -298,12 +307,13 @@ def approve_business(user_id):
     user = User.query.get_or_404(user_id)
     user.is_verified = True
 
-    # Activate associated business if it exists
-    business = Business.query.filter_by(owner_id=user.id).first()
+    # Activate ALL associated businesses
+    businesses = Business.query.filter_by(owner_id=user.id).all()
     business_id = None
-    if business:
+    for business in businesses:
         business.status = 'active'
-        business_id = business.id
+        if not business_id:
+            business_id = business.id
 
     # Log the action
     log = AdminActivityLog(
