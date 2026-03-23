@@ -210,6 +210,8 @@
     async function syncSession() {
         try {
             const idToken = await firebase.auth().currentUser.getIdToken();
+            // Store token for downstream pages (e.g. select_role.html)
+            localStorage.setItem('firebaseToken', idToken);
             const syncResponse = await fetch('/api/auth/sync', {
                 method: 'POST',
                 headers: {

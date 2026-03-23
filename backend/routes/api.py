@@ -214,6 +214,7 @@ def google_login():
     return redirect(authorization_url)
 
 @api_bp.route("/google/callback")
+@firebase_token_required
 def google_callback():
     flow = get_google_flow()
     flow.fetch_token(authorization_response=request.url)
@@ -601,6 +602,8 @@ def auth_sync():
         redirect_url = '/select-role'
     elif current_user.role == 'business_owner':
         redirect_url = '/admin/dashboard'
+    elif current_user.role == 'staff':
+        redirect_url = '/staff/dashboard'
     else:
         redirect_url = '/'
 

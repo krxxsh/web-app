@@ -343,8 +343,10 @@ def reject_business(user_id):
     )
     db.session.add(log)
 
-    # Logic for rejection (e.g., delete or suspend)
-    db.session.delete(user)
+    # Suspend user and their businesses instead of deleting (to preserve data integrity)
+    user.is_verified = False
+    for biz in Business.query.filter_by(owner_id=user.id).all():
+        biz.status = 'suspended'
     db.session.commit()
-    flash('Registration rejected and account removed.', 'warning')
+    flash('Registration rejected and account suspended.', 'warning')
     return redirect(url_for('admin.platform_dashboard'))
